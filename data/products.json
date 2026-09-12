@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "version": 1,
+    "lastModified": "2026-09-12T12:00:00Z",
+    "description": "Catalogo de productos y existencias de Stockly"
+  },
+  "records": [
+    {
+      "id": "prd_cafe001",
+      "createdAt": "2026-09-01T08:00:00Z",
+      "updatedAt": "2026-09-12T12:00:00Z",
+      "sku": "CAF-001",
+      "name": "Cafe de origen",
+      "category": "Bebidas",
+      "stock": 128,
+      "minimumStock": 40,
+      "unitCost": 14.5,
+      "active": true
+    },
+    {
+      "id": "prd_vasos014",
+      "createdAt": "2026-09-02T08:00:00Z",
+      "updatedAt": "2026-09-12T12:00:00Z",
+      "sku": "VAS-014",
+      "name": "Vasos compostables",
+      "category": "Empaque",
+      "stock": 42,
+      "minimumStock": 30,
+      "unitCost": 0.18,
+      "active": true
+    },
+    {
+      "id": "prd_jarabe009",
+      "createdAt": "2026-09-03T08:00:00Z",
+      "updatedAt": "2026-09-12T12:00:00Z",
+      "sku": "JAR-009",
+      "name": "Jarabe de vainilla",
+      "category": "Insumos",
+      "stock": 8,
+      "minimumStock": 20,
+      "unitCost": 6.75,
+      "active": true
+    }
+  ]
+}

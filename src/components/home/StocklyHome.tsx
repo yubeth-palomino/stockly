@@ -1,14 +1,33 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 
-const products = [
-  { name: 'Cafe de origen', sku: 'CAF-001', stock: 128, status: 'En stock', tone: 'green' },
-  { name: 'Vasos compostables', sku: 'VAS-014', stock: 42, status: 'Vigilar', tone: 'amber' },
-  { name: 'Jarabe de vainilla', sku: 'JAR-009', stock: 8, status: 'Critico', tone: 'red' },
+type Product = {
+  name: string;
+  sku: string;
+  stock: number;
+  minimumStock: number;
+};
+
+const fallbackProducts: Product[] = [
+  { name: 'Cafe de origen', sku: 'CAF-001', stock: 128, minimumStock: 40 },
+  { name: 'Vasos compostables', sku: 'VAS-014', stock: 42, minimumStock: 30 },
+  { name: 'Jarabe de vainilla', sku: 'JAR-009', stock: 8, minimumStock: 20 },
 ];
 
 export function StocklyHome() {
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
+
+  useEffect(() => {
+    void fetch('/api/data/products?limit=3&sortBy=stock&sortOrder=asc')
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error('API unavailable'))))
+      .then((payload: { data?: { data?: Product[] } }) => {
+        if (payload.data?.data) setProducts(payload.data.data);
+      })
+      .catch(() => undefined);
+  }, []);
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -34,7 +53,7 @@ export function StocklyHome() {
         </div>
 
         <div className="dashboard-grid">
-          <section className="panel products-panel" id="productos"><div className="panel-heading"><div><h2>Productos por revisar</h2><p>Los movimientos mas recientes de tu catalogo.</p></div><a href="#productos">Ver todos ↗</a></div><div className="product-list">{products.map((product, index) => <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.12 }} className="product-row" key={product.sku}><span className={`product-icon ${product.tone}`}>{product.name[0]}</span><div className="product-name"><b>{product.name}</b><small>{product.sku}</small></div><span className={`status ${product.tone}`}>{product.status}</span><strong>{product.stock}<small> uds.</small></strong><span className="row-arrow">→</span></motion.div>)}</div></section>
+          <section className="panel products-panel" id="productos"><div className="panel-heading"><div><h2>Productos por revisar</h2><p>Los movimientos mas recientes de tu catalogo.</p></div><a href="#productos">Ver todos ↗</a></div><div className="product-list">{products.map((product, index) => { const status = getStockStatus(product); return <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.12 }} className="product-row" key={product.sku}><span className={`product-icon ${status.tone}`}>{product.name[0]}</span><div className="product-name"><b>{product.name}</b><small>{product.sku}</small></div><span className={`status ${status.tone}`}>{status.label}</span><strong>{product.stock}<small> uds.</small></strong><span className="row-arrow">→</span></motion.div>; })}</div></section>
           <section className="panel activity-panel" id="movimientos"><div className="panel-heading"><div><h2>Actividad reciente</h2><p>Ultimas entradas y salidas.</p></div></div><div className="activity-list"><Activity title="Entrada de inventario" detail="Cafe de origen · 40 uds." time="Hace 12 min" type="in" /><Activity title="Salida registrada" detail="Vasos compostables · 12 uds." time="Hace 48 min" type="out" /><Activity title="Alerta de stock" detail="Jarabe de vainilla · 8 uds." time="Hace 2 h" type="alert" /></div></section>
         </div>
         <footer className="footer"><span>Stockly v0.1.0</span><span>Todos los sistemas operativos <i /></span></footer>
@@ -49,4 +68,10 @@ function Metric({ label, value, change, detail, accent }: { label: string; value
 
 function Activity({ title, detail, time, type }: { title: string; detail: string; time: string; type: string }) {
   return <div className="activity-row"><span className={`activity-icon ${type}`}>{type === 'in' ? '↓' : type === 'out' ? '↑' : '!'}</span><div><b>{title}</b><small>{detail}</small></div><time>{time}</time></div>;
+}
+
+function getStockStatus(product: Product): { label: string; tone: 'green' | 'amber' | 'red' } {
+  if (product.stock <= product.minimumStock / 2) return { label: 'Critico', tone: 'red' };
+  if (product.stock <= product.minimumStock) return { label: 'Vigilar', tone: 'amber' };
+  return { label: 'En stock', tone: 'green' };
 }
