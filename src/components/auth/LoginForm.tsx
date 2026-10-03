@@ -39,14 +39,20 @@ export function LoginForm() {
     setIsSubmitting(true);
 
     try {
-      // TODO: conectar con la API real.
-      await new Promise((resolve) => window.setTimeout(resolve, 450));
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
 
-      if (normalizedEmail.toLowerCase() === 'demo@stockly.com' && password === 'demo1234') {
-        router.push('/');
+      if (response.ok) {
+        router.replace('/dashboard');
       } else {
-        setAuthError('Correo o contraseña incorrectos');
+        const result = (await response.json()) as { error?: string };
+        setAuthError(result.error ?? 'Correo o contraseña incorrectos');
       }
+    } catch {
+      setAuthError('No fue posible conectar con el servidor. Intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,0 +1,24 @@
+.link {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dce5e1;
+  border-radius: 6px;
+  color: #43514e;
+  background: #fff;
+  font: 18px Arial, sans-serif;
+  text-decoration: none;
+}
+
+.link:hover {
+  border-color: #a8bbb4;
+  color: #087f70;
+}
+
+@media (max-width: 800px) {
+  .link {
+    display: inline-flex;
+  }
+}

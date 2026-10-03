@@ -20,6 +20,9 @@ function failure(error: unknown): NextResponse {
 
 async function collectionFrom(context: RouteContext): Promise<string> {
   const { collection } = await context.params;
+  if (collection === 'users' || collection === 'sessions') {
+    throw new JsonDBError('NOT_FOUND', `Coleccion ${collection} no registrada.`);
+  }
   if (!getSchema(collection)) throw new JsonDBError('NOT_FOUND', `Coleccion ${collection} no registrada.`);
   return collection;
 }

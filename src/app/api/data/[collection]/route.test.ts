@@ -21,4 +21,16 @@ describe('/api/data/[collection]', () => {
 
     expect(response.status).toBe(404);
   });
+
+  it('no permite consultar usuarios ni sesiones mediante el CRUD generico', async () => {
+    const usersResponse = await GET(new Request('http://localhost/api/data/users'), {
+      params: Promise.resolve({ collection: 'users' }),
+    });
+    const sessionsResponse = await GET(new Request('http://localhost/api/data/sessions'), {
+      params: Promise.resolve({ collection: 'sessions' }),
+    });
+
+    expect(usersResponse.status).toBe(404);
+    expect(sessionsResponse.status).toBe(404);
+  });
 });

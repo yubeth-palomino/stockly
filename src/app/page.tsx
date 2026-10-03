@@ -1,5 +1,5 @@
-import { StocklyHome } from '@/components/home/StocklyHome';
+import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  return <StocklyHome />;
+  redirect('/login');
 }

@@ -1,0 +1,61 @@
+.wrapper {
+  position: relative;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid #dce5e1;
+  border-radius: 6px;
+  color: #43514e;
+  background: #fff;
+  font: 12px Arial, sans-serif;
+}
+
+.button:hover:not(:disabled) {
+  border-color: #a8bbb4;
+  color: #087f70;
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.error {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 1;
+  width: max-content;
+  max-width: 220px;
+  color: #a13f2a;
+  font: 11px Arial, sans-serif;
+}
+
+@media (max-width: 800px) {
+  .button {
+    width: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+}

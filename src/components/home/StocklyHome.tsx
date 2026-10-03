@@ -1,7 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { LogoutButton } from '@/components/auth/LogoutButton';
+import { AdminUsersLink } from '@/components/users/AdminUsersLink';
 
 type Product = {
   name: string;
@@ -16,8 +19,13 @@ const fallbackProducts: Product[] = [
   { name: 'Jarabe de vainilla', sku: 'JAR-009', stock: 8, minimumStock: 20 },
 ];
 
-export function StocklyHome() {
+type DashboardUser = { id: string; email: string; full_name: string; role: 'admin' | 'user' };
+
+export function StocklyHome({ user }: { user: DashboardUser }) {
   const [products, setProducts] = useState<Product[]>(fallbackProducts);
+  const displayName = user.full_name || user.email;
+  const firstName = displayName.split(/\s+/)[0];
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
 
   useEffect(() => {
     void fetch('/api/data/products?limit=3&sortBy=stock&sortOrder=asc')
@@ -38,13 +46,14 @@ export function StocklyHome() {
           <a className="nav-item" href="#productos"><span>□</span> Productos</a>
           <a className="nav-item" href="#movimientos"><span>↗</span> Movimientos</a>
           <a className="nav-item" href="#alertas"><span>!</span> Alertas <strong>3</strong></a>
+          {user.role === 'admin' && <Link className="nav-item" href="/users"><span>♙</span> Usuarios</Link>}
         </nav>
-        <div className="sidebar-footer"><span className="avatar">JC</span><div><b>Jhonatan Castro</b><small>Administrador</small></div><span>···</span></div>
+        <div className="sidebar-footer"><span className="avatar">{initials}</span><div><b>{displayName}</b><small>{user.role === 'admin' ? 'Administrador' : 'Usuario'}</small></div></div>
       </aside>
 
       <section className="content" id="resumen">
-        <header className="topbar"><div className="mobile-brand"><span className="brand-mark">S</span> stockly</div><div className="topbar-actions"><button className="icon-button" aria-label="Buscar">⌕</button><button className="icon-button" aria-label="Notificaciones">♢</button><span className="avatar">JC</span></div></header>
-        <div className="page-heading"><div><p className="eyebrow">Viernes, 12 de septiembre de 2026</p><h1>Buenos dias, Jhonatan.</h1><p className="lede">Esto es lo que esta pasando con tu inventario hoy.</p></div><button className="primary-button">+ Añadir producto</button></div>
+        <header className="topbar"><div className="mobile-brand"><span className="brand-mark">S</span> stockly</div><div className="topbar-actions">{user.role === 'admin' && <AdminUsersLink />}<button className="icon-button" aria-label="Buscar">⌕</button><button className="icon-button" aria-label="Notificaciones">♢</button><span className="avatar">{initials}</span><LogoutButton /></div></header>
+        <div className="page-heading"><div><p className="eyebrow">Viernes, 12 de septiembre de 2026</p><h1>Buenos dias, {firstName}.</h1><p className="lede">Esto es lo que esta pasando con tu inventario hoy.</p></div><button className="primary-button">+ Añadir producto</button></div>
 
         <div className="metrics" aria-label="Metricas de inventario">
           <Metric label="Productos activos" value="248" change="+12%" detail="vs. mes anterior" accent="teal" />
