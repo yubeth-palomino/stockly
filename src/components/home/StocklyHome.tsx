@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ChangePasswordButton } from '@/components/auth/ChangePasswordButton';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 import { AdminUsersLink } from '@/components/users/AdminUsersLink';
 
@@ -52,7 +53,7 @@ export function StocklyHome({ user }: { user: DashboardUser }) {
       </aside>
 
       <section className="content" id="resumen">
-        <header className="topbar"><div className="mobile-brand"><span className="brand-mark">S</span> stockly</div><div className="topbar-actions">{user.role === 'admin' && <AdminUsersLink />}<button className="icon-button" aria-label="Buscar">⌕</button><button className="icon-button" aria-label="Notificaciones">♢</button><span className="avatar">{initials}</span><LogoutButton /></div></header>
+        <header className="topbar"><div className="mobile-brand"><span className="brand-mark">S</span> stockly</div><div className="topbar-actions">{user.role === 'admin' && <AdminUsersLink />}<button className="icon-button" aria-label="Buscar">⌕</button><button className="icon-button" aria-label="Notificaciones">♢</button><span className="avatar">{initials}</span><ChangePasswordButton /><LogoutButton /></div></header>
         <div className="page-heading"><div><p className="eyebrow">Viernes, 12 de septiembre de 2026</p><h1>Buenos dias, {firstName}.</h1><p className="lede">Esto es lo que esta pasando con tu inventario hoy.</p></div><button className="primary-button">+ Añadir producto</button></div>
 
         <div className="metrics" aria-label="Metricas de inventario">
