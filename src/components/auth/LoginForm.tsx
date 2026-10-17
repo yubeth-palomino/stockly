@@ -7,12 +7,14 @@ import styles from './LoginForm.module.css';
 
 type LoginErrors = { email?: string | undefined; password?: string | undefined };
 
-export function LoginForm() {
+export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boolean }) {
   const router = useRouter();
+  const [mode, setMode] = useState<'login' | 'recovery'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<LoginErrors>({});
   const [authError, setAuthError] = useState('');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -51,6 +53,44 @@ export function LoginForm() {
         const result = (await response.json()) as { error?: string };
         setAuthError(result.error ?? 'Correo o contraseña incorrectos');
       }
+    } catch {
+      setAuthError('No fue posible conectar con el servidor. Intenta nuevamente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleRecoverySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setErrors({
+        email: normalizedEmail
+          ? 'Ingresa un correo electrónico válido.'
+          : 'Ingresa tu correo electrónico.',
+      });
+      return;
+    }
+
+    setErrors({});
+    setAuthError('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/auth/recover-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const result = (await response.json()) as { error?: string; message?: string };
+      if (!response.ok) {
+        setAuthError(result.error ?? 'No se pudo solicitar el correo. Intenta nuevamente.');
+        return;
+      }
+      setRecoveryMessage(
+        result.message ?? 'Si existe una cuenta asociada, recibirás un correo con instrucciones.',
+      );
     } catch {
       setAuthError('No fue posible conectar con el servidor. Intenta nuevamente.');
     } finally {
@@ -101,80 +141,163 @@ export function LoginForm() {
         </div>
 
         <div className={styles.formContent}>
-          <p className={styles.formKicker}>BIENVENIDO DE NUEVO</p>
-          <h2>Inicia sesión</h2>
-          <p className={styles.formIntro}>Ingresa tus datos para continuar a tu espacio de trabajo.</p>
+          <p className={styles.formKicker}>
+            {mode === 'login' ? 'BIENVENIDO DE NUEVO' : 'RECUPERACIÓN DE CUENTA'}
+          </p>
+          <h2>{mode === 'login' ? 'Inicia sesión' : 'Restablece tu contraseña'}</h2>
+          <p className={styles.formIntro}>
+            {mode === 'login'
+              ? 'Ingresa tus datos para continuar a tu espacio de trabajo.'
+              : 'Te enviaremos un enlace para crear una contraseña nueva.'}
+          </p>
 
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <div className={styles.field}>
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                autoComplete="email"
-                className={errors.email ? styles.inputError : ''}
-                id="email"
-                name="email"
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  setErrors((current) => ({ ...current, email: undefined }));
-                  setAuthError('');
-                }}
-                aria-describedby={errors.email ? 'email-error' : undefined}
-                aria-invalid={Boolean(errors.email)}
-                placeholder="nombre@empresa.com"
-                type="email"
-                value={email}
-              />
-              {errors.email && (
-                <span className={styles.fieldError} id="email-error">
-                  {errors.email}
-                </span>
-              )}
-            </div>
+          {passwordUpdated && (
+            <p className={styles.recoveryMessage} role="status">
+              Tu contraseña se restableció correctamente. Inicia sesión con la nueva contraseña.
+            </p>
+          )}
 
-            <div className={styles.field}>
-              <div className={styles.passwordLabel}>
-                <label htmlFor="password">Contraseña</label>
-                <a href="#forgot-password" onClick={(event) => event.preventDefault()}>
-                  Olvidé mi contraseña
-                </a>
+          {mode === 'login' ? (
+            <form className={styles.form} onSubmit={handleSubmit} noValidate>
+              <div className={styles.field}>
+                <label htmlFor="email">Correo electrónico</label>
+                <input
+                  autoComplete="email"
+                  className={errors.email ? styles.inputError : ''}
+                  id="email"
+                  name="email"
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setErrors((current) => ({ ...current, email: undefined }));
+                    setAuthError('');
+                  }}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
+                  aria-invalid={Boolean(errors.email)}
+                  placeholder="nombre@empresa.com"
+                  type="email"
+                  value={email}
+                />
+                {errors.email && (
+                  <span className={styles.fieldError} id="email-error">
+                    {errors.email}
+                  </span>
+                )}
               </div>
-              <input
-                autoComplete="current-password"
-                className={errors.password ? styles.inputError : ''}
-                id="password"
-                name="password"
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  setErrors((current) => ({ ...current, password: undefined }));
+
+              <div className={styles.field}>
+                <div className={styles.passwordLabel}>
+                  <label htmlFor="password">Contraseña</label>
+                  <Link
+                    className={styles.forgotPassword}
+                    href="/recuperar-contrasena"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <input
+                  autoComplete="current-password"
+                  className={errors.password ? styles.inputError : ''}
+                  id="password"
+                  name="password"
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setErrors((current) => ({ ...current, password: undefined }));
+                    setAuthError('');
+                  }}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
+                  aria-invalid={Boolean(errors.password)}
+                  placeholder="Ingresa tu contraseña"
+                  type="password"
+                  value={password}
+                />
+                {errors.password && (
+                  <span className={styles.fieldError} id="password-error">
+                    {errors.password}
+                  </span>
+                )}
+              </div>
+
+              {authError && (
+                <p className={styles.authError} aria-live="polite">
+                  {authError}
+                </p>
+              )}
+
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Entrando...' : 'Entrar'}
+                {!isSubmitting && <span aria-hidden="true">→</span>}
+              </button>
+            </form>
+          ) : recoveryMessage ? (
+            <div className={styles.form}>
+              <p className={styles.recoveryMessage} role="status">
+                {recoveryMessage}
+              </p>
+              <button
+                className={styles.submitButton}
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setRecoveryMessage('');
                   setAuthError('');
                 }}
-                aria-describedby={errors.password ? 'password-error' : undefined}
-                aria-invalid={Boolean(errors.password)}
-                placeholder="Ingresa tu contraseña"
-                type="password"
-                value={password}
-              />
-              {errors.password && (
-                <span className={styles.fieldError} id="password-error">
-                  {errors.password}
-                </span>
-              )}
+              >
+                Volver a iniciar sesión
+              </button>
             </div>
-
-            {authError && (
-              <p className={styles.authError} aria-live="polite">
-                {authError}
-              </p>
-            )}
-
-            <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Entrando...' : 'Entrar'}
-              {!isSubmitting && <span aria-hidden="true">→</span>}
-            </button>
-          </form>
+          ) : (
+            <form className={styles.form} onSubmit={handleRecoverySubmit} noValidate>
+              <div className={styles.field}>
+                <label htmlFor="recovery-email">Correo electrónico</label>
+                <input
+                  autoComplete="email"
+                  className={errors.email ? styles.inputError : ''}
+                  id="recovery-email"
+                  name="email"
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setErrors({});
+                    setAuthError('');
+                  }}
+                  aria-describedby={errors.email ? 'recovery-email-error' : undefined}
+                  aria-invalid={Boolean(errors.email)}
+                  placeholder="nombre@empresa.com"
+                  type="email"
+                  value={email}
+                />
+                {errors.email && (
+                  <span className={styles.fieldError} id="recovery-email-error">
+                    {errors.email}
+                  </span>
+                )}
+              </div>
+              {authError && (
+                <p className={styles.authError} aria-live="polite">
+                  {authError}
+                </p>
+              )}
+              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Enviando…' : 'Enviar enlace de recuperación'}
+              </button>
+              <button
+                className={styles.backToLogin}
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setErrors({});
+                  setAuthError('');
+                  setRecoveryMessage('');
+                }}
+              >
+                Volver a iniciar sesión
+              </button>
+            </form>
+          )}
         </div>
 
-        <p className={styles.formFooter}>Stockly <span>·</span> Gestión de inventario</p>
+        <p className={styles.formFooter}>
+          Stockly <span>·</span> Gestión de inventario
+        </p>
       </section>
     </main>
   );

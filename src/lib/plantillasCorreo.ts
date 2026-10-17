@@ -1,0 +1,5 @@
+export function plantillaRecuperacion(enlace: string): string {
+  const enlaceSeguro = enlace.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  return `<div style="margin:0;padding:32px;background:#f6f8f6;font-family:Arial,sans-serif;color:#172322"><div style="max-width:520px;margin:0 auto;padding:32px;background:#ffffff;border:1px solid #e5ebe8;border-radius:8px"><p style="margin:0 0 18px;color:#087f70;font-weight:bold">Stockly</p><h1 style="margin:0 0 14px;font-size:24px;font-weight:500">Restablece tu contraseña</h1><p style="margin:0 0 24px;line-height:1.6;color:#52615e">Usa el siguiente enlace para crear una contraseña nueva. El enlace vence en 30 minutos.</p><a href="${enlaceSeguro}" style="display:inline-block;padding:13px 20px;border-radius:6px;background:#087f70;color:#ffffff;text-decoration:none;font-weight:bold">Crear contraseña nueva</a><p style="margin:24px 0 0;line-height:1.6;color:#71807d;font-size:13px">Si no solicitaste este cambio, puedes ignorar este mensaje.</p></div></div>`;
+}

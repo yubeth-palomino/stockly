@@ -1,0 +1,48 @@
+.page {
+  min-height: 100vh;
+  padding: 32px 24px;
+  background: #f6f8f6;
+}
+
+.brand {
+  color: #087f70;
+  font: bold 20px Georgia, serif;
+  text-decoration: none;
+}
+
+.panel {
+  width: min(100%, 440px);
+  margin: 12vh auto 0;
+  padding: 32px;
+  border: 1px solid #e5ebe8;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: #71807d;
+  font: 11px Arial, sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.panel h1 {
+  margin: 0;
+  color: #172322;
+  font-size: 30px;
+  font-weight: 400;
+}
+
+.description {
+  margin: 9px 0 25px;
+  color: #71807d;
+  font: 14px/1.5 Arial, sans-serif;
+}
+
+@media (max-width: 520px) {
+  .panel {
+    margin-top: 8vh;
+    padding: 24px 20px;
+  }
+}

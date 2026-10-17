@@ -19,7 +19,7 @@ describe('POST /api/auth/login', () => {
     const signOut = vi.fn().mockResolvedValue({ error: null });
     const maybeSingle = vi.fn().mockResolvedValue({
       data: profile === undefined
-        ? { id: 'user-1', email: 'demo@stockly.com', full_name: 'Usuario demo', role: 'user' }
+        ? { id: 'user-1', email: 'yubeth.palomino01@usa.edu.co', full_name: 'Usuario demo', role: 'user' }
         : profile,
       error: profileError ?? null,
     });
@@ -40,16 +40,16 @@ describe('POST /api/auth/login', () => {
     const response = await POST(new Request('http://localhost/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: ' DEMO@STOCKLY.COM ', password: 'valid-password' }),
+      body: JSON.stringify({ email: ' YUBETH.PALOMINO01@USA.EDU.CO ', password: 'valid-password' }),
     }));
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mocks.signInWithPassword).toHaveBeenCalledWith({ email: 'demo@stockly.com', password: 'valid-password' });
+    expect(mocks.signInWithPassword).toHaveBeenCalledWith({ email: 'yubeth.palomino01@usa.edu.co', password: 'valid-password' });
     expect(mocks.from).toHaveBeenCalledWith('users');
     expect(mocks.select).toHaveBeenCalledWith('id, email, full_name, role');
     expect(mocks.eq).toHaveBeenCalledWith('id', 'user-1');
-    expect(body.user).toEqual({ id: 'user-1', email: 'demo@stockly.com', full_name: 'Usuario demo', role: 'user' });
+    expect(body.user).toEqual({ id: 'user-1', email: 'yubeth.palomino01@usa.edu.co', full_name: 'Usuario demo', role: 'user' });
   });
 
   it('rechaza credenciales incorrectas', async () => {
@@ -57,7 +57,7 @@ describe('POST /api/auth/login', () => {
     const response = await POST(new Request('http://localhost/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'demo@stockly.com', password: 'incorrecta' }),
+      body: JSON.stringify({ email: 'yubeth.palomino01@usa.edu.co', password: 'incorrecta' }),
     }));
     const body = await response.json();
 
@@ -71,7 +71,7 @@ describe('POST /api/auth/login', () => {
     const response = await POST(new Request('http://localhost/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'demo@stockly.com', password: 'valid-password' }),
+      body: JSON.stringify({ email: 'yubeth.palomino01@usa.edu.co', password: 'valid-password' }),
     }));
 
     expect(response.status).toBe(503);

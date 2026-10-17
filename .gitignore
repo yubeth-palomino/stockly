@@ -7,3 +7,6 @@ node_modules/
 data/_backups/
 data/sessions.json
 coverage/
+.vercel
+.env*
+.env*.local
