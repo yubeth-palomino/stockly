@@ -1,13 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getSupabaseEnvironment } from './environment';
 
 export async function updateSession(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!url || !publishableKey) {
-    return { response: NextResponse.next({ request }), autenticado: false };
-  }
+  const { url, publishableKey } = getSupabaseEnvironment();
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, publishableKey, {

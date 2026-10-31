@@ -10,9 +10,11 @@ Sistema de gestión y control de inventario.
 
 El inicio de sesión usa Supabase Auth. Inicia sesión con una cuenta creada en el proyecto Supabase configurado para la aplicación; no hay credenciales de demostración compartidas.
 
-Para habilitar la recuperación por correo, en el Dashboard de Supabase abre **Authentication → URL Configuration** y agrega la URL de retorno a **Redirect URLs**:
+En producción, la URL base de Auth debe ser `https://stocklyphi.vercel.app`. En el Dashboard de Supabase abre **Authentication → URL Configuration** y permite estas URLs de retorno:
 
-- Desarrollo local: `http://localhost:3000/auth/confirm`
-- Producción: `https://<dominio-de-la-aplicacion>/auth/confirm`
+- `https://stocklyphi.vercel.app/auth/confirm`
+- `http://localhost:3000/auth/confirm` (desarrollo local)
 
-Configura también el **Site URL** con el dominio principal de la aplicación. El usuario solicita el enlace desde «Olvidé mi contraseña» y establece una contraseña nueva tras abrir el correo. Las contraseñas se administran en Supabase Auth, no en `public.users`.
+Los enlaces de invitación y recuperación deben volver al dominio público, nunca a `localhost`. El usuario establece una contraseña nueva tras abrir el correo. Las contraseñas se administran en Supabase Auth, no en `public.users`.
+
+La conexión acepta los nombres estándar `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, además de los nombres heredados `NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_URL`, `NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_PUBLISHABLE_KEY`, `STOCKLY_SUPABASE_URL` y `STOCKLY_SUPABASE_PUBLISHABLE_KEY` usados en el proyecto Vercel existente. Configura esos valores en el proveedor de despliegue; no los incluyas en el repositorio ni los compartas en mensajes.
