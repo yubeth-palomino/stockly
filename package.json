@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "test:ver": "vitest",
     "db:migrar": "node --env-file=.env.local scripts/migrar.mjs",
-    "db:verificar": "node --env-file=.env.local scripts/verificar-bd.mjs"
+    "db:verificar": "node --env-file=.env.local scripts/verificar-bd.mjs",
+    "db:vincular-dueno": "node --env-file=.env.local scripts/vincular-dueno.mjs"
   },
   "bugs": {
     "url": "https://github.com/yubeth-palomino/stockly/issues"

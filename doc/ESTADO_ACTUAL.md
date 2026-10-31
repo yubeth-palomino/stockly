@@ -34,6 +34,7 @@ Versiones declaradas en `package.json`:
 | `test:ver` | `vitest` |
 | `db:migrar` | `node --env-file=.env.local scripts/migrar.mjs` |
 | `db:verificar` | `node --env-file=.env.local scripts/verificar-bd.mjs` |
+| `db:vincular-dueno` | `node --env-file=.env.local scripts/vincular-dueno.mjs` |
 
 ## 3. Estructura
 
@@ -173,7 +174,7 @@ Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas AP
 ## 11. Conflictos con el plan
 
 - `src/app/panel/`: no existe.
-- `src/app/api/panel/`: no existe.
+- `src/app/api/panel/sesion/route.ts`: creada en P03; las demás rutas del módulo se implementan en P05.
 - `src/lib/dataService.ts`: sí existe; su función actual está relacionada con recuperación de cuentas, no con el servicio de inventario del plan.
 - `src/components/ui/`: no existe.
 - `src/app/page.tsx`: no es la plantilla de Next; redirige a `/login`.
@@ -184,20 +185,20 @@ Actualización P01: la inspección remota confirmó que `public.users` existe co
 ## 12. Decisiones derivadas
 
 - Ruta de login existente: `/login`.
-- Protección: `src/proxy.ts` (Next.js 16); ya existe, conserva su matcher actual y hoy solo actualiza claims.
+- Protección: `src/proxy.ts` (Next.js 16); actualiza claims y protege `/panel/:path*` y `/api/panel/:path*`. El Proxy valida la sesión Supabase; las rutas de API también verifican que la cuenta tenga fila activa en `usuarios`.
 - Migraciones: el mecanismo se creó en P01 (`scripts/migrar.mjs`, `scripts/verificar-bd.mjs`, `_migrations`). M1 y M2 están aplicadas en Supabase; la migración existente del login se registró sin reejecutarla tras verificar sus objetos.
-- Variable propuesta para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL` (pooler de transacciones, puerto 6543); P01 no consiguió conectar a ese puerto desde este entorno, queda pendiente probarla desde la app. Para migraciones/verificación se usa primero `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, puerto 5432).
-- Vínculo login/Stockly (`auth_ref`): usar el UUID de Supabase Auth (`authData.user.id`/`auth.uid()`), que ya es la clave `id` de `public.users`. P03 deberá consultar ese UUID en `usuarios.auth_ref`; no usar el correo como clave de vínculo.
+- Variable de producción para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL` (pooler de transacciones, puerto 6543). En desarrollo local, P03 usa `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, puerto 5432) porque el puerto 6543 agotó el tiempo de conexión desde este entorno; la conexión de sesión sí respondió `SELECT 1`. En producción se mantiene el pooler de transacciones. El script de migración/verificación también usa primero la variable del pooler de sesión.
+- Vínculo login/Stockly (`auth_ref`): usar el UUID de Supabase Auth (`authData.user.id`/`auth.uid()`), que ya es la clave `id` de `public.users`. P03 consulta ese UUID en `usuarios.auth_ref`; no se usa el correo como clave de vínculo.
 - Tabla preexistente `public.users`: no debe confundirse con la tabla `usuarios` que crea Stockly. Sus roles `admin/user` tampoco sustituyen los roles `dueno/trabajador`.
 - Numeración propuesta para continuar el archivo actual:
   - M1: `20261031000100_stockly_tablas.sql`.
   - M2: `20261031000200_stockly_vista_seguridad.sql`.
 - Prefijo de importación para `lib`: `@/lib/...`.
-- Próximo destino de login: P03 cambiará `/dashboard` a `/panel`, como indica el plan; no se modifica en P00.
+- Destino de login posterior a autenticación: P03 lo cambió de `/dashboard` a `/panel`, como indica el plan. La página `/panel` se implementa en P06.
 - Estado posterior a P01: tablas, vista, restricciones, índices únicos y RLS comprobados; P01 finalizó con cero fallas.
 
 ## 13. Compilación de base
 
 Comando: `npm run build`.
 
-Resultado: correcto. Next.js 16.3.5 compiló, completó TypeScript, generó 21 páginas estáticas y finalizó la optimización. Se listaron las rutas existentes, incluida `/dashboard`; no hay rutas `/panel`.
+Resultado: correcto. Next.js 16.3.5 compiló, completó TypeScript, generó 21 páginas estáticas y finalizó la optimización. Se listaron las rutas existentes, incluida `/dashboard` y `/api/panel/sesion`; la interfaz `/panel` se implementa en P06.

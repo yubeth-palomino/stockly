@@ -5,7 +5,7 @@
 | P00 Auditoría | completado | correcto | no ejecutados | 2026-10-31 |
 | P01 Base de datos | completado | correcto | 0 fallas | 2026-10-31 |
 | P02 Reglas de negocio | completado | correcto | 68/68 | 2026-10-31 |
-| P03 Servidor y roles | pendiente | | | |
+| P03 Servidor y roles | completado | correcto | 80/80 | 2026-10-31 |
 | P04 Datos | pendiente | | | |
 | P05 API | pendiente | | | |
 | P06 Interfaz base y resumen | pendiente | | | |
@@ -70,3 +70,13 @@ Total de fallas: 0
 - **Problemas/resolución:** se conservó la selección de pruebas API existente junto con `tests/**/*.test.ts`; las suites existentes también pasan usando environment Node. Vitest emite una advertencia ya presente sobre `configLoader: 'native'`, sin afectar build ni pruebas.
 - **Economía:** se implementaron fórmulas puras y validación para T-24 a T-32; el módulo económico sigue desactivado y estas funciones no están conectadas a la aplicación.
 - **Pendientes:** ninguno identificado.
+
+### P03 · Servidor, sesión con rol y primer dueño
+
+- **Archivos creados:** `src/lib/db/conexion.ts`, `src/lib/auth/sesion.ts`, `src/lib/http/respuestas.ts`, `src/lib/validacion/esquemas.ts`, `src/lib/formato.ts`, `src/app/api/panel/sesion/route.ts`, `scripts/vincular-dueno.mjs`, pruebas en `tests/servidor/`.
+- **Archivos modificados:** `src/proxy.ts`, `src/lib/supabase/proxy.ts`, `src/components/auth/LoginForm.tsx`, `package.json`, `doc/ESTADO_ACTUAL.md`.
+- **Comandos y resultados:** `npm test`: 20 archivos y 80 pruebas aprobadas; `npm run build`: correcto; `npm run type-check`: correcto; ESLint focalizado: correcto. GET `/api/panel/sesion` sin sesión respondió 401 con `NO_AUTORIZADO` y `Cache-Control: no-store`; `/panel` redirige a `/login`.
+- **Conexión:** el pooler de transacciones `STOCKLY_POSTGRES_URL` (6543) agotó el tiempo de conexión desde este entorno. `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, 5432) respondió `SELECT 1`; se usa esta URL solo en desarrollo local. Producción mantiene el pooler de transacciones.
+- **Vínculo de identidad:** `usuarios.auth_ref` usa el UUID de la cuenta en Supabase Auth, no el correo. El script de alta idempotente requiere ese UUID y un nombre; no solicita ni guarda contraseñas.
+- **Alta y verificación manual:** se ejecutó `npm run db:vincular-dueno` para vincular la cuenta autorizada. Sin sesión, GET `/api/panel/sesion` devolvió 401 y `NO_AUTORIZADO`; con la sesión Supabase autenticada, respondió 200 con el nombre de la cuenta y `rol: "dueno"`.
+- **Checkpoint:** `doc/checkpoints/FASE_3_COMPLETADA.md`.

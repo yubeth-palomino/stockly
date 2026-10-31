@@ -48,7 +48,7 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
       });
 
       if (response.ok) {
-        router.replace('/dashboard');
+        router.replace('/panel');
       } else {
         const result = (await response.json()) as { error?: string };
         setAuthError(result.error ?? 'Correo o contraseña incorrectos');

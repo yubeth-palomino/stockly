@@ -6,7 +6,7 @@ export async function updateSession(request: NextRequest) {
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !publishableKey) {
-    return NextResponse.next({ request });
+    return { response: NextResponse.next({ request }), autenticado: false };
   }
 
   let response = NextResponse.next({ request });
@@ -18,12 +18,15 @@ export async function updateSession(request: NextRequest) {
       setAll(cookiesToSet, cacheHeaders) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        );
         Object.entries(cacheHeaders).forEach(([name, value]) => response.headers.set(name, value));
       },
     },
   });
 
-  await supabase.auth.getClaims();
-  return response;
+  const { data, error } = await supabase.auth.getClaims();
+  if (error && error.name !== 'AuthSessionMissingError') throw error;
+  return { response, autenticado: Boolean(data?.claims?.sub) };
 }
