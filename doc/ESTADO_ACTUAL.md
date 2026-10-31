@@ -12,7 +12,7 @@ Versiones declaradas en `package.json`:
 | react | `^19.3.0` |
 | typescript | `^6.0.3` |
 | tailwindcss | No existe |
-| pg | No existe |
+| pg | `^8.23.1` |
 | zod | `^4.6.2` |
 | @supabase/supabase-js | `^2.117.2` |
 | jose | No existe |
@@ -31,6 +31,9 @@ Versiones declaradas en `package.json`:
 | `type-check` | `tsc --noEmit` |
 | `test` | `vitest run` |
 | `test:watch` | `vitest` |
+| `test:ver` | `vitest` |
+| `db:migrar` | `node --env-file=.env.local scripts/migrar.mjs` |
+| `db:verificar` | `node --env-file=.env.local scripts/verificar-bd.mjs` |
 
 ## 3. Estructura
 
@@ -63,6 +66,8 @@ src/
 │   └── users/
 ├── lib/
 │   ├── supabase/
+│   ├── config/stockly.ts
+│   ├── reglas/{errores,fechas,roles,producto,venta,economia}.ts
 │   ├── correo.ts
 │   ├── dataService.ts
 │   ├── json-db.ts
@@ -78,11 +83,24 @@ src/
 
 supabase/
 ├── migrations/
-│   └── 20261003000100_create_users_profiles.sql
+│   ├── 20261003000100_create_users_profiles.sql
+│   ├── 20261031000100_stockly_tablas.sql
+│   └── 20261031000200_stockly_vista_seguridad.sql
 └── restablecimientos_contrasena.sql
 
 scripts/
-└── tokenVercel.mjs
+├── tokenVercel.mjs
+├── db-client.mjs
+├── migrar.mjs
+└── verificar-bd.mjs
+
+tests/reglas/
+├── ayudas.ts
+├── producto.test.ts
+├── venta.test.ts
+├── fechas.test.ts
+├── roles.test.ts
+└── economia.test.ts
 
 data/
 ├── _backups/
@@ -109,13 +127,13 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 - Protección/proxy: `src/proxy.ts` exporta `proxy`; el matcher actual excluye recursos estáticos e imágenes y aplica al resto de rutas. `src/lib/supabase/proxy.ts` refresca la sesión, pero no exige autenticación ni protege rutas por rol.
 - Cierre de sesión: POST `/api/auth/logout`, que llama `supabase.auth.signOut({ scope: 'local' })`; el botón navega a `/login`.
 - Tabla de perfil existente en la migración local: `public.users`, columnas `id` (UUID, referencia a `auth.users.id`), `email`, `full_name`, `role` (`admin` o `user`), `created_at` y `updated_at`. No es la tabla `usuarios` requerida por el módulo Stockly.
-- El estado de la base remota no se consultó; no se infiere que la migración local esté aplicada ni que la tabla remota tenga actualmente estas columnas.
+- P01 verificó en la base remota `public.users` con las columnas anteriores y sus objetos del login (índice, función de perfil y trigger de Auth). También confirmó que antes de P01 no existían `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. La migración del perfil se registró sin reejecutarla y M1/M2 se aplicaron.
 
 ## 6. Acceso a datos
 
 - Clientes Supabase: `src/lib/supabase/server.ts` (cliente SSR), `src/lib/supabase/admin.ts` (cliente administrativo) y `src/lib/supabase/proxy.ts` (renovación de sesión).
 - `src/lib/dataService.ts` ya existe y usa el cliente administrativo para recuperación de contraseñas y operaciones asociadas.
-- `pg` no está declarado ni instalado; no existe archivo de pool/conexión `pg`.
+- `pg` está instalado para las migraciones/verificación de P01; no existe aún el pool de aplicación en `src/lib/db/conexion.ts`.
 - `src/lib/json-db.ts` y los JSON de `data/` son otra superficie de persistencia del proyecto.
 
 ## 7. Migraciones
@@ -150,7 +168,7 @@ Hay cadenas de conexión PostgreSQL configuradas en `.env.local`: `STOCKLY_POSTG
 
 ## 10. Pruebas
 
-Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas API y `test/setup.ts`. El comando configurado es `npm test` (`vitest run`).
+Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas API, `test/setup.ts` y `tests/reglas/`. Se ejecutan con `npm test` (`vitest run`) y `npm run test:ver` (modo interactivo).
 
 ## 11. Conflictos con el plan
 

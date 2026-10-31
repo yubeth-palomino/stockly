@@ -3,8 +3,8 @@
 | Prompt | Estado | Build | Tests | Fecha de cierre |
 |---|---|---|---|---|
 | P00 Auditoría | completado | correcto | no ejecutados | 2026-10-31 |
-| P01 Base de datos | pendiente | | | |
-| P02 Reglas de negocio | pendiente | | | |
+| P01 Base de datos | completado | correcto | 0 fallas | 2026-10-31 |
+| P02 Reglas de negocio | completado | correcto | 68/68 | 2026-10-31 |
 | P03 Servidor y roles | pendiente | | | |
 | P04 Datos | pendiente | | | |
 | P05 API | pendiente | | | |
@@ -23,7 +23,7 @@
 - **Archivos modificados:** ninguno.
 - **Comandos y resultados:** revisión de estructura, `package.json`, migraciones y nombres de variables sin valores; `npm run build` terminó correctamente con Next.js 16.3.5.
 - **Problemas/resolución:** el esquema remoto y el modo de conexión asociado a las URL Postgres no se verificaron. Se documentó la limitación sin leer ni imprimir credenciales.
-- **Cierre:** pendientes resueltos en P01.
+- **Cierre:** P01 confirmó el estado remoto y creó las migraciones Stockly.
 
 ### P01 · Base de datos del módulo
 
@@ -61,3 +61,12 @@ OK rol de usuario no permitido
 OK vista indica no disponible con cantidad cero
 Total de fallas: 0
 ```
+
+### P02 · Reglas de negocio y pruebas unitarias
+
+- **Archivos creados:** `src/lib/config/stockly.ts`, `src/lib/reglas/{errores,fechas,roles,producto,venta,economia}.ts`, `tests/reglas/{ayudas,producto,venta,fechas,roles,economia}.test.ts`, `doc/checkpoints/FASE_2_COMPLETADA.md`.
+- **Archivos modificados:** `vitest.config.ts`, `package.json`, `doc/ESTADO_ACTUAL.md`, `doc/ESTADO_EJECUCION.md`.
+- **Comandos y resultados:** `npm exec vitest run tests/reglas`: 5 archivos, 32 pruebas aprobadas. `npm test`: 17 archivos, 68 pruebas aprobadas. `npm run build`: correcto; TypeScript y compilación completados.
+- **Problemas/resolución:** se conservó la selección de pruebas API existente junto con `tests/**/*.test.ts`; las suites existentes también pasan usando environment Node. Vitest emite una advertencia ya presente sobre `configLoader: 'native'`, sin afectar build ni pruebas.
+- **Economía:** se implementaron fórmulas puras y validación para T-24 a T-32; el módulo económico sigue desactivado y estas funciones no están conectadas a la aplicación.
+- **Pendientes:** ninguno identificado.

@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:ver": "vitest",
     "db:migrar": "node --env-file=.env.local scripts/migrar.mjs",
     "db:verificar": "node --env-file=.env.local scripts/verificar-bd.mjs"
   },
