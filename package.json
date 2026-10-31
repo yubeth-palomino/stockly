@@ -14,7 +14,10 @@
     "test:ver": "vitest",
     "db:migrar": "node --env-file=.env.local scripts/migrar.mjs",
     "db:verificar": "node --env-file=.env.local scripts/verificar-bd.mjs",
-    "db:vincular-dueno": "node --env-file=.env.local scripts/vincular-dueno.mjs"
+    "db:vincular-dueno": "node --env-file=.env.local scripts/vincular-dueno.mjs",
+    "db:limpiar": "node --env-file=.env.local scripts/limpiar-prueba.mjs",
+    "db:demo": "node --env-file=.env.local --import tsx scripts/cargar-demo.ts",
+    "probar:flujo": "node --env-file=.env.local --import tsx scripts/probar-flujo.ts"
   },
   "bugs": {
     "url": "https://github.com/yubeth-palomino/stockly/issues"
@@ -43,6 +46,7 @@
     "eslint-config-next": "^16.3.5",
     "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vercel": "^64.5.0",
     "vitest": "^5.0.0"

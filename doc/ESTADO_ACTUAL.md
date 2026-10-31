@@ -35,6 +35,9 @@ Versiones declaradas en `package.json`:
 | `db:migrar` | `node --env-file=.env.local scripts/migrar.mjs` |
 | `db:verificar` | `node --env-file=.env.local scripts/verificar-bd.mjs` |
 | `db:vincular-dueno` | `node --env-file=.env.local scripts/vincular-dueno.mjs` |
+| `db:limpiar` | `node --env-file=.env.local scripts/limpiar-prueba.mjs` |
+| `db:demo` | `node --env-file=.env.local --import tsx scripts/cargar-demo.ts` |
+| `probar:flujo` | `node --env-file=.env.local --import tsx scripts/probar-flujo.ts` |
 
 ## 3. Estructura
 
@@ -124,8 +127,9 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 - Lectura/renovación de sesión: no existe un adaptador exportado que devuelva el usuario actual. `updateSession` en `src/lib/supabase/proxy.ts` llama `supabase.auth.getClaims()` para validar/refrescar las claims, pero no devuelve un perfil ni un rol.
 - Roles: el login obtiene un perfil desde `public.users` y devuelve su rol actual (`admin` o `user`). No implementa los roles de negocio `dueno` y `trabajador` del plan.
 - Página de login: `/login`.
-- Después de autenticar: `src/components/auth/LoginForm.tsx`, línea 51, reemplaza la ruta por `/dashboard`.
-- Protección/proxy: `src/proxy.ts` exporta `proxy`; el matcher actual excluye recursos estáticos e imágenes y aplica al resto de rutas. `src/lib/supabase/proxy.ts` refresca la sesión, pero no exige autenticación ni protege rutas por rol.
+- Después de autenticar: `src/components/auth/LoginForm.tsx` reemplaza la ruta por `/panel`.
+- Protección/proxy: `src/proxy.ts` protege `/panel/:path*` y `/api/panel/:path*`; las API verifican también el perfil activo Stockly.
+- Perfil y rol Stockly: `src/lib/auth/sesion.ts` vincula el UUID de Supabase Auth con `usuarios.auth_ref` y devuelve el rol Stockly activo.
 - Cierre de sesión: POST `/api/auth/logout`, que llama `supabase.auth.signOut({ scope: 'local' })`; el botón navega a `/login`.
 - Tabla de perfil existente en la migración local: `public.users`, columnas `id` (UUID, referencia a `auth.users.id`), `email`, `full_name`, `role` (`admin` o `user`), `created_at` y `updated_at`. No es la tabla `usuarios` requerida por el módulo Stockly.
 - P01 verificó en la base remota `public.users` con las columnas anteriores y sus objetos del login (índice, función de perfil y trigger de Auth). También confirmó que antes de P01 no existían `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. La migración del perfil se registró sin reejecutarla y M1/M2 se aplicaron.
@@ -133,8 +137,8 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 ## 6. Acceso a datos
 
 - Clientes Supabase: `src/lib/supabase/server.ts` (cliente SSR), `src/lib/supabase/admin.ts` (cliente administrativo) y `src/lib/supabase/proxy.ts` (renovación de sesión).
-- `src/lib/dataService.ts` ya existe y usa el cliente administrativo para recuperación de contraseñas y operaciones asociadas.
-- `pg` está instalado para las migraciones/verificación de P01; no existe aún el pool de aplicación en `src/lib/db/conexion.ts`.
+- `src/lib/dataService.ts` conserva sus operaciones de recuperación y, desde P04, expone los casos de uso Stockly.
+- `src/lib/db/conexion.ts` administra el pool de `pg`; `src/lib/datos/` concentra las consultas y transacciones del módulo Stockly.
 - `src/lib/json-db.ts` y los JSON de `data/` son otra superficie de persistencia del proyecto.
 
 ## 7. Migraciones
@@ -173,12 +177,12 @@ Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas AP
 
 ## 11. Conflictos con el plan
 
-- `src/app/panel/`: no existe.
+- `src/app/panel/`: la interfaz se implementa en P06.
 - `src/app/api/panel/sesion/route.ts`: creada en P03; las demás rutas del módulo se implementan en P05.
-- `src/lib/dataService.ts`: sí existe; su función actual está relacionada con recuperación de cuentas, no con el servicio de inventario del plan.
+- `src/lib/dataService.ts`: conserva recuperación de cuentas y ahora reexporta los casos de uso P04.
 - `src/components/ui/`: no existe.
 - `src/app/page.tsx`: no es la plantilla de Next; redirige a `/login`.
-- En las migraciones locales no aparecen tablas `productos`, `ventas` ni `usuarios` del plan. La migración existente crea `public.users` para perfiles del login. No se consultó el esquema de la base remota, así que su estado no puede confirmarse.
+- Las migraciones locales crean las tablas `productos`, `ventas`, `usuarios` y `eventos_inventario`; P01 verificó su aplicación en la base remota.
 
 Actualización P01: la inspección remota confirmó que `public.users` existe con las columnas esperadas, el índice `users_email_lower_uidx`, la función `handle_auth_user_profile` y el trigger de Auth correspondiente. No se encontraron previamente `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. P01 registró la migración existente del login sin volver a ejecutarla y aplicó M1/M2; las pruebas de integridad terminaron con cero fallas.
 
@@ -187,14 +191,14 @@ Actualización P01: la inspección remota confirmó que `public.users` existe co
 - Ruta de login existente: `/login`.
 - Protección: `src/proxy.ts` (Next.js 16); actualiza claims y protege `/panel/:path*` y `/api/panel/:path*`. El Proxy valida la sesión Supabase; las rutas de API también verifican que la cuenta tenga fila activa en `usuarios`.
 - Migraciones: el mecanismo se creó en P01 (`scripts/migrar.mjs`, `scripts/verificar-bd.mjs`, `_migrations`). M1 y M2 están aplicadas en Supabase; la migración existente del login se registró sin reejecutarla tras verificar sus objetos.
-- Variable de producción para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL` (pooler de transacciones, puerto 6543). En desarrollo local, P03 usa `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, puerto 5432) porque el puerto 6543 agotó el tiempo de conexión desde este entorno; la conexión de sesión sí respondió `SELECT 1`. En producción se mantiene el pooler de transacciones. El script de migración/verificación también usa primero la variable del pooler de sesión.
+- Variable de producción para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL` (pooler de transacciones, puerto 6543). En desarrollo y scripts locales se usa `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, puerto 5432) porque el puerto 6543 agotó el tiempo de conexión desde este entorno; la conexión de sesión sí respondió `SELECT 1`. En producción se mantiene el pooler de transacciones. Los scripts de migración/verificación usan primero la variable del pooler de sesión.
 - Vínculo login/Stockly (`auth_ref`): usar el UUID de Supabase Auth (`authData.user.id`/`auth.uid()`), que ya es la clave `id` de `public.users`. P03 consulta ese UUID en `usuarios.auth_ref`; no se usa el correo como clave de vínculo.
 - Tabla preexistente `public.users`: no debe confundirse con la tabla `usuarios` que crea Stockly. Sus roles `admin/user` tampoco sustituyen los roles `dueno/trabajador`.
 - Numeración propuesta para continuar el archivo actual:
   - M1: `20261031000100_stockly_tablas.sql`.
   - M2: `20261031000200_stockly_vista_seguridad.sql`.
 - Prefijo de importación para `lib`: `@/lib/...`.
-- Destino de login posterior a autenticación: P03 lo cambió de `/dashboard` a `/panel`, como indica el plan. La página `/panel` se implementa en P06.
+- Destino de login posterior a autenticación: P03 lo cambió de `/dashboard` a `/panel`, como indica el plan. La interfaz `/panel` se implementa en P06.
 - Estado posterior a P01: tablas, vista, restricciones, índices únicos y RLS comprobados; P01 finalizó con cero fallas.
 
 ## 13. Compilación de base

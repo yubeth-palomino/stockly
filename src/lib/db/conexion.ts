@@ -10,7 +10,7 @@ declare global {
 
 function obtenerConfiguracionPool() {
   const variableConexion =
-    process.env.NODE_ENV === 'development' && process.env.STOCKLY_POSTGRES_URL_NON_POOLING
+    process.env.NODE_ENV !== 'production' && process.env.STOCKLY_POSTGRES_URL_NON_POOLING
       ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
       : 'STOCKLY_POSTGRES_URL';
   const cadenaConexion = process.env[variableConexion];

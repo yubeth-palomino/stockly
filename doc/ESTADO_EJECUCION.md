@@ -6,7 +6,7 @@
 | P01 Base de datos | completado | correcto | 0 fallas | 2026-10-31 |
 | P02 Reglas de negocio | completado | correcto | 68/68 | 2026-10-31 |
 | P03 Servidor y roles | completado | correcto | 80/80 | 2026-10-31 |
-| P04 Datos | pendiente | | | |
+| P04 Datos | completado | correcto | 80/80 | 2026-10-31 |
 | P05 API | pendiente | | | |
 | P06 Interfaz base y resumen | pendiente | | | |
 | P07 Inventario | pendiente | | | |
@@ -80,3 +80,32 @@ Total de fallas: 0
 - **Vínculo de identidad:** `usuarios.auth_ref` usa el UUID de la cuenta en Supabase Auth, no el correo. El script de alta idempotente requiere ese UUID y un nombre; no solicita ni guarda contraseñas.
 - **Alta y verificación manual:** se ejecutó `npm run db:vincular-dueno` para vincular la cuenta autorizada. Sin sesión, GET `/api/panel/sesion` devolvió 401 y `NO_AUTORIZADO`; con la sesión Supabase autenticada, respondió 200 con el nombre de la cuenta y `rol: "dueno"`.
 - **Checkpoint:** `doc/checkpoints/FASE_3_COMPLETADA.md`.
+
+### P04 · Datos: usuarios, inventario y ventas
+
+- **Archivos creados:** `src/lib/datos/{tipos,eventos,usuarios,productos,ventas,resumen,economia,conexion}.ts`, `scripts/limpiar-prueba.mjs`, `scripts/probar-flujo.ts`, `scripts/cargar-demo.ts`.
+- **Archivos modificados:** `src/lib/dataService.ts` (se conservaron las funciones existentes de recuperación), `src/lib/db/conexion.ts` (selección del pooler de sesión para comandos locales), `package.json`, `package-lock.json`, `doc/ESTADO_ACTUAL.md`.
+- **Flujo real:** `npm run probar:flujo`: 13/13 pasos OK, total de fallas 0. Se verificaron normalización/re-stock, errores de entrada y venta, filtrado de disponibilidad, ocultamiento de precio de compra al trabajador, ventas, precio copiado, edición de producto, usuario duplicado y protección del último dueño. Limpieza final: 2 ventas, 6 eventos, 1 producto y 1 usuario de prueba eliminados.
+- **Datos demo:** `npm run db:demo` cargó 8 productos de distintas marcas/tallas y registró 2 ventas que dejaron 2 productos agotados.
+
+Salida de `npm run db:demo`:
+
+```text
+Ventas eliminadas: 0
+Eventos eliminados: 0
+Productos eliminados: 0
+Usuarios eliminados: 0
+referencia  talla  cantidad  disponible
+DEMO-001    S      12        Sí
+DEMO-002    M      8         Sí
+DEMO-003    30     6         Sí
+DEMO-004    32     5         Sí
+DEMO-005    L      0         No
+DEMO-006    M      10        Sí
+DEMO-007    L      4         Sí
+DEMO-008    34     0         No
+```
+
+- **Resumen comprobado en la base:** 8 productos activos, 45 unidades disponibles, 2 productos agotados y 2 ventas de hoy. Para trabajador, las filas no contienen `precioCompra`; para dueño, aparece `precioCompra: null`. `npm run db:verificar`: total de fallas 0; RLS, índices únicos y restricciones siguen correctos.
+- **Validación automatizada:** `npm run build`, `npm test` (20 archivos, 80 pruebas), `npm run type-check` y ESLint focalizado completados correctamente.
+- **Fase:** la fase 4 queda abierta hasta P05, según el plan.
