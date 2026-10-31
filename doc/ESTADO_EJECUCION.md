@@ -7,8 +7,8 @@
 | P02 Reglas de negocio | completado | correcto | 68/68 | 2026-10-31 |
 | P03 Servidor y roles | completado | correcto | 80/80 | 2026-10-31 |
 | P04 Datos | completado | correcto | 80/80 | 2026-10-31 |
-| P05 API | pendiente | | | |
-| P06 Interfaz base y resumen | pendiente | | | |
+| P05 API | completado | correcto | 84/84 | 2026-10-31 |
+| P06 Interfaz base y resumen | completado | correcto | 84/84 | 2026-10-31 |
 | P07 Inventario | pendiente | | | |
 | P08 Entrada de mercancía | pendiente | | | |
 | P09 Ventas | pendiente | | | |
@@ -108,4 +108,22 @@ DEMO-008    34     0         No
 
 - **Resumen comprobado en la base:** 8 productos activos, 45 unidades disponibles, 2 productos agotados y 2 ventas de hoy. Para trabajador, las filas no contienen `precioCompra`; para dueño, aparece `precioCompra: null`. `npm run db:verificar`: total de fallas 0; RLS, índices únicos y restricciones siguen correctos.
 - **Validación automatizada:** `npm run build`, `npm test` (20 archivos, 80 pruebas), `npm run type-check` y ESLint focalizado completados correctamente.
-- **Fase:** la fase 4 queda abierta hasta P05, según el plan.
+- **Fase:** P04 dejó la fase 4 abierta hasta P05; con P05 completado, la fase queda cerrada.
+
+### P05 · API con control por rol
+
+- **Archivos creados:** `src/app/api/panel/resumen/route.ts`, rutas de productos (`route.ts`, `[id]/route.ts`, `[id]/desactivar/route.ts`), ventas y usuarios (`route.ts`, `[id]/route.ts`), además de pruebas de rutas para productos y usuarios.
+- **Protección y validación:** todos los handlers exigen sesión Stockly; usuarios y desactivación de productos exigen dueño. Cuerpos y filtros se validan con los esquemas Zod existentes, los UUID se validan y las respuestas usan `Cache-Control: no-store`. Entradas/ventas retornan 201.
+- **Sin sesión:** GET `/api/panel/resumen`, GET `/api/panel/productos` y POST `/api/panel/ventas` respondieron 401 (`NO_AUTORIZADO`).
+- **Dueño con sesión real:** GET `/api/panel/productos` respondió 200 con 8 productos e incluyó `precioCompra`; GET `/api/panel/usuarios` respondió 200 con 1 usuario.
+- **Trabajador:** pruebas de rutas verifican 403 al consultar usuarios y que el rol trabajador se pasa al servicio de inventario, que serializa omitiendo `precioCompra`. No se usó una sesión real de trabajador en esta comprobación.
+- **Checkpoint:** `doc/checkpoints/FASE_4_COMPLETADA.md`.
+
+### P06 · Interfaz base, navegación y resumen
+
+- **Archivos creados:** `src/components/ui/` (botón, campo, selector, tarjeta, insignia, aviso, modal y estado vacío), `src/components/panel/` (navegación por rol e insignias), `src/app/panel/layout.tsx` y `src/app/panel/page.tsx`.
+- **Archivos modificados:** `src/app/globals.css` (tokens visuales preservando el login) y `src/app/page.tsx` (redirección a `/panel`).
+- **Acceso:** el layout valida el usuario; sin perfil Stockly, pero con sesión Auth, informa que la cuenta necesita alta y ofrece cerrar sesión; sin sesión redirige al login. La navegación muestra Usuarios solo al dueño y Economía solo con el módulo activado.
+- **Resumen real:** con usuario dueño y datos DEMO aparecen 8 productos activos, 45 unidades, 2 agotados y 2 ventas de hoy. Se muestran enlaces a detalle y accesos rápidos para registrar entrada y venta.
+- **Móvil:** comprobado en navegador a 390×844; el menú inicia cerrado, se despliega al activarlo, muestra Usuarios al dueño y omite Economía porque P11 está desactivado.
+- **Validación automatizada:** `npm test`: 22 archivos, 84/84 pruebas aprobadas; `npm run type-check`, ESLint focalizado, Prettier y `npm run build` correctos.

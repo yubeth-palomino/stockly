@@ -1,4 +1,4 @@
-:root { --ink: #172322; --muted: #71807d; --line: #e5ebe8; --canvas: #f6f8f6; --white: #fff; --teal: #087f70; --teal-soft: #dff3ed; --coral: #e56f54; --amber: #d99835; }
+:root { --ink: #172322; --muted: #71807d; --line: #e5ebe8; --canvas: #f6f8f6; --white: #fff; --teal: #087f70; --teal-soft: #dff3ed; --coral: #e56f54; --amber: #d99835; --color-primario: #2A4D8F; --color-primario-suave: #E7EDF7; --color-disponible: #2F7D4F; --color-agotado: #B83232; --color-inactivo: #5B6770; --color-dueno: #8A5A1C; --color-fondo: #F5F6F8; --color-superficie: #FFFFFF; --color-texto: #1F2933; --color-texto-suave: #52606D; --color-borde: #D9DEE4; }
 * { box-sizing: border-box; }
 html { background: var(--canvas); }
 body { margin: 0; color: var(--ink); background: var(--canvas); font-family: Georgia, 'Times New Roman', serif; }

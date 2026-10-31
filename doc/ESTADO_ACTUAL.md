@@ -51,10 +51,12 @@ src/
 │   │   ├── auth/{change-password,login,logout,recover-password,recuperar,reset-password,restablecer}/
 │   │   ├── correo/prueba/
 │   │   ├── data/[collection]/
-│   │   └── health/
+│   │   ├── health/
+│   │   └── panel/{sesion,resumen,productos,ventas,usuarios}/
 │   ├── auth/confirm/
 │   ├── dashboard/
 │   ├── login/
+│   ├── panel/
 │   ├── prueba-correo/
 │   ├── recuperar-contrasena/
 │   ├── reset-password/
@@ -67,8 +69,13 @@ src/
 │   ├── auth/
 │   ├── correo/
 │   ├── home/
+│   ├── panel/
+│   ├── ui/
 │   └── users/
 ├── lib/
+│   ├── auth/
+│   ├── datos/
+│   ├── db/
 │   ├── supabase/
 │   ├── config/stockly.ts
 │   ├── reglas/{errores,fechas,roles,producto,venta,economia}.ts
@@ -124,8 +131,8 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 - Archivos principales: `src/app/login/page.tsx`, `src/components/auth/LoginForm.tsx`, `src/app/api/auth/login/route.ts`, `src/lib/supabase/server.ts`, `src/lib/supabase/proxy.ts` y `src/proxy.ts`.
 - Archivos relacionados: `src/app/api/auth/logout/route.ts`, `src/components/auth/LogoutButton.tsx`, `src/app/api/auth/{change-password,recover-password,recuperar,reset-password,restablecer}/`, `src/app/auth/confirm/` y los formularios en `src/components/auth/`.
 - Cookie: la administra Supabase SSR a partir del proyecto; su nombre efectivo depende del identificador del proyecto (formato habitual `sb-<project-ref>-auth-token`, potencialmente fragmentado). El código no lee una cookie de sesión con nombre fijo.
-- Lectura/renovación de sesión: no existe un adaptador exportado que devuelva el usuario actual. `updateSession` en `src/lib/supabase/proxy.ts` llama `supabase.auth.getClaims()` para validar/refrescar las claims, pero no devuelve un perfil ni un rol.
-- Roles: el login obtiene un perfil desde `public.users` y devuelve su rol actual (`admin` o `user`). No implementa los roles de negocio `dueno` y `trabajador` del plan.
+- Lectura/renovación de sesión: `updateSession` en `src/lib/supabase/proxy.ts` valida/refresca las claims; `obtenerUsuario()` en `src/lib/auth/sesion.ts` enlaza la identidad autenticada con el perfil activo Stockly en `usuarios`.
+- Roles: las páginas y API Stockly autorizan según los roles `dueno` y `trabajador` de `usuarios`; el perfil preexistente `public.users` con roles `admin/user` se mantiene separado.
 - Página de login: `/login`.
 - Después de autenticar: `src/components/auth/LoginForm.tsx` reemplaza la ruta por `/panel`.
 - Protección/proxy: `src/proxy.ts` protege `/panel/:path*` y `/api/panel/:path*`; las API verifican también el perfil activo Stockly.
@@ -139,6 +146,8 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 - Clientes Supabase: `src/lib/supabase/server.ts` (cliente SSR), `src/lib/supabase/admin.ts` (cliente administrativo) y `src/lib/supabase/proxy.ts` (renovación de sesión).
 - `src/lib/dataService.ts` conserva sus operaciones de recuperación y, desde P04, expone los casos de uso Stockly.
 - `src/lib/db/conexion.ts` administra el pool de `pg`; `src/lib/datos/` concentra las consultas y transacciones del módulo Stockly.
+- `src/app/api/panel/` ofrece los endpoints del módulo mínimo con control de sesión y rol.
+- `src/app/panel/` implementa desde P06 el layout autenticado y el resumen inicial.
 - `src/lib/json-db.ts` y los JSON de `data/` son otra superficie de persistencia del proyecto.
 
 ## 7. Migraciones
@@ -177,11 +186,11 @@ Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas AP
 
 ## 11. Conflictos con el plan
 
-- `src/app/panel/`: la interfaz se implementa en P06.
-- `src/app/api/panel/sesion/route.ts`: creada en P03; las demás rutas del módulo se implementan en P05.
+- `src/app/panel/`: layout autenticado y resumen implementados en P06; inventario, entradas, ventas y gestión de usuarios siguen en prompts posteriores.
+- `src/app/api/panel/sesion/route.ts`: creada en P03; las rutas mínimas de resumen, productos, ventas y usuarios se implementaron en P05.
 - `src/lib/dataService.ts`: conserva recuperación de cuentas y ahora reexporta los casos de uso P04.
-- `src/components/ui/`: no existe.
-- `src/app/page.tsx`: no es la plantilla de Next; redirige a `/login`.
+- `src/components/ui/`: componentes reutilizables implementados en P06.
+- `src/app/page.tsx`: redirige a `/panel`, que deriva a login cuando no existe sesión.
 - Las migraciones locales crean las tablas `productos`, `ventas`, `usuarios` y `eventos_inventario`; P01 verificó su aplicación en la base remota.
 
 Actualización P01: la inspección remota confirmó que `public.users` existe con las columnas esperadas, el índice `users_email_lower_uidx`, la función `handle_auth_user_profile` y el trigger de Auth correspondiente. No se encontraron previamente `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. P01 registró la migración existente del login sin volver a ejecutarla y aplicó M1/M2; las pruebas de integridad terminaron con cero fallas.
@@ -198,11 +207,11 @@ Actualización P01: la inspección remota confirmó que `public.users` existe co
   - M1: `20261031000100_stockly_tablas.sql`.
   - M2: `20261031000200_stockly_vista_seguridad.sql`.
 - Prefijo de importación para `lib`: `@/lib/...`.
-- Destino de login posterior a autenticación: P03 lo cambió de `/dashboard` a `/panel`, como indica el plan. La interfaz `/panel` se implementa en P06.
+- Destino de login posterior a autenticación: P03 lo cambió de `/dashboard` a `/panel`; P06 implementó el layout y el resumen del panel.
 - Estado posterior a P01: tablas, vista, restricciones, índices únicos y RLS comprobados; P01 finalizó con cero fallas.
 
 ## 13. Compilación de base
 
 Comando: `npm run build`.
 
-Resultado: correcto. Next.js 16.3.5 compiló, completó TypeScript, generó 21 páginas estáticas y finalizó la optimización. Se listaron las rutas existentes, incluida `/dashboard` y `/api/panel/sesion`; la interfaz `/panel` se implementa en P06.
+Resultado: correcto. Next.js 16.3.5 compiló, completó TypeScript y finalizó la optimización. La salida incluye `/panel` y las rutas API protegidas para sesión, resumen, productos, ventas y usuarios.
