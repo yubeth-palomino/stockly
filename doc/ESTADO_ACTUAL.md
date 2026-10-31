@@ -136,7 +136,7 @@ Solo nombres encontrados; nunca se copiaron valores.
 `.env.example`:
 `NODE_ENV`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_APP_VERSION`, `DATA_DIR`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `STOCKLY_SUPABASE_SERVICE_ROLE_KEY`.
 
-Hay cadenas de conexión PostgreSQL configuradas en `.env.local`: `STOCKLY_POSTGRES_URL`, `STOCKLY_POSTGRES_URL_NON_POOLING` y `STOCKLY_POSTGRES_PRISMA_URL`. El archivo de ejemplo no incluye ninguna. La conexión de aplicación propuesta para P03 es `STOCKLY_POSTGRES_URL`; reservar `STOCKLY_POSTGRES_URL_NON_POOLING` para operaciones que requieran conexión directa si se confirma su modo en Supabase. No se inspeccionó ningún valor ni se confirmó el tipo de endpoint.
+Hay cadenas de conexión PostgreSQL configuradas en `.env.local`: `STOCKLY_POSTGRES_URL`, `STOCKLY_POSTGRES_URL_NON_POOLING` y `STOCKLY_POSTGRES_PRISMA_URL`. El archivo de ejemplo no incluye ninguna. En la comprobación P01, `STOCKLY_POSTGRES_URL` (puerto 6543, pooler de transacciones) agotó el tiempo de conexión desde este entorno; `STOCKLY_POSTGRES_URL_NON_POOLING` (puerto 5432, pooler de sesión) sí conectó. Aunque el nombre diga "NON_POOLING", el host observado es un pooler, no la conexión directa a la base. El script de migración/verificación usa primero `STOCKLY_POSTGRES_URL_NON_POOLING`; la conexión de aplicación propuesta para P03 sigue siendo `STOCKLY_POSTGRES_URL` y se debe probar desde Next.js/Vercel.
 
 `.env.local` y `.env*.local` están excluidos por `.gitignore`. Se deja constancia de que la persona usuaria confirmó que completó la rotación de credenciales, el cambio de contraseñas y la actualización de entornos; el contenido de dichos valores no se verificó ni se expone.
 
@@ -161,12 +161,14 @@ Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas AP
 - `src/app/page.tsx`: no es la plantilla de Next; redirige a `/login`.
 - En las migraciones locales no aparecen tablas `productos`, `ventas` ni `usuarios` del plan. La migración existente crea `public.users` para perfiles del login. No se consultó el esquema de la base remota, así que su estado no puede confirmarse.
 
+Actualización P01: la inspección remota confirmó que `public.users` existe con las columnas esperadas, el índice `users_email_lower_uidx`, la función `handle_auth_user_profile` y el trigger de Auth correspondiente. No se encontraron previamente `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. P01 registró la migración existente del login sin volver a ejecutarla y aplicó M1/M2; las pruebas de integridad terminaron con cero fallas.
+
 ## 12. Decisiones derivadas
 
 - Ruta de login existente: `/login`.
 - Protección: `src/proxy.ts` (Next.js 16); ya existe, conserva su matcher actual y hoy solo actualiza claims.
-- Migraciones: no existe mecanismo local; P01 deberá crear `scripts/migrar.mjs` y la tabla de control que define el plan. La migración de perfil existente debe verificarse en Supabase antes de aplicarla o registrarla.
-- Variable propuesta para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL`. Está presente junto con variantes directas/Prisma; confirmar sus modos de conexión sin imprimir las URL. No es necesario pedir otra variable si la existente sirve para transacciones con `pg`.
+- Migraciones: el mecanismo se creó en P01 (`scripts/migrar.mjs`, `scripts/verificar-bd.mjs`, `_migrations`). M1 y M2 están aplicadas en Supabase; la migración existente del login se registró sin reejecutarla tras verificar sus objetos.
+- Variable propuesta para `lib/db/conexion.ts`: `STOCKLY_POSTGRES_URL` (pooler de transacciones, puerto 6543); P01 no consiguió conectar a ese puerto desde este entorno, queda pendiente probarla desde la app. Para migraciones/verificación se usa primero `STOCKLY_POSTGRES_URL_NON_POOLING` (pooler de sesión, puerto 5432).
 - Vínculo login/Stockly (`auth_ref`): usar el UUID de Supabase Auth (`authData.user.id`/`auth.uid()`), que ya es la clave `id` de `public.users`. P03 deberá consultar ese UUID en `usuarios.auth_ref`; no usar el correo como clave de vínculo.
 - Tabla preexistente `public.users`: no debe confundirse con la tabla `usuarios` que crea Stockly. Sus roles `admin/user` tampoco sustituyen los roles `dueno/trabajador`.
 - Numeración propuesta para continuar el archivo actual:
@@ -174,6 +176,7 @@ Vitest `^5.0.0` está configurado en `vitest.config.ts`; hay pruebas en rutas AP
   - M2: `20261031000200_stockly_vista_seguridad.sql`.
 - Prefijo de importación para `lib`: `@/lib/...`.
 - Próximo destino de login: P03 cambiará `/dashboard` a `/panel`, como indica el plan; no se modifica en P00.
+- Estado posterior a P01: tablas, vista, restricciones, índices únicos y RLS comprobados; P01 finalizó con cero fallas.
 
 ## 13. Compilación de base
 

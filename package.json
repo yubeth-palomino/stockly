@@ -10,7 +10,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrar": "node --env-file=.env.local scripts/migrar.mjs",
+    "db:verificar": "node --env-file=.env.local scripts/verificar-bd.mjs"
   },
   "bugs": {
     "url": "https://github.com/yubeth-palomino/stockly/issues"

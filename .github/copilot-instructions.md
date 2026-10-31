@@ -7,7 +7,7 @@
 
 ## Stack
 - Next.js App Router + TypeScript. El proyecto no tiene Tailwind CSS; usa CSS global y módulos CSS. Despliegue en Vercel.
-- Postgres de Supabase con el paquete `pg` (aún no instalado) y la variable `STOCKLY_POSTGRES_URL`.
+- Postgres de Supabase con el paquete `pg` y la variable `STOCKLY_POSTGRES_URL`.
 - Validación con Zod. Pruebas con Vitest.
 - Login existente: Supabase Auth con `@supabase/ssr`; archivos principales `src/app/api/auth/login/route.ts`, `src/components/auth/LoginForm.tsx`, `src/lib/supabase/server.ts` y `src/proxy.ts`. No se reescribe. Dos roles Stockly: trabajador y dueno.
 
