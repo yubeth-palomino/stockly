@@ -7,7 +7,7 @@ Ejecutar los casos en el despliegue de Vercel con una cuenta de trabajador y una
 | A-01 | Entrar como trabajador | Llega a `/panel`; no ve Usuarios ni Economía | | | |
 | A-02 | Registrar `CAM001` marca Nike, talla M, 10 unidades, precio 60.000 | Producto creado, disponible | | | |
 | A-03 | Registrar `cam001` talla m, 5 unidades | Suma: 15 unidades, un solo registro | | | |
-| A-04 | Registrar con cantidad 0 | Rechazo con mensaje | Falló inicialmente: el rechazo funcionó, pero el texto estaba en inglés. Corrección local lista; falta desplegar y repetir. | Vercel, `/panel/inventario/nuevo`, 2026-11-07 | Se corrigió el esquema Zod y se añadieron pruebas en español. |
+| A-04 | Registrar con cantidad 0 | Rechazo con mensaje | Aprobado: se rechaza y muestra “La cantidad debe ser mayor que cero.” | Vercel, `/panel/inventario/nuevo`, 2026-11-07 | Repetido tras desplegar la corrección; no se envió el formulario. |
 | A-05 | Registrar con fecha de mañana | Rechazo con mensaje | Aprobado: muestra “La fecha de entrada no puede ser posterior a hoy.” | Vercel, `/panel/inventario/nuevo`, 2026-11-07 | Se rechazó antes de enviar el formulario. |
 | A-06 | Buscar inventario por marca "Nike" | Muestra `CAM001` | | | |
 | A-07 | Como trabajador, revisar que no aparece el precio de compra en ninguna pantalla | No aparece | | | |

@@ -8,6 +8,8 @@ declare global {
   var poolStockly: Pool | undefined;
 }
 
+let poolLocal: Pool | undefined;
+
 function obtenerConfiguracionPool() {
   const variableConexion =
     process.env.NODE_ENV !== 'production' && process.env.STOCKLY_POSTGRES_URL_NON_POOLING
@@ -28,30 +30,36 @@ function obtenerConfiguracionPool() {
   };
 }
 
-export const pool =
-  globalThis.poolStockly ??
-  new Pool({
-    ...obtenerConfiguracionPool(),
-    ssl: { rejectUnauthorized: false },
-    max: 3,
-    idleTimeoutMillis: 10_000,
-    connectionTimeoutMillis: 15_000,
-  });
+export function obtenerPool(): Pool {
+  if (poolLocal) return poolLocal;
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.poolStockly = pool;
+  poolLocal =
+    globalThis.poolStockly ??
+    new Pool({
+      ...obtenerConfiguracionPool(),
+      ssl: { rejectUnauthorized: false },
+      max: 3,
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 15_000,
+    });
+
+  if (process.env.NODE_ENV !== 'production') {
+    globalThis.poolStockly = poolLocal;
+  }
+
+  return poolLocal;
 }
 
 export async function consultar<T extends QueryResultRow>(
   sql: string,
   valores: unknown[] = [],
 ): Promise<T[]> {
-  const resultado = await pool.query<T>(sql, valores);
+  const resultado = await obtenerPool().query<T>(sql, valores);
   return resultado.rows;
 }
 
 export async function conTransaccion<T>(trabajo: (tx: PoolClient) => Promise<T>): Promise<T> {
-  const cliente = await pool.connect();
+  const cliente = await obtenerPool().connect();
 
   try {
     await cliente.query('BEGIN');
