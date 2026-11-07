@@ -89,6 +89,12 @@ export {
 } from '@/lib/datos/usuarios';
 export { listarVentas, registrarVenta } from '@/lib/datos/ventas';
 export { obtenerEconomia } from '@/lib/datos/economia';
+export {
+  ajustarExistenciasComercial,
+  crearProductoComercial,
+  listarInventarioComercial,
+  registrarVentaComercial,
+} from '@/lib/datos/comercial';
 export { cerrarPool } from '@/lib/datos/conexion';
 
 export type {

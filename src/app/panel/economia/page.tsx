@@ -26,7 +26,8 @@ export default async function EconomiaPage({ searchParams }: Props) {
           <p className={styles.sobretitulo}>Solo dueño</p>
           <h1 className={styles.titulo}>Economía</h1>
           <p className={styles.descripcion}>
-            Costos actuales, inversión y ganancias estimadas e históricas.
+            Inversión y ganancia potencial con los costos registrados. La ganancia realizada
+            requiere una empresa autorizada y costos históricos por venta.
           </p>
         </div>
       </header>

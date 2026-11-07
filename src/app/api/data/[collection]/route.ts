@@ -2,20 +2,54 @@ import { NextResponse } from 'next/server';
 import { getSchema } from '@data/_schema/registry';
 import { count, create, getAll, getById, remove, update, JsonDBError, ReadOnlyError } from '@/lib/json-db';
 import type { QueryOptions } from '@/lib/types';
+import { requireAdmin } from '@/lib/supabase/admin-authorization';
 
 type RouteContext = { params: Promise<{ collection: string }> };
 
 function success<T>(data: T, status = 200): NextResponse {
-  return NextResponse.json({ success: true, data, timestamp: new Date().toISOString() }, { status });
+  return NextResponse.json(
+    { success: true, data, timestamp: new Date().toISOString() },
+    { status, headers: { 'Cache-Control': 'no-store' } },
+  );
 }
 
 function failure(error: unknown): NextResponse {
   if (error instanceof JsonDBError) {
     const status = error.code === 'NOT_FOUND' ? 404 : error.code === 'VALIDATION_ERROR' ? 400 : 500;
-    return NextResponse.json({ success: false, error: error.message, code: error.code, timestamp: new Date().toISOString() }, { status });
+    return NextResponse.json(
+      { success: false, error: error.message, code: error.code, timestamp: new Date().toISOString() },
+      { status, headers: { 'Cache-Control': 'no-store' } },
+    );
   }
-  if (error instanceof ReadOnlyError) return NextResponse.json({ success: false, error: error.message, code: 'READ_ONLY', timestamp: new Date().toISOString() }, { status: 405 });
-  return NextResponse.json({ success: false, error: 'Error interno del servidor.', code: 'IO_ERROR', timestamp: new Date().toISOString() }, { status: 500 });
+  if (error instanceof ReadOnlyError) {
+    return NextResponse.json(
+      { success: false, error: error.message, code: 'READ_ONLY', timestamp: new Date().toISOString() },
+      { status: 405, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+  return NextResponse.json(
+    { success: false, error: 'Error interno del servidor.', code: 'IO_ERROR', timestamp: new Date().toISOString() },
+    { status: 500, headers: { 'Cache-Control': 'no-store' } },
+  );
+}
+
+async function authorize(): Promise<NextResponse | null> {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'El almacenamiento JSON legado no está disponible en producción.',
+        code: 'LEGACY_STORAGE_DISABLED',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 410, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
+  const access = await requireAdmin();
+  if (!('response' in access)) return null;
+  access.response.headers.set('Cache-Control', 'no-store');
+  return access.response;
 }
 
 async function collectionFrom(context: RouteContext): Promise<string> {
@@ -28,6 +62,9 @@ async function collectionFrom(context: RouteContext): Promise<string> {
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  const denied = await authorize();
+  if (denied) return denied;
+
   try {
     const collection = await collectionFrom(context);
     const url = new URL(request.url);
@@ -49,6 +86,9 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const denied = await authorize();
+  if (denied) return denied;
+
   try {
     const collection = await collectionFrom(context);
     const body = (await request.json()) as Record<string, unknown>;
@@ -57,6 +97,9 @@ export async function POST(request: Request, context: RouteContext) {
 }
 
 export async function PUT(request: Request, context: RouteContext) {
+  const denied = await authorize();
+  if (denied) return denied;
+
   try {
     const collection = await collectionFrom(context);
     const body = (await request.json()) as Record<string, unknown>;
@@ -69,6 +112,9 @@ export async function PUT(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(request: Request, context: RouteContext) {
+  const denied = await authorize();
+  if (denied) return denied;
+
   try {
     const collection = await collectionFrom(context);
     const id = new URL(request.url).searchParams.get('id');
@@ -79,5 +125,13 @@ export async function DELETE(request: Request, context: RouteContext) {
 }
 
 export async function HEAD(_request: Request, context: RouteContext) {
-  try { return success({ collection: await collectionFrom(context), total: await count(await collectionFrom(context)) }); } catch (error) { return failure(error); }
+  const denied = await authorize();
+  if (denied) return denied;
+
+  try {
+    const collection = await collectionFrom(context);
+    return success({ collection, total: await count(collection) });
+  } catch (error) {
+    return failure(error);
+  }
 }

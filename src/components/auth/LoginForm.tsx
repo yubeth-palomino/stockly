@@ -113,22 +113,10 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
         </div>
 
         <div className={styles.stockNote} aria-hidden="true">
-          <span className={styles.noteLabel}>RESUMEN DE EXISTENCIAS</span>
-          <div className={styles.stockLine}>
-            <span>Productos activos</span>
-            <strong>248</strong>
-            <i className={styles.stockBar} />
-          </div>
-          <div className={styles.stockLine}>
-            <span>Movimientos hoy</span>
-            <strong>36</strong>
-            <i className={`${styles.stockBar} ${styles.stockBarShort}`} />
-          </div>
-          <div className={styles.stockLine}>
-            <span>Alertas pendientes</span>
-            <strong className={styles.alertCount}>03</strong>
-            <i className={`${styles.stockBar} ${styles.stockBarAlert}`} />
-          </div>
+          <span className={styles.noteLabel}>GESTIÓN COMERCIAL</span>
+          <p className={styles.stockDescription}>
+            Organiza productos, ventas y movimientos en un solo lugar.
+          </p>
         </div>
 
         <span className={styles.panelIndex}>01 / STOCKLY</span>

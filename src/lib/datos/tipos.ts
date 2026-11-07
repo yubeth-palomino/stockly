@@ -120,6 +120,6 @@ export type ProductoEconomico = {
 export type ResumenEconomico = {
   inversionTotal: number;
   gananciaPotencialTotal: number;
-  gananciaRealizadaTotal: number;
+  gananciaRealizadaTotal: number | null;
   productos: ProductoEconomico[];
 };

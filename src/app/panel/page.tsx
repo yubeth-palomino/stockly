@@ -38,6 +38,8 @@ export default async function PanelPage() {
         etiqueta: 'Ganancia realizada',
         valor: formatearPesos(resumen.gananciaRealizadaTotal),
       });
+    } else {
+      metricas.push({ etiqueta: 'Ganancia realizada', valor: 'No disponible' });
     }
   }
 
@@ -59,6 +61,11 @@ export default async function PanelPage() {
           </article>
         ))}
       </section>
+      {usuario.rol === 'dueno' && resumen.gananciaRealizadaTotal === null && (
+        <p className={styles.textoSuave} role="note">
+          La ganancia realizada requiere una empresa autorizada y costos históricos por venta.
+        </p>
+      )}
 
       <section className={styles.seccionResumen} aria-labelledby="agotados-titulo">
         <div className={styles.encabezadoSeccion}>

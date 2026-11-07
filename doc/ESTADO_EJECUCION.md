@@ -13,7 +13,8 @@
 | P08 Entrada de mercancía | completado | correcto | 98/98 | 2026-11-07 |
 | P09 Ventas | completado | correcto | 98/98 | 2026-11-07 |
 | P10 Usuarios y aceptación | implementación completada; aceptación manual pendiente | correcto | 98/98 | 2026-11-07 |
-| P11 Módulo económico (opcional) | implementación completada; aceptación manual pendiente | correcto | 98/98 | 2026-11-07 |
+| P11 Módulo económico (opcional) | parcial; utilidad histórica pendiente de costos por venta y empresa activa | correcto | 130/130 | 2026-11-07 |
+| Evolución comercial | inventario y ventas API local parcial; BD sin migrar | correcto | 130/130 | 2026-11-07 |
 
 ## Bitácora
 
@@ -168,3 +169,34 @@ DEMO-008    34     0         No
 - **Historial y Economía:** el historial muestra las tres ventas con fecha, precio unitario y total. CAM001 muestra costo 30.000, ganancia potencial 0 cuando agotado y venta de 15 a 60.000; Economía refleja inversión 0, potencial 0 y realizada 450.000, igual a `(60.000 − 30.000) × 15`.
 - **CI:** el workflow de `9d7bee1` pasó `npm ci`, lint, type-check, tests y build en GitHub Actions. Las páginas autenticadas se renderizan en solicitudes para no requerir secretos de Supabase durante el prerender.
 - **Pendiente:** quedan A-01, A-07, A-13 y A-19 por acceso de trabajador; A-14 no se intentó para no arriesgar el único acceso de dueño disponible; A-21 no se ejecutó porque requeriría modificar precio en producción; A-17 solo se comprobó tras navegar, no cerrar navegador/sesión. El filtro A-11 y las operaciones CAM001 se observaron en producción. La persona usuaria eligió continuar pruebas de dueño y dejar trabajador pendiente; no se solicitaron ni compartieron credenciales.
+
+### Evolución comercial · diagnóstico y propuesta · 2026-11-07
+
+- **Archivos preparados:** `doc/EVOLUCION_COMERCIAL.md` y `supabase/propuestas/20261107000100_evolucion_comercial.sql`.
+- **Base inspeccionada:** únicamente agregados y esquema dentro de una transacción de solo lectura. Se observaron 9 productos, 8 activos, 3 ventas y 14 eventos; 6 productos activos con stock no tienen costo de compra. No se modificaron ni mostraron filas comerciales.
+- **Diseño:** expansión aditiva con empresa/sucursal, membresías, catálogo/variantes, existencias con costo promedio, libro de movimientos, proveedores/compras, ventas con líneas/pagos, devoluciones y gastos; restricciones compuestas para impedir cruces entre empresas.
+- **Resguardo:** la propuesta vive fuera de `supabase/migrations`; `scripts/migrar.mjs` solo ejecuta archivos de esa carpeta. No se ejecutó SQL ni se creó respaldo porque aún no hay aprobación para aplicar cambios estructurales. La documentación define los pasos de respaldo, restauración de ensayo y comparación requeridos antes de aplicar.
+- **Historial:** no se inventan costos históricos de ventas ni movimientos previos; las ventas legadas quedan marcadas sin costo histórico y los eventos JSON existentes se conservan.
+- **Fase 1 sin cambios de BD:** el dashboard legacy y la pantalla de login dejaron de mostrar cifras/productos/actividad de muestra. La API JSON legacy exige administrador, usa `Cache-Control: no-store` y responde 410 en producción porque lee un JSON de demostración, no el inventario real.
+- **Verificación:** `npm run build`, `npm run lint` correctos; `npm test`: 29 archivos, 104/104 pruebas. El SQL no se ejecutó ni se conectó a la base; el diseño se revisó estáticamente. No se afirma que los módulos comerciales estén implementados.
+- **Bloqueo de despliegue:** la aplicación actual todavía escribe en tablas legadas. No aplicar el SQL aislado; requiere versión compatible probada en staging y despliegue coordinado.
+
+### Evolución comercial · reglas y API de inventario · 2026-11-07
+
+- **Archivos creados:** `src/lib/reglas/comercial.ts`, `src/lib/datos/comercial.ts`, pruebas de reglas, servicio y rutas para inventario comercial y venta multiproducto.
+- **Archivos creados adicionales:** endpoint y pruebas para venta comercial multiproducto con descuentos y pagos.
+- **Archivos modificados:** validación Zod, catálogo de errores, `src/lib/dataService.ts`, SQL de propuesta (huella SHA-256 de idempotencia) y esta bitácora.
+- **Implementado localmente:** normalización de referencia/talla/color/SKU/código de barras; creación transaccional de catálogo/variantes; listado filtrable con aislamiento empresa/sucursal; ajustes transaccionales con bloqueo de fila, costo promedio ponderado y ledger append-only; ventas con múltiples líneas, descuentos, pagos, control de existencias y copia de costo solo si está validado. Los movimientos de ajuste/venta son idempotentes. La disponibilidad del módulo se detecta explícitamente y responde 503 mientras falte el esquema.
+- **Permisos y economía:** se comprueba la membresía activa y el acceso a sucursal en la capa de datos; costos solo se seleccionan para usuarios con rol dueño tanto en Stockly como en la empresa; creación y ajustes requieren dueño. No se usa un costo inicial importado que todavía no haya sido validado.
+- **Validación:** `npm test` pasó 33 archivos y 130/130 pruebas; `npm run lint`, `npm run type-check` y `npm run build` correctos. Las pruebas del servicio simulan el cliente SQL; no sustituyen integración contra PostgreSQL.
+- **Límites:** no se aplicó ni se probó la propuesta SQL en staging; no hay `pg_dump`/`pg_restore` disponibles en este entorno y no se confirmó conexión de staging ni respaldo restaurable. La UI todavía no consume estos endpoints; la huella SHA-256 debe probarse con la migración real. Compras/proveedores, devoluciones/cambios, gastos, reportes, alertas, dashboard comercial y aceptación integral siguen pendientes. No declarar el producto completo.
+
+### Auditoría funcional integral · 2026-11-07
+
+- **Alcance observado:** navegación autenticada de producción (Resumen, Inventario, Ventas, Usuarios y Economía), lectura de formularios/tablas/filtros y revisión de rutas/servicios/permisos/CSS responsive. No se enviaron mutaciones de negocio a producción.
+- **Hallazgos corregidos localmente:** Economía calculaba la ganancia histórica con el costo actual de `productos`, que puede haber cambiado desde la venta, y la consulta comercial propuesta agregaba ventas sin limitarse a una empresa autorizada. Se eliminaron ambas inferencias: la ganancia realizada queda no disponible hasta tener contexto de empresa validado y costos por línea; la UI explica el motivo. Las ventas actuales no se alteraron. El cambio no está desplegado en la página de producción observada.
+- **Hallazgos de funcionalidad:** compras/proveedores, devoluciones/cambios, reportes, gastos, alertas de bajo stock y UI para los endpoints comerciales todavía no existen. Los endpoints nuevos dependen de la migración pendiente. El historial de movimientos legado es JSON, no un ledger cuantitativo; las ventas legadas no guardan costo histórico.
+- **Observación en producción:** el inventario y los indicadores se leen de PostgreSQL, pero los nombres `DEMO-*` observados en el inventario sugieren datos de demostración en la base conectada. No se borraron ni modificaron; hace falta confirmar si son datos reales o semilla antes de cualquier limpieza.
+- **Pruebas del navegador:** se verificó render y navegación autenticada de dueño en páginas de lectura; a 390 px Economía cambió a tarjetas y el documento no tuvo desbordamiento horizontal (375 px de contenido frente a viewport de 390 px). El menú móvil abrió y cerró con teclado (Enter) y expuso sus enlaces; el clic automatizado por puntero agotó el tiempo esperando estabilidad antes de activarse, así que ese método queda sin validar. El navegador conservaba eventos previos de respuestas 401 y peticiones RSC abortadas durante navegación rápida; no se reprodujo error visible en las páginas cargadas. No se ejecutaron mutaciones productivas.
+- **Pruebas locales de esta auditoría:** tras restringir el cálculo comercial sin empresa activa, `npm test` pasó 33 archivos y 130/130 pruebas; `npm run build`, `npm run type-check` y `npm run lint` correctos.
+- **Límite de aceptación:** sin PostgreSQL aislado, restauración de respaldo, credenciales de trabajador ni logs del servidor, no se puede certificar compras/ventas/devoluciones, aislamiento multiempresa o errores backend de extremo a extremo. No declarar listo para producción.

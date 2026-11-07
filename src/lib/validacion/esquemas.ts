@@ -8,11 +8,16 @@ const texto = (minimo: number, maximo: number) =>
     .trim()
     .min(minimo, { error: `Debe tener al menos ${minimo} caracteres.` })
     .max(maximo, { error: `No puede superar ${maximo} caracteres.` });
+const uuidComercial = (mensaje: string) =>
+  z.string().uuid({ error: mensaje }).transform((valor) => valor.toLowerCase());
 const enteroPositivo = (campo: string) =>
   z
     .number({ error: `${campo} debe ser un número.` })
     .int({ error: `${campo} debe ser un número entero.` })
-    .min(1, { error: `${campo} debe ser mayor que cero.` });
+    .min(1, { error: `${campo} debe ser mayor que cero.` })
+    .max(2_147_483_647, { error: `${campo} supera el rango permitido.` });
+const enteroComercialPositivo = (campo: string) =>
+  enteroPositivo(campo).max(2_147_483_647, { error: `${campo} supera el rango permitido.` });
 const fecha = z
   .string({ error: 'La fecha debe ser texto.' })
   .refine(esFechaValida, 'La fecha debe tener formato YYYY-MM-DD.');
@@ -55,10 +60,116 @@ export const esquemaVenta = z.object({
   cantidad: enteroPositivo('La cantidad'),
 });
 
+const esquemaVarianteComercial = z.object({
+  talla: texto(1, 20),
+  color: texto(1, 60).optional(),
+  sku: texto(1, 80).optional(),
+  codigoBarras: texto(1, 80).optional(),
+  precioVenta: enteroComercialPositivo('El precio de venta'),
+});
+
+export const esquemaCrearProductoComercial = z.object({
+  empresaId: uuidComercial('Seleccione una empresa válida.'),
+  sucursalId: uuidComercial('Seleccione una sucursal válida.'),
+  referencia: texto(1, 60),
+  marca: texto(2, 80),
+  descripcion: texto(2, 200),
+  categoria: texto(2, 100).optional(),
+  variante: esquemaVarianteComercial,
+});
+
+export const esquemaAjusteComercial = z
+  .object({
+    empresaId: uuidComercial('Seleccione una empresa válida.'),
+    sucursalId: uuidComercial('Seleccione una sucursal válida.'),
+    varianteId: uuidComercial('Seleccione una variante válida.'),
+    delta: z
+      .number({ error: 'La cantidad debe ser un número.' })
+      .int({ error: 'La cantidad debe ser un número entero.' })
+      .min(-2_147_483_647, { error: 'La cantidad supera el rango permitido.' })
+      .max(2_147_483_647, { error: 'La cantidad supera el rango permitido.' })
+      .refine((valor) => valor !== 0, 'La cantidad no puede ser cero.'),
+    costoUnitario: enteroComercialPositivo('El costo unitario').optional(),
+    motivo: texto(3, 300),
+    claveIdempotencia: uuidComercial('La clave de operación no es válida.'),
+  })
+  .refine(
+    (datos) =>
+      datos.delta > 0
+        ? datos.costoUnitario !== undefined
+        : datos.costoUnitario === undefined,
+    {
+      path: ['costoUnitario'],
+      message: 'Indique costo unitario solo para aumentos de existencias.',
+    },
+  );
+
+const esquemaLineaVentaComercial = z.object({
+  varianteId: uuidComercial('Seleccione una variante válida.'),
+  cantidad: z
+    .number({ error: 'La cantidad debe ser un número.' })
+    .int({ error: 'La cantidad debe ser un número entero.' })
+    .min(1, { error: 'La cantidad debe ser mayor que cero.' })
+    .max(2_147_483_647, { error: 'La cantidad supera el rango permitido.' }),
+  descuentoLinea: z
+    .number({ error: 'El descuento debe ser un número.' })
+    .int({ error: 'El descuento debe ser un número entero.' })
+    .min(0, { error: 'El descuento no puede ser negativo.' })
+    .max(Number.MAX_SAFE_INTEGER, { error: 'El descuento supera el rango permitido.' })
+    .default(0),
+});
+
+const esquemaPagoComercial = z.object({
+  metodo: z.enum(['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'OTRO'], {
+    error: 'Seleccione un método de pago válido.',
+  }),
+  monto: z
+    .number({ error: 'El pago debe ser un número.' })
+    .int({ error: 'El pago debe ser un número entero.' })
+    .min(1, { error: 'El pago debe ser mayor que cero.' })
+    .max(Number.MAX_SAFE_INTEGER, { error: 'El pago supera el rango permitido.' }),
+  referencia: texto(1, 120).optional(),
+});
+
+export const esquemaVentaComercial = z
+  .object({
+    empresaId: uuidComercial('Seleccione una empresa válida.'),
+    sucursalId: uuidComercial('Seleccione una sucursal válida.'),
+    lineas: z.array(esquemaLineaVentaComercial).min(1).max(100),
+    pagos: z.array(esquemaPagoComercial).min(1).max(20),
+    claveIdempotencia: uuidComercial('La clave de operación no es válida.'),
+  })
+  .superRefine((datos, contexto) => {
+    const variantes = new Set<string>();
+    datos.lineas.forEach((linea, indice) => {
+      const varianteId = linea.varianteId.toLowerCase();
+      if (variantes.has(varianteId)) {
+        contexto.addIssue({
+          code: 'custom',
+          path: ['lineas', indice, 'varianteId'],
+          message: 'No repita una variante; combine sus cantidades en una sola línea.',
+        });
+      }
+      variantes.add(varianteId);
+    });
+  });
+
 export const esquemaFiltrosInventario = z.object({
   referencia: texto(1, 60).optional(),
   marca: texto(1, 80).optional(),
   talla: texto(1, 20).optional(),
+  soloDisponibles: z.preprocess(
+    (valor) => (valor === 'true' ? true : valor === 'false' ? false : valor),
+    z.boolean({ error: 'El filtro de disponibilidad debe ser verdadero o falso.' }).optional(),
+  ),
+});
+
+export const esquemaFiltrosInventarioComercial = z.object({
+  empresaId: uuidComercial('Seleccione una empresa válida.'),
+  sucursalId: uuidComercial('Seleccione una sucursal válida.'),
+  referencia: texto(1, 60).optional(),
+  talla: texto(1, 20).optional(),
+  color: texto(1, 60).optional(),
   soloDisponibles: z.preprocess(
     (valor) => (valor === 'true' ? true : valor === 'false' ? false : valor),
     z.boolean({ error: 'El filtro de disponibilidad debe ser verdadero o falso.' }).optional(),
@@ -103,7 +214,11 @@ export const esquemaFiltrosEconomia = z.object({
 export type EntradaProducto = z.infer<typeof esquemaEntradaProducto>;
 export type CambiosProductoValidos = z.infer<typeof esquemaCambiosProducto>;
 export type VentaValida = z.infer<typeof esquemaVenta>;
+export type ProductoComercialValido = z.infer<typeof esquemaCrearProductoComercial>;
+export type AjusteComercialValido = z.infer<typeof esquemaAjusteComercial>;
+export type VentaComercialValida = z.infer<typeof esquemaVentaComercial>;
 export type FiltrosInventarioValidos = z.infer<typeof esquemaFiltrosInventario>;
+export type FiltrosInventarioComercialValidos = z.infer<typeof esquemaFiltrosInventarioComercial>;
 export type UsuarioValido = z.infer<typeof esquemaUsuario>;
 export type CambiosUsuarioValidos = z.infer<typeof esquemaCambiosUsuario>;
 export type FiltrosVentasValidos = z.infer<typeof esquemaFiltrosVentas>;

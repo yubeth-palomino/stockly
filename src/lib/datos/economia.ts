@@ -15,9 +15,6 @@ type FilaProductoEconomico = {
   precioVenta: number;
   precioCompra: number | null;
 };
-
-type FilaGananciaRealizada = { total: string };
-
 function enteroSeguro(valor: number | string, nombre: string): number {
   const numero = typeof valor === 'number' ? valor : Number(valor);
   if (!Number.isSafeInteger(numero)) {
@@ -32,30 +29,17 @@ function sumarSeguro(actual: number, siguiente: number, nombre: string): number 
 
 export async function obtenerEconomia(filtros: { marca?: string } = {}): Promise<ResumenEconomico> {
   const marca = filtros.marca?.trim();
-  const parametros = marca ? [`%${marca.toLowerCase()}%`] : [];
+  const filtroMarca = marca ? `%${marca.toLowerCase()}%` : undefined;
+  const parametros = filtroMarca === undefined ? [] : [filtroMarca];
   const condicionMarcaProductos = marca ? 'AND lower(marca) LIKE $1' : '';
-  const condicionMarcaVentas = marca ? 'AND lower(p.marca) LIKE $1' : '';
-
-  const [productos, filasGanancia] = await Promise.all([
-    consultar<FilaProductoEconomico>(
-      `SELECT id, referencia, marca, talla, cantidad,
-              precio_venta AS "precioVenta", precio_compra AS "precioCompra"
-       FROM productos
-       WHERE activo = true ${condicionMarcaProductos}
-       ORDER BY clave_referencia ASC, clave_talla ASC`,
-      parametros,
-    ),
-    consultar<FilaGananciaRealizada>(
-      `SELECT COALESCE(
-                SUM((v.precio_venta::bigint - p.precio_compra::bigint) * v.cantidad::bigint),
-                0
-              )::text AS total
-       FROM ventas v
-       JOIN productos p ON p.id = v.producto_id
-       WHERE p.precio_compra IS NOT NULL ${condicionMarcaVentas}`,
-      parametros,
-    ),
-  ]);
+  const productos = await consultar<FilaProductoEconomico>(
+    `SELECT id, referencia, marca, talla, cantidad,
+            precio_venta AS "precioVenta", precio_compra AS "precioCompra"
+     FROM productos
+     WHERE activo = true ${condicionMarcaProductos}
+     ORDER BY clave_referencia ASC, clave_talla ASC`,
+    parametros,
+  );
 
   let inversionTotal = 0;
   let gananciaPotencialTotal = 0;
@@ -98,14 +82,10 @@ export async function obtenerEconomia(filtros: { marca?: string } = {}): Promise
     };
   });
 
-  const gananciaRealizadaTotal = enteroSeguro(
-    filasGanancia[0]?.total ?? '0',
-    'ganancia realizada',
-  );
   return {
     inversionTotal,
     gananciaPotencialTotal,
-    gananciaRealizadaTotal,
+    gananciaRealizadaTotal: null,
     productos: detalleProductos,
   };
 }
