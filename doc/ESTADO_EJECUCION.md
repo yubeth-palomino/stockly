@@ -157,3 +157,11 @@ DEMO-008    34     0         No
 - **Revisión estática:** rutas `/api/panel/*` llaman el guard correspondiente antes de leer parámetros o datos; los campos económicos se seleccionan por rol y Economía exige dueño; las consultas SQL usan parámetros y las interpolaciones restantes corresponden a fragmentos/columnas controlados por el código. No se encontraron archivos `.env.local` versionados ni valores de credenciales en archivos rastreados.
 - **Verificación actual:** `npm test`: 27 archivos, 98/98 pruebas; `npm run build`, `npm run lint` y `npm run type-check`: correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; limpieza final de solo sus datos temporales.
 - **Alcance pendiente:** A-01 a A-23 siguen sin evidencia de ejecución autenticada en Vercel. P11 también exige como precondición la aceptación diligenciada; su implementación está lista, pero no se declara aceptación completa hasta que se cumpla esa precondición con dueño y trabajador reales.
+
+### Aceptación autenticada en Vercel · avance 2026-11-07
+
+- **Dueño:** sesión real confirmada en `/panel`; navegación muestra Usuarios y Economía. A-12 aprobado.
+- **Fecha futura:** A-05 aprobado; la interfaz muestra rechazo en español y no envía la entrada.
+- **Sin sesión:** A-18 aprobado mediante solicitud HTTP sin cookies (`/panel` redirige con 307 a `/login`). GET `/api/panel/economia` sin sesión devolvió 401, pero esto no sustituye la prueba A-19 como trabajador.
+- **Falla detectada:** en A-04, cantidad cero se rechazó, pero el mensaje automático de Zod apareció en inglés. Se localizaron los mensajes de los esquemas a español y se añadieron pruebas; build y suite local (100/100) pasan. Se debe desplegar este cambio y repetir A-04 antes de registrar su aprobación.
+- **Pendiente por acceso:** la persona usuaria no pudo restablecer el acceso del trabajador. No se realizaron todavía las mutaciones A-02–A-03 ni las pruebas A-01, A-06–A-11, A-13–A-17, A-19–A-23 en Vercel. El formulario de CAM001 quedó sin enviar; no se alteraron productos/ventas de producción.
