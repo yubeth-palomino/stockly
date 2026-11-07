@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { UserManagement } from '@/components/users/UserManagement';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export default async function UsersPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
