@@ -119,6 +119,16 @@ DEMO-008    34     0         No
 - **Trabajador:** pruebas de rutas verifican 403 al consultar usuarios y que el rol trabajador se pasa al servicio de inventario, que serializa omitiendo `precioCompra`. No se usó una sesión real de trabajador en esta comprobación.
 - **Checkpoint:** `doc/checkpoints/FASE_4_COMPLETADA.md`.
 
+### Revalidación de P01–P05 · 2026-11-06
+
+- **Pruebas y compilación:** `npm test`: 23 archivos y 87/87 pruebas aprobadas; `npm run build` y `npm run type-check`: correctos.
+- **P01:** `npm run db:verificar` terminó con 0 fallas; confirmó tablas, índices, RLS y restricciones. Las inserciones de prueba se revirtieron con `ROLLBACK`.
+- **P02:** la suite completa aprobó las pruebas de reglas de negocio.
+- **P03:** las rutas de sesión, resumen, productos y usuarios y el POST de ventas respondieron 401 sin sesión en el servidor local. La comprobación previa de sesión real de dueño está documentada en P03; no se simuló ni creó una sesión real de trabajador.
+- **P04:** `npm run probar:flujo` completó 13/13 pasos; verificó entradas, ventas, stock, roles y datos históricos. Antes de ejecutarlo se confirmó que no había registros `PRUEBA` existentes; la limpieza final eliminó solo los datos temporales del flujo.
+- **P05:** la suite verificó las restricciones de rol y el servicio de inventario; las rutas locales sin sesión respondieron 401. La verificación con sesión real de dueño y la limitación de la sesión de trabajador constan arriba y en `doc/checkpoints/FASE_4_COMPLETADA.md`.
+- **Aviso de herramientas:** Vitest emitió una advertencia de configuración `configLoader: 'native'`; no afectó las pruebas.
+
 ### P06 · Interfaz base, navegación y resumen
 
 - **Archivos creados:** `src/components/ui/` (botón, campo, selector, tarjeta, insignia, aviso, modal y estado vacío), `src/components/panel/` (navegación por rol e insignias), `src/app/panel/layout.tsx` y `src/app/panel/page.tsx`.
