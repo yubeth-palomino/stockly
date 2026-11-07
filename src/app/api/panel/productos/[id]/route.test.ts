@@ -3,15 +3,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   exigirUsuario: vi.fn(),
   actualizarProducto: vi.fn(),
+  obtenerProducto: vi.fn(),
 }));
 
 vi.mock('@/lib/auth/sesion', () => ({ exigirUsuario: mocks.exigirUsuario }));
 vi.mock('@/lib/dataService', () => ({
   actualizarProducto: mocks.actualizarProducto,
-  obtenerProducto: vi.fn(),
+  obtenerProducto: mocks.obtenerProducto,
 }));
 
-import { PATCH } from './route';
+import { GET, PATCH } from './route';
 
 const id = '00000000-0000-4000-8000-000000000001';
 
@@ -22,6 +23,30 @@ function solicitud(cuerpo: unknown): Request {
     body: JSON.stringify(cuerpo),
   });
 }
+
+describe('GET /api/panel/productos/[id]', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('pasa la identidad del trabajador al servicio del detalle', async () => {
+    mocks.exigirUsuario.mockResolvedValue({
+      id: 'usuario-trabajador',
+      nombre: 'Trabajador',
+      rol: 'trabajador',
+    });
+    mocks.obtenerProducto.mockResolvedValue({ id });
+
+    const response = await GET(new Request(`http://localhost/api/panel/productos/${id}`), {
+      params: Promise.resolve({ id }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.obtenerProducto).toHaveBeenCalledWith(
+      id,
+      'trabajador',
+      'usuario-trabajador',
+    );
+  });
+});
 
 describe('PATCH /api/panel/productos/[id]', () => {
   beforeEach(() => vi.resetAllMocks());

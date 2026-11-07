@@ -10,3 +10,5 @@ coverage/
 .vercel
 .env*
 .env*.local
+backup_datos.sql
+backup_esquema.sql

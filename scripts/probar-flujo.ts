@@ -103,10 +103,10 @@ async function ejecutar(): Promise<void> {
     if (resultado.sumado || resultado.cantidadResultante !== 10) {
       throw new Error('La entrada inicial no creó el producto con 10 unidades.');
     }
-    const producto = await obtenerProducto(productoId, 'trabajador');
+    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
     if (!producto.disponible) throw new Error('El producto inicial no quedó disponible.');
     await actualizarProducto(productoId, { marca: 'Marca actualizada' }, usuarioPrueba.id);
-    const actualizado = await obtenerProducto(productoId, 'trabajador');
+    const actualizado = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
     if (actualizado.marca !== 'Marca actualizada') {
       throw new Error('No se guardó la actualización del producto.');
     }
@@ -146,7 +146,7 @@ async function ejecutar(): Promise<void> {
       registrarVenta({ referencia: 'PRUEBA-A', talla: 'M', cantidad: 20 }, usuarioPrueba.id),
     );
     if (!productoId) throw new Error('No se creó PRUEBA-A.');
-    const producto = await obtenerProducto(productoId, 'trabajador');
+    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
     if (producto.cantidad !== 15) throw new Error('El stock cambió pese al rechazo de la venta.');
   });
 
@@ -196,7 +196,7 @@ async function ejecutar(): Promise<void> {
   await paso(12, 'desactivar el producto agotado como dueño', async () => {
     if (!productoId) throw new Error('No se creó PRUEBA-A.');
     await desactivarProducto(productoId, dueno.id);
-    const producto = await obtenerProducto(productoId, 'dueno');
+    const producto = await obtenerProducto(productoId, 'dueno', dueno.id);
     if (producto.activo) throw new Error('El producto siguió activo.');
   });
 
@@ -226,7 +226,7 @@ async function ejecutar(): Promise<void> {
       'dueno',
     );
     productoEconomicoId = resultado.productoId;
-    const detalle = await obtenerProducto(productoEconomicoId, 'dueno');
+    const detalle = await obtenerProducto(productoEconomicoId, 'dueno', dueno.id);
     if (
       detalle.precioCompra !== 10_000 ||
       detalle.inversion !== 50_000 ||
@@ -238,7 +238,11 @@ async function ejecutar(): Promise<void> {
 
   await paso(15, 'ocultar costos a trabajador y calcular ganancia realizada', async () => {
     if (!productoEconomicoId) throw new Error('No se creó PRUEBA-ECONOMIA.');
-    const detalleTrabajador = await obtenerProducto(productoEconomicoId, 'trabajador');
+    const detalleTrabajador = await obtenerProducto(
+      productoEconomicoId,
+      'trabajador',
+      usuarioPrueba.id,
+    );
     const listadoTrabajador = await listarInventario(
       { referencia: 'PRUEBA-ECONOMIA' },
       'trabajador',

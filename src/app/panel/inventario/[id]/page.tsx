@@ -25,7 +25,7 @@ export default async function DetalleProductoPage({ params }: Props) {
 
   let producto;
   try {
-    producto = await obtenerProducto(productoId.data, usuario.rol);
+    producto = await obtenerProducto(productoId.data, usuario.rol, usuario.id);
   } catch (error) {
     if (error instanceof ErrorDeNegocio && error.codigo === 'PRODUCTO_NO_ENCONTRADO') notFound();
     throw error;

@@ -211,7 +211,11 @@ export async function listarInventario(
   );
 }
 
-export async function obtenerProducto(id: string, rol: Rol): Promise<DetalleProducto> {
+export async function obtenerProducto(
+  id: string,
+  rol: Rol,
+  usuarioId: string,
+): Promise<DetalleProducto> {
   const productos = await consultar<DetalleProducto>(
     `SELECT ${columnasProducto(rol)}
      FROM v_productos
@@ -222,13 +226,16 @@ export async function obtenerProducto(id: string, rol: Rol): Promise<DetalleProd
   const producto = productos[0];
   if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
 
+  const condicionesEventos =
+    rol === 'dueno' ? 'producto_id = $1' : 'producto_id = $1 AND usuario_id = $2';
+  const valoresEventos = rol === 'dueno' ? [id] : [id, usuarioId];
   const [eventos, ventas] = await Promise.all([
     consultar<FilaEvento>(
       `SELECT id, tipo, detalle, created_at::text AS "createdAt"
        FROM eventos_inventario
-       WHERE producto_id = $1
+       WHERE ${condicionesEventos}
        ORDER BY created_at DESC, id DESC`,
-      [id],
+      valoresEventos,
     ),
     consultar<FilaVenta>(
       `SELECT v.id, v.producto_id AS "productoId", v.usuario_id AS "usuarioId",

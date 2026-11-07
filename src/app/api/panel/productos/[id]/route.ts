@@ -16,7 +16,7 @@ async function obtenerDetalle(_request: Request, contexto: ParametrosRuta) {
   const usuario = await exigirUsuario();
   const { id } = await contexto.params;
   const productoId = z.string().uuid().parse(id);
-  return responderOk(await obtenerProducto(productoId, usuario.rol));
+  return responderOk(await obtenerProducto(productoId, usuario.rol, usuario.id));
 }
 
 async function editarProducto(request: Request, contexto: ParametrosRuta) {
