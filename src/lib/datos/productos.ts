@@ -2,6 +2,11 @@ import { conTransaccion, consultar } from '@/lib/db/conexion';
 import { ErrorDeNegocio } from '@/lib/reglas/errores';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import { normalizarReferencia, normalizarTalla, validarEntrada } from '@/lib/reglas/producto';
+import {
+  gananciaPotencialProducto,
+  inversionProducto,
+  validarPrecioCompra,
+} from '@/lib/reglas/economia';
 import { LIMITE_LISTADO } from '@/lib/config/stockly';
 import { registrarEvento } from '@/lib/datos/eventos';
 import type {
@@ -15,7 +20,12 @@ import type {
 import type { Rol } from '@/lib/reglas/roles';
 
 type FilaId = { id: string };
-type FilaCantidad = { id: string; cantidad: number; referencia?: string };
+type FilaCantidad = {
+  id: string;
+  cantidad: number;
+  referencia?: string;
+  precioVenta?: number;
+};
 type ErrorPostgres = { code?: string; constraint?: string };
 
 function esErrorPostgres(error: unknown): error is ErrorPostgres {
@@ -86,8 +96,10 @@ function filtrosInventario(filtros: {
 export async function registrarEntrada(
   datos: DatosEntrada,
   usuarioId: string,
+  rol: Rol = 'trabajador',
 ): Promise<{ productoId: string; sumado: boolean; cantidadResultante: number }> {
   validarEntrada({ ...datos, hoy: hoyBogota() });
+  const precioCompra = rol === 'dueno' ? datos.precioCompra : undefined;
 
   try {
     return await conTransaccion(async (tx) => {
@@ -99,7 +111,7 @@ export async function registrarEntrada(
       ]);
 
       const existentes = await tx.query<FilaCantidad>(
-        `SELECT id, cantidad FROM productos
+        `SELECT id, cantidad, precio_venta AS "precioVenta" FROM productos
          WHERE clave_referencia = $1 AND clave_talla = $2 AND activo = true
          FOR UPDATE`,
         [referenciaNormalizada, tallaNormalizada],
@@ -107,12 +119,19 @@ export async function registrarEntrada(
       const existente = existentes.rows[0];
 
       if (existente) {
+        if (precioCompra !== undefined) {
+          if (existente.precioVenta === undefined) {
+            throw new Error('No se pudo leer el precio de venta del producto existente.');
+          }
+          validarPrecioCompra(precioCompra, existente.precioVenta);
+        }
         const filas = await tx.query<FilaCantidad>(
           `UPDATE productos
-           SET cantidad = cantidad + $1
-           WHERE id = $2
+           SET cantidad = cantidad + $1,
+               precio_compra = COALESCE($2, precio_compra)
+           WHERE id = $3
            RETURNING id, cantidad`,
-          [datos.cantidad, existente.id],
+          [datos.cantidad, precioCompra ?? null, existente.id],
         );
         const actualizado = filas.rows[0];
         if (!actualizado) throw new Error('No se pudo actualizar la cantidad del producto.');
@@ -134,10 +153,11 @@ export async function registrarEntrada(
         };
       }
 
+      if (precioCompra !== undefined) validarPrecioCompra(precioCompra, datos.precioVenta);
       const filas = await tx.query<FilaId & { cantidad: number }>(
         `INSERT INTO productos
-           (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+           (referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, cantidad`,
         [
           datos.referencia.trim(),
@@ -146,6 +166,7 @@ export async function registrarEntrada(
           datos.talla.trim(),
           datos.cantidad,
           datos.precioVenta,
+          precioCompra ?? null,
           datos.fechaEntrada,
         ],
       );
@@ -221,48 +242,87 @@ export async function obtenerProducto(id: string, rol: Rol): Promise<DetalleProd
     ),
   ]);
 
-  return { ...producto, eventos, ventas };
+  const detalle = { ...producto, eventos, ventas };
+  if (rol !== 'dueno') return detalle;
+  if (producto.precioCompra == null) {
+    return { ...detalle, inversion: null, gananciaPotencial: null };
+  }
+  return {
+    ...detalle,
+    inversion: inversionProducto(producto.precioCompra, producto.cantidad),
+    gananciaPotencial: gananciaPotencialProducto(
+      producto.precioVenta,
+      producto.precioCompra,
+      producto.cantidad,
+    ),
+  };
 }
 
 export async function actualizarProducto(
   id: string,
   cambios: CambiosProducto,
   usuarioId: string,
+  rol: Rol = 'trabajador',
 ): Promise<void> {
-  const asignaciones: string[] = [];
-  const valores: Array<string | number> = [];
-
-  if (cambios.marca !== undefined) {
-    valores.push(cambios.marca.trim());
-    asignaciones.push(`marca = $${valores.length}`);
-  }
-  if (cambios.descripcion !== undefined) {
-    valores.push(cambios.descripcion.trim());
-    asignaciones.push(`descripcion = $${valores.length}`);
-  }
-  if (cambios.precioVenta !== undefined) {
-    valores.push(cambios.precioVenta);
-    asignaciones.push(`precio_venta = $${valores.length}`);
-  }
-  if (asignaciones.length === 0) throw new ErrorDeNegocio('DATOS_INVALIDOS');
-
   try {
     await conTransaccion(async (tx) => {
+      const actuales = await tx.query<{
+        id: string;
+        precioVenta: number;
+        precioCompra: number | null;
+      }>(
+        `SELECT id, precio_venta AS "precioVenta", precio_compra AS "precioCompra"
+         FROM productos
+         WHERE id = $1 AND activo = true
+         FOR UPDATE`,
+        [id],
+      );
+      const actual = actuales.rows[0];
+      if (!actual) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
+
+      const precioVenta = cambios.precioVenta ?? actual.precioVenta;
+      const precioCompra =
+        rol === 'dueno' ? (cambios.precioCompra ?? actual.precioCompra) : actual.precioCompra;
+      if (precioCompra !== null) validarPrecioCompra(precioCompra, precioVenta);
+
+      const asignaciones: string[] = [];
+      const valores: Array<string | number> = [];
+      if (cambios.marca !== undefined) {
+        valores.push(cambios.marca.trim());
+        asignaciones.push(`marca = $${valores.length}`);
+      }
+      if (cambios.descripcion !== undefined) {
+        valores.push(cambios.descripcion.trim());
+        asignaciones.push(`descripcion = $${valores.length}`);
+      }
+      if (cambios.precioVenta !== undefined) {
+        valores.push(cambios.precioVenta);
+        asignaciones.push(`precio_venta = $${valores.length}`);
+      }
+      if (rol === 'dueno' && cambios.precioCompra !== undefined) {
+        valores.push(cambios.precioCompra);
+        asignaciones.push(`precio_compra = $${valores.length}`);
+      }
+      if (asignaciones.length === 0) throw new ErrorDeNegocio('DATOS_INVALIDOS');
+
       valores.push(id);
-      const resultado = await tx.query<FilaId>(
-        `UPDATE productos
-         SET ${asignaciones.join(', ')}
+      const actualizado = await tx.query<FilaId>(
+        `UPDATE productos SET ${asignaciones.join(', ')}
          WHERE id = $${valores.length} AND activo = true
          RETURNING id`,
         valores,
       );
-      const producto = resultado.rows[0];
-      if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
+      if (!actualizado.rows[0]) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
+      const detalle = {
+        ...(cambios.marca !== undefined ? { marca: cambios.marca } : {}),
+        ...(cambios.descripcion !== undefined ? { descripcion: cambios.descripcion } : {}),
+        ...(cambios.precioVenta !== undefined ? { precioVenta: cambios.precioVenta } : {}),
+      };
       await registrarEvento(tx, {
         tipo: 'PRODUCTO_ACTUALIZADO',
-        productoId: producto.id,
+        productoId: actual.id,
         usuarioId,
-        detalle: cambios,
+        detalle,
       });
     });
   } catch (error) {

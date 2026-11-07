@@ -12,16 +12,28 @@ export const esquemaEntradaProducto = z.object({
   talla: texto(1, 20),
   cantidad: z.number().int().min(1),
   precioVenta: z.number().int().min(1),
+  precioCompra: z.number().int().min(1).optional(),
   fechaEntrada: fecha,
 });
 
-export const esquemaCambiosProducto = z
-  .object({
-    marca: texto(2, 80).optional(),
-    descripcion: texto(2, 200).optional(),
-    precioVenta: z.number().int().min(1).optional(),
-  })
-  .refine((cambios) => Object.values(cambios).some((valor) => valor !== undefined), {
+const camposCambiosProducto = z.object({
+  marca: texto(2, 80).optional(),
+  descripcion: texto(2, 200).optional(),
+  precioVenta: z.number().int().min(1).optional(),
+  precioCompra: z.number().int().min(1).optional(),
+});
+
+function tieneCambios(cambios: Record<string, unknown>): boolean {
+  return Object.values(cambios).some((valor) => valor !== undefined);
+}
+
+export const esquemaCambiosProducto = camposCambiosProducto.refine(tieneCambios, {
+  message: 'Debe indicar al menos un campo para actualizar.',
+});
+
+export const esquemaCambiosProductoTrabajador = camposCambiosProducto
+  .omit({ precioCompra: true })
+  .refine(tieneCambios, {
     message: 'Debe indicar al menos un campo para actualizar.',
   });
 
@@ -70,6 +82,10 @@ export const esquemaFiltrosVentas = z
     { message: 'La fecha inicial no puede ser posterior a la fecha final.' },
   );
 
+export const esquemaFiltrosEconomia = z.object({
+  marca: texto(1, 80).optional(),
+});
+
 export type EntradaProducto = z.infer<typeof esquemaEntradaProducto>;
 export type CambiosProductoValidos = z.infer<typeof esquemaCambiosProducto>;
 export type VentaValida = z.infer<typeof esquemaVenta>;
@@ -77,3 +93,4 @@ export type FiltrosInventarioValidos = z.infer<typeof esquemaFiltrosInventario>;
 export type UsuarioValido = z.infer<typeof esquemaUsuario>;
 export type CambiosUsuarioValidos = z.infer<typeof esquemaCambiosUsuario>;
 export type FiltrosVentasValidos = z.infer<typeof esquemaFiltrosVentas>;
+export type FiltrosEconomiaValidos = z.infer<typeof esquemaFiltrosEconomia>;

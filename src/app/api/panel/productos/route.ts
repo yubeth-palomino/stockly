@@ -20,8 +20,25 @@ async function obtenerProductos(request: Request) {
 
 async function crearProducto(request: Request) {
   const usuario = await exigirUsuario();
-  const datos = await leerCuerpo(request, esquemaEntradaProducto);
-  return responderOk(await registrarEntrada(datos, usuario.id), 201);
+  if (usuario.rol === 'dueno') {
+    const parsed = await leerCuerpo(request, esquemaEntradaProducto);
+    const datos = {
+      referencia: parsed.referencia,
+      marca: parsed.marca,
+      descripcion: parsed.descripcion,
+      talla: parsed.talla,
+      cantidad: parsed.cantidad,
+      precioVenta: parsed.precioVenta,
+      fechaEntrada: parsed.fechaEntrada,
+      ...(parsed.precioCompra !== undefined ? { precioCompra: parsed.precioCompra } : {}),
+    };
+    return responderOk(await registrarEntrada(datos, usuario.id, usuario.rol), 201);
+  }
+  const parsed = await leerCuerpo(
+    request,
+    esquemaEntradaProducto.omit({ precioCompra: true }),
+  );
+  return responderOk(await registrarEntrada(parsed, usuario.id, usuario.rol), 201);
 }
 
 export const GET = conManejoDeErrores(obtenerProductos);

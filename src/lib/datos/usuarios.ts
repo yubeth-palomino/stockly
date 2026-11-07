@@ -19,6 +19,16 @@ function traducirErrorUsuario(error: unknown): never {
   ) {
     throw new ErrorDeNegocio('USUARIO_DUPLICADO');
   }
+  if (
+    esErrorPostgres(error) &&
+    error.code === '23505' &&
+    error.constraint === 'usuarios_auth_ref_key'
+  ) {
+    throw new ErrorDeNegocio(
+      'USUARIO_DUPLICADO',
+      'Esta cuenta de Supabase Auth ya está vinculada a Stockly.',
+    );
+  }
   throw error;
 }
 

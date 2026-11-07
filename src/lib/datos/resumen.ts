@@ -4,6 +4,8 @@ import type { Rol } from '@/lib/reglas/roles';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import { LIMITE_LISTADO } from '@/lib/config/stockly';
 import { columnasProducto } from '@/lib/datos/productos';
+import { obtenerEconomia } from '@/lib/datos/economia';
+import { MODULO_ECONOMICO_ACTIVO } from '@/lib/config/stockly';
 
 type ConteosPanel = {
   productosActivos: number;
@@ -41,6 +43,13 @@ export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
     gananciaPotencialTotal: null,
     gananciaRealizadaTotal: null,
   };
+
+  if (rol === 'dueno' && MODULO_ECONOMICO_ACTIVO) {
+    const economia = await obtenerEconomia();
+    resumen.inversionTotal = economia.inversionTotal;
+    resumen.gananciaPotencialTotal = economia.gananciaPotencialTotal;
+    resumen.gananciaRealizadaTotal = economia.gananciaRealizadaTotal;
+  }
 
   return resumen;
 }

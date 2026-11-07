@@ -7,6 +7,7 @@ export type DatosEntrada = {
   talla: string;
   cantidad: number;
   precioVenta: number;
+  precioCompra?: number;
   fechaEntrada: string;
 };
 
@@ -33,6 +34,7 @@ export type CambiosProducto = {
   marca?: string;
   descripcion?: string;
   precioVenta?: number;
+  precioCompra?: number;
 };
 
 export type FilaProducto = {
@@ -99,4 +101,25 @@ export type ResumenPanel = {
   inversionTotal: number | null;
   gananciaPotencialTotal: number | null;
   gananciaRealizadaTotal: number | null;
+};
+
+export type ProductoEconomico = {
+  id: string;
+  referencia: string;
+  marca: string;
+  talla: string;
+  cantidad: number;
+  precioVenta: number;
+  precioCompra: number | null;
+  gananciaPorUnidad: number | null;
+  inversion: number | null;
+  gananciaPotencial: number | null;
+  sinPrecioCompra: boolean;
+};
+
+export type ResumenEconomico = {
+  inversionTotal: number;
+  gananciaPotencialTotal: number;
+  gananciaRealizadaTotal: number;
+  productos: ProductoEconomico[];
 };

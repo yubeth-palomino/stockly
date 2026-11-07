@@ -13,7 +13,7 @@ vi.mock('@/lib/dataService', () => ({
   registrarEntrada: mocks.registrarEntrada,
 }));
 
-import { GET } from './route';
+import { GET, POST } from './route';
 
 describe('/api/panel/productos', () => {
   beforeEach(() => vi.resetAllMocks());
@@ -44,5 +44,79 @@ describe('/api/panel/productos', () => {
     expect(response.status).toBe(200);
     expect(mocks.listarInventario).toHaveBeenCalledWith({ soloDisponibles: true }, 'trabajador');
     expect(response.headers.get('Cache-Control')).toBe('no-store');
+  });
+
+  it('ignora precioCompra enviado por un trabajador al registrar una entrada', async () => {
+    mocks.exigirUsuario.mockResolvedValue({
+      id: 'usuario-trabajador',
+      nombre: 'Trabajador',
+      rol: 'trabajador',
+    });
+    mocks.registrarEntrada.mockResolvedValue({
+      productoId: '00000000-0000-4000-8000-000000000001',
+      sumado: false,
+      cantidadResultante: 5,
+    });
+
+    const response = await POST(
+      new Request('http://localhost/api/panel/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: 'CAM001',
+          marca: 'Marca',
+          descripcion: 'Descripción',
+          talla: 'M',
+          cantidad: 5,
+          precioVenta: 50_000,
+          precioCompra: -20_000,
+          fechaEntrada: '2026-11-07',
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.registrarEntrada).toHaveBeenCalledWith(
+      expect.not.objectContaining({ precioCompra: expect.any(Number) }),
+      'usuario-trabajador',
+      'trabajador',
+    );
+  });
+
+  it('permite precioCompra solo cuando registra el dueño', async () => {
+    mocks.exigirUsuario.mockResolvedValue({
+      id: 'usuario-dueno',
+      nombre: 'Dueño',
+      rol: 'dueno',
+    });
+    mocks.registrarEntrada.mockResolvedValue({
+      productoId: '00000000-0000-4000-8000-000000000001',
+      sumado: false,
+      cantidadResultante: 5,
+    });
+
+    const response = await POST(
+      new Request('http://localhost/api/panel/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: 'CAM001',
+          marca: 'Marca',
+          descripcion: 'Descripción',
+          talla: 'M',
+          cantidad: 5,
+          precioVenta: 50_000,
+          precioCompra: 20_000,
+          fechaEntrada: '2026-11-07',
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(mocks.registrarEntrada).toHaveBeenCalledWith(
+      expect.objectContaining({ precioCompra: 20_000 }),
+      'usuario-dueno',
+      'dueno',
+    );
   });
 });

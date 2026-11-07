@@ -9,6 +9,7 @@ import {
   listarInventario,
   listarVentas,
   listarUsuarios,
+  obtenerEconomia,
   obtenerProducto,
   registrarEntrada,
   registrarVenta,
@@ -207,6 +208,128 @@ async function ejecutar(): Promise<void> {
       ventas.some((venta) => venta.nombreUsuario === null)
     ) {
       throw new Error('El historial no contiene las dos ventas, sus precios y su usuario.');
+    }
+  });
+
+  let productoEconomicoId: string | undefined;
+  await paso(14, 'registrar costo y calcular inversión/ganancia potencial', async () => {
+    const resultado = await registrarEntrada(
+      entrada({
+        referencia: 'PRUEBA-ECONOMIA',
+        marca: 'Marca economía prueba',
+        talla: 'L',
+        cantidad: 5,
+        precioVenta: 20_000,
+        precioCompra: 10_000,
+      }),
+      dueno.id,
+      'dueno',
+    );
+    productoEconomicoId = resultado.productoId;
+    const detalle = await obtenerProducto(productoEconomicoId, 'dueno');
+    if (
+      detalle.precioCompra !== 10_000 ||
+      detalle.inversion !== 50_000 ||
+      detalle.gananciaPotencial !== 50_000
+    ) {
+      throw new Error('El producto no conserva el costo o sus cálculos iniciales.');
+    }
+  });
+
+  await paso(15, 'ocultar costos a trabajador y calcular ganancia realizada', async () => {
+    if (!productoEconomicoId) throw new Error('No se creó PRUEBA-ECONOMIA.');
+    const detalleTrabajador = await obtenerProducto(productoEconomicoId, 'trabajador');
+    const listadoTrabajador = await listarInventario(
+      { referencia: 'PRUEBA-ECONOMIA' },
+      'trabajador',
+    );
+    if (
+      Object.hasOwn(detalleTrabajador, 'precioCompra') ||
+      Object.hasOwn(detalleTrabajador, 'inversion') ||
+      Object.hasOwn(detalleTrabajador, 'gananciaPotencial') ||
+      Object.hasOwn(listadoTrabajador[0] ?? {}, 'precioCompra')
+    ) {
+      throw new Error('La respuesta de trabajador contiene datos económicos.');
+    }
+
+    await registrarVenta(
+      { referencia: 'PRUEBA-ECONOMIA', talla: 'L', cantidad: 2 },
+      usuarioPrueba.id,
+    );
+    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' });
+    if (
+      economia.productos.length !== 1 ||
+      economia.gananciaRealizadaTotal !== 20_000 ||
+      economia.inversionTotal !== 30_000 ||
+      economia.gananciaPotencialTotal !== 30_000
+    ) {
+      throw new Error('Los totales no coinciden después de vender dos unidades.');
+    }
+  });
+
+  await paso(16, 'actualizar costo en re-stock y recalcular ventas históricas', async () => {
+    const reingreso = await registrarEntrada(
+      entrada({
+        referencia: 'PRUEBA-ECONOMIA',
+        marca: 'Marca economía prueba',
+        talla: 'L',
+        cantidad: 2,
+        precioVenta: 20_000,
+        precioCompra: 12_000,
+      }),
+      dueno.id,
+      'dueno',
+    );
+    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' });
+    if (
+      !reingreso.sumado ||
+      reingreso.cantidadResultante !== 5 ||
+      economia.inversionTotal !== 60_000 ||
+      economia.gananciaPotencialTotal !== 40_000 ||
+      economia.gananciaRealizadaTotal !== 16_000
+    ) {
+      throw new Error('No se conservó el nuevo costo o la ganancia histórica recalculada.');
+    }
+    await debeFallarCon('PRECIO_VENTA_NO_SUPERA_COMPRA', () =>
+      actualizarProducto(
+        reingreso.productoId,
+        { precioVenta: 12_000 },
+        dueno.id,
+        'dueno',
+      ),
+    );
+    await debeFallarCon('PRECIO_VENTA_NO_SUPERA_COMPRA', () =>
+      registrarEntrada(
+        entrada({
+          referencia: 'PRUEBA-COSTO-INVALIDO',
+          precioCompra: 50_000,
+        }),
+        dueno.id,
+        'dueno',
+      ),
+    );
+  });
+
+  await paso(17, 'marcar productos sin costo sin inflar los totales', async () => {
+    await registrarEntrada(
+      entrada({
+        referencia: 'PRUEBA-SIN-COSTO',
+        marca: 'Marca sin costo prueba',
+        cantidad: 2,
+      }),
+      dueno.id,
+      'dueno',
+    );
+    const economia = await obtenerEconomia({ marca: 'Marca sin costo prueba' });
+    if (
+      economia.productos.length !== 1 ||
+      !economia.productos[0]?.sinPrecioCompra ||
+      economia.productos[0].inversion !== null ||
+      economia.inversionTotal !== 0 ||
+      economia.gananciaPotencialTotal !== 0 ||
+      economia.gananciaRealizadaTotal !== 0
+    ) {
+      throw new Error('El producto sin costo no está marcado o alteró los totales.');
     }
   });
 }

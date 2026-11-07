@@ -244,6 +244,23 @@
   text-decoration: underline;
 }
 
+.botonEnlace {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--color-primario);
+  font: 600 14px Arial, sans-serif;
+  text-decoration: none;
+}
+
+.botonEnlace:hover {
+  background: #203d72;
+}
+
 .listaAgotados {
   overflow: hidden;
   border: 1px solid var(--color-borde);
@@ -326,6 +343,303 @@
   font:
     12px Arial,
     sans-serif;
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto auto;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.filtrosEconomia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.filtrosEconomia label {
+  display: grid;
+  flex: 1 1 220px;
+  gap: 7px;
+  color: var(--color-texto);
+  font-size: 14px;
+}
+
+.filtrosEconomia input {
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.filtrosEconomia button {
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--color-primario);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filtroDisponibles {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  gap: 8px;
+  color: var(--color-texto);
+  font: 14px Arial, sans-serif;
+  white-space: nowrap;
+}
+
+.filtroDisponibles input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primario);
+}
+
+.tablaDesbordable {
+  overflow-x: auto;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.tablaPanel {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--color-texto);
+  font: 14px/1.5 Arial, sans-serif;
+}
+
+.tablaPanel th,
+.tablaPanel td {
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--color-borde);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tablaPanel thead th {
+  color: var(--color-texto-suave);
+  background: #f7f8fa;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tablaPanel tbody tr:last-child th,
+.tablaPanel tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tablaPanel tbody th {
+  font-weight: 600;
+}
+
+.numeroTabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.soloLectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+.tarjetasInventario {
+  display: none;
+}
+
+.tarjetaInventario {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.tarjetaInventario header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tarjetaInventario p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+
+.tarjetaInventario dl,
+.detalleLista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.tarjetaInventario dl div,
+.detalleLista div {
+  display: grid;
+  gap: 4px;
+}
+
+.tarjetaInventario dt,
+.detalleLista dt {
+  color: var(--color-texto-suave);
+  font-size: 12px;
+}
+
+.tarjetaInventario dd,
+.detalleLista dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.detalleProducto {
+  max-width: 760px;
+}
+
+.detalleProducto h2 {
+  margin: 0 0 18px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.accionesProducto,
+.formularioPanel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.formularioPanel {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.formularioContenedor {
+  display: grid;
+  width: min(100%, 680px);
+  gap: 14px;
+}
+
+.formularioUsuario {
+  display: grid;
+  width: min(100%, 680px);
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.formularioUsuario h2,
+.formularioUsuario p {
+  margin: 0;
+}
+
+.formularioUsuario h2 {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.rolUsuario {
+  display: grid;
+  gap: 8px;
+}
+
+.estadoUsuario {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.estadoUsuario input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primario);
+}
+
+.accionesUsuario {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+}
+
+.accionesUsuario small {
+  max-width: 220px;
+  color: var(--color-texto-suave);
+  line-height: 1.4;
+}
+
+.resumenVenta {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+}
+
+.resumenVenta h2,
+.resumenVenta p {
+  margin: 0;
+}
+
+.resumenVenta h2 {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.resumenVenta strong {
+  margin-top: 6px;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.errorFormulario {
+  margin: 0;
+  color: var(--color-agotado);
+}
+
+.listaEventos {
+  display: grid;
+  gap: 10px;
+  padding-left: 22px;
+}
+
+.listaEventos li {
+  padding-left: 4px;
+}
+
+.listaEventos time {
+  margin-left: 12px;
+  color: var(--color-texto-suave);
+  font-size: 13px;
 }
 
 :where(.enlace, .botonMenu, .accesoRapido):focus-visible {
@@ -436,6 +750,26 @@
 
   .pie {
     flex-direction: column;
+  }
+
+  .filtros {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .tablaDesbordable {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .tablaPanel {
+    display: none;
+  }
+
+  .tarjetasInventario {
+    display: grid;
+    gap: 12px;
   }
 }
 

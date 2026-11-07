@@ -27,6 +27,12 @@ export default async function PanelPage() {
     if (resumen.inversionTotal !== null) {
       metricas.push({ etiqueta: 'Inversión total', valor: formatearPesos(resumen.inversionTotal) });
     }
+    if (resumen.gananciaPotencialTotal !== null) {
+      metricas.push({
+        etiqueta: 'Ganancia potencial',
+        valor: formatearPesos(resumen.gananciaPotencialTotal),
+      });
+    }
     if (resumen.gananciaRealizadaTotal !== null) {
       metricas.push({
         etiqueta: 'Ganancia realizada',

@@ -102,6 +102,8 @@ export type {
   FilaProducto,
   FilaUsuario,
   FilaVenta,
+  ProductoEconomico,
   ResumenPanel,
+  ResumenEconomico,
   ResultadoVenta,
 } from '@/lib/datos/tipos';

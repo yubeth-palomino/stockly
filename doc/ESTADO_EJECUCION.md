@@ -9,11 +9,11 @@
 | P04 Datos | completado | correcto | 80/80 | 2026-10-31 |
 | P05 API | completado | correcto | 84/84 | 2026-10-31 |
 | P06 Interfaz base y resumen | completado | correcto | 84/84 | 2026-10-31 |
-| P07 Inventario | pendiente | | | |
-| P08 Entrada de mercancía | pendiente | | | |
-| P09 Ventas | pendiente | | | |
-| P10 Usuarios y aceptación | pendiente | | | |
-| P11 Módulo económico (opcional) | pendiente | | | |
+| P07 Inventario | completado | correcto | 95/95 | 2026-11-07 |
+| P08 Entrada de mercancía | completado | correcto | 95/95 | 2026-11-07 |
+| P09 Ventas | completado | correcto | 95/95 | 2026-11-07 |
+| P10 Usuarios y aceptación | completado; aceptación manual pendiente | correcto | 95/95 | 2026-11-07 |
+| P11 Módulo económico (opcional) | completado; aceptación manual pendiente | correcto | 95/95 | 2026-11-07 |
 
 ## Bitácora
 
@@ -137,3 +137,15 @@ DEMO-008    34     0         No
 - **Resumen real:** con usuario dueño y datos DEMO aparecen 8 productos activos, 45 unidades, 2 agotados y 2 ventas de hoy. Se muestran enlaces a detalle y accesos rápidos para registrar entrada y venta.
 - **Móvil:** comprobado en navegador a 390×844; el menú inicia cerrado, se despliega al activarlo, muestra Usuarios al dueño y omite Economía porque P11 está desactivado.
 - **Validación automatizada:** `npm test`: 22 archivos, 84/84 pruebas aprobadas; `npm run type-check`, ESLint focalizado, Prettier y `npm run build` correctos.
+
+### P07–P11 · Inventario, operaciones, usuarios y economía · 2026-11-07
+
+- **P07 inventario:** filtros sincronizados con URL, listado adaptable, detalle e historial; edición y desactivación restringidas al dueño. La serialización por rol omite los campos económicos para trabajadores.
+- **P08 entrada:** formulario validado, fecha Bogotá, normalización, re-stock y actualización de costo exclusiva del dueño. Los esquemas de trabajadores descartan `precioCompra` incluso cuando llega inválido.
+- **P09 ventas:** búsqueda, confirmación, verificación transaccional de stock e historial filtrable con el precio de venta histórico.
+- **P10 usuarios:** administración de cuentas Stockly para dueños, incluyendo cambio de rol/estado y protección del último dueño. El alta de identidad se realiza primero en Supabase Auth; el login no se reescribió ni se añadió registro público.
+- **P11 economía:** módulo activado, captura de costo solo para dueño, validación de margen, resumen y desglose económico, incluyendo productos sin costo y ventas de productos agotados.
+- **API y validación por rol:** las rutas POST/PATCH ahora usan esquemas distintos para dueño y trabajador; no aplican `.omit()` sobre un objeto Zod refinado. Las pruebas cubren la omisión de costos inválidos enviados por trabajadores.
+- **Verificación local:** `npm run type-check`, `npm test` (26 archivos, 95/95), `npm run lint` y `npm run build` correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; eliminó solo sus datos temporales `PRUEBA` (3 ventas, 10 eventos, 3 productos y 1 usuario).
+- **Aceptación manual pendiente:** A-01 a A-23 permanecen sin resultado ni evidencia; no se verificó la sesión autenticada de trabajador ni la aceptación de ambos roles en Vercel. Completarla antes de declarar aprobada la aceptación de producción.
+- **Aviso:** Vitest conserva la advertencia preexistente de `configLoader: 'native'`; no afecta las pruebas.
