@@ -6,6 +6,8 @@ import { LogoutButton } from '@/components/auth/LogoutButton';
 import { NavegacionPanel } from '@/components/panel/NavegacionPanel';
 import styles from '@/components/panel/panel.module.css';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PanelLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const usuario = await obtenerUsuario();
   if (usuario) {
