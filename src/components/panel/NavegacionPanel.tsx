@@ -11,13 +11,22 @@ import styles from './panel.module.css';
 
 type EnlacePanel = { href: string; etiqueta: string };
 
-export function NavegacionPanel({ rol, nombre }: { rol: Rol; nombre: string }) {
+export function NavegacionPanel({
+  rol,
+  nombre,
+  productosPorReponer = 0,
+}: {
+  rol: Rol;
+  nombre: string;
+  productosPorReponer?: number;
+}) {
   const ruta = usePathname();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const enlaces: EnlacePanel[] = [
     { href: '/panel', etiqueta: 'Resumen' },
     { href: '/panel/inventario', etiqueta: 'Inventario' },
     { href: '/panel/ventas', etiqueta: 'Ventas' },
+    { href: '/panel/evolucion', etiqueta: 'Evolución' },
   ];
   if (rol === 'dueno') {
     enlaces.push({ href: '/panel/usuarios', etiqueta: 'Usuarios' });
@@ -60,7 +69,12 @@ export function NavegacionPanel({ rol, nombre }: { rol: Rol; nombre: string }) {
                 onClick={() => setMenuAbierto(false)}
               >
                 {etiqueta}
-              </Link>
+                  {href === '/panel/inventario' && productosPorReponer > 0 && (
+                    <strong className={styles.insigniaReposicion} aria-label={`${productosPorReponer} productos por reponer`}>
+                      {productosPorReponer}
+                    </strong>
+                  )}
+                </Link>
             );
           })}
         </nav>

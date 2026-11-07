@@ -92,4 +92,46 @@ describe('PATCH /api/panel/productos/[id]', () => {
       'dueno',
     );
   });
+
+  it('permite configurar stock mínimo solo al dueño', async () => {
+    mocks.exigirUsuario.mockResolvedValue({
+      id: 'usuario-dueno',
+      nombre: 'Dueño',
+      rol: 'dueno',
+    });
+    mocks.actualizarProducto.mockResolvedValue(undefined);
+
+    const response = await PATCH(solicitud({ stockMinimo: 3 }), {
+      params: Promise.resolve({ id }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.actualizarProducto).toHaveBeenCalledWith(
+      id,
+      { stockMinimo: 3 },
+      'usuario-dueno',
+      'dueno',
+    );
+  });
+
+  it('ignora stock mínimo enviado por trabajador', async () => {
+    mocks.exigirUsuario.mockResolvedValue({
+      id: 'usuario-trabajador',
+      nombre: 'Trabajador',
+      rol: 'trabajador',
+    });
+    mocks.actualizarProducto.mockResolvedValue(undefined);
+
+    const response = await PATCH(solicitud({ marca: 'Marca nueva', stockMinimo: 3 }), {
+      params: Promise.resolve({ id }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.actualizarProducto).toHaveBeenCalledWith(
+      id,
+      { marca: 'Marca nueva' },
+      'usuario-trabajador',
+      'trabajador',
+    );
+  });
 });

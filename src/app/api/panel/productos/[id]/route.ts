@@ -31,6 +31,7 @@ async function editarProducto(request: Request, contexto: ParametrosRuta) {
       ...(parsed.descripcion !== undefined ? { descripcion: parsed.descripcion } : {}),
       ...(parsed.precioVenta !== undefined ? { precioVenta: parsed.precioVenta } : {}),
       ...(parsed.precioCompra !== undefined ? { precioCompra: parsed.precioCompra } : {}),
+      ...(parsed.stockMinimo !== undefined ? { stockMinimo: parsed.stockMinimo } : {}),
     };
   } else {
     const parsed = await leerCuerpo(request, esquemaCambiosProductoTrabajador);

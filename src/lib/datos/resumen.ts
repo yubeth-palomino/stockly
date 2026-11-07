@@ -14,6 +14,31 @@ type ConteosPanel = {
   ventasHoy: number;
 };
 
+async function stockMinimoDisponible(): Promise<boolean> {
+  const columnas = await consultar<{ existe: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = 'productos'
+         AND column_name = 'stock_minimo'
+     ) AS existe`,
+  );
+  return columnas[0]?.existe === true;
+}
+
+export async function contarProductosPorReponer(): Promise<number> {
+  if (!(await stockMinimoDisponible())) return 0;
+  const filas = await consultar<{ cantidad: number }>(
+    `SELECT count(*)::integer AS cantidad
+     FROM productos
+     WHERE activo = true
+       AND stock_minimo IS NOT NULL
+       AND cantidad <= stock_minimo`,
+  );
+  return filas[0]?.cantidad ?? 0;
+}
+
 export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
   const [conteos, listaAgotados] = await Promise.all([
     consultar<ConteosPanel>(
@@ -38,11 +63,39 @@ export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
   if (!totales) throw new Error('La base de datos no devolvió los indicadores del panel.');
   const resumen: ResumenPanel = {
     ...totales,
+    productosPorReponer: 0,
+    stockMinimoConfigurado: false,
     listaAgotados,
+    listaPorReponer: [],
     inversionTotal: null,
     gananciaPotencialTotal: null,
     gananciaRealizadaTotal: null,
   };
+
+  if (await stockMinimoDisponible()) {
+    const [conteosReposicion, listaPorReponer] = await Promise.all([
+      consultar<{ cantidad: number }>(
+        `SELECT count(*)::integer AS cantidad
+         FROM productos
+         WHERE activo = true
+           AND stock_minimo IS NOT NULL
+           AND cantidad <= stock_minimo`,
+      ),
+      consultar<FilaProducto>(
+        `SELECT ${columnasProducto(rol)}
+         FROM v_productos
+         WHERE activo = true
+           AND stock_minimo IS NOT NULL
+           AND cantidad <= stock_minimo
+         ORDER BY cantidad ASC, clave_referencia ASC, clave_talla ASC
+         LIMIT $1`,
+        [LIMITE_LISTADO],
+      ),
+    ]);
+    resumen.productosPorReponer = conteosReposicion[0]?.cantidad ?? 0;
+    resumen.stockMinimoConfigurado = true;
+    resumen.listaPorReponer = listaPorReponer;
+  }
 
   if (rol === 'dueno' && MODULO_ECONOMICO_ACTIVO) {
     const economia = await obtenerEconomia();

@@ -12,6 +12,7 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
   const [mode, setMode] = useState<'login' | 'recovery'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [errors, setErrors] = useState<LoginErrors>({});
   const [authError, setAuthError] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
@@ -182,22 +183,33 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
-                <input
-                  autoComplete="current-password"
-                  className={errors.password ? styles.inputError : ''}
-                  id="password"
-                  name="password"
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                    setErrors((current) => ({ ...current, password: undefined }));
-                    setAuthError('');
-                  }}
-                  aria-describedby={errors.password ? 'password-error' : undefined}
-                  aria-invalid={Boolean(errors.password)}
-                  placeholder="Ingresa tu contraseña"
-                  type="password"
-                  value={password}
-                />
+                <div className={styles.passwordInput}>
+                  <input
+                    autoComplete="current-password"
+                    className={errors.password ? styles.inputError : ''}
+                    id="password"
+                    name="password"
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setErrors((current) => ({ ...current, password: undefined }));
+                      setAuthError('');
+                    }}
+                    aria-describedby={errors.password ? 'password-error' : undefined}
+                    aria-invalid={Boolean(errors.password)}
+                    placeholder="Ingresa tu contraseña"
+                    type={mostrarContrasena ? 'text' : 'password'}
+                    value={password}
+                  />
+                  <button
+                    aria-label={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-pressed={mostrarContrasena}
+                    className={styles.passwordToggle}
+                    onClick={() => setMostrarContrasena((visible) => !visible)}
+                    type="button"
+                  >
+                    {mostrarContrasena ? 'Ocultar' : 'Mostrar'}
+                  </button>
+                </div>
                 {errors.password && (
                   <span className={styles.fieldError} id="password-error">
                     {errors.password}
@@ -211,7 +223,12 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
                 </p>
               )}
 
-              <button className={styles.submitButton} type="submit" disabled={isSubmitting}>
+              <button
+                aria-busy={isSubmitting}
+                className={styles.submitButton}
+                type="submit"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
                 {!isSubmitting && <span aria-hidden="true">→</span>}
               </button>

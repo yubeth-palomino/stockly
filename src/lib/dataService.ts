@@ -76,19 +76,22 @@ export async function actualizarContrasenaUsuario(usuarioId: string, contrasena:
 export {
   actualizarProducto,
   desactivarProducto,
+  exportarInventario,
   listarInventario,
+  listarEventosProducto,
   obtenerProducto,
   registrarEntrada,
 } from '@/lib/datos/productos';
-export { obtenerResumen } from '@/lib/datos/resumen';
+export { contarProductosPorReponer, obtenerResumen } from '@/lib/datos/resumen';
 export {
   actualizarUsuario,
   crearUsuario,
   listarUsuarios,
   obtenerUsuarioActual,
 } from '@/lib/datos/usuarios';
-export { listarVentas, registrarVenta } from '@/lib/datos/ventas';
+export { exportarVentas, listarVentas, registrarVenta } from '@/lib/datos/ventas';
 export { obtenerEconomia } from '@/lib/datos/economia';
+export { obtenerEvolucionVentas } from '@/lib/datos/evolucionVentas';
 export {
   ajustarExistenciasComercial,
   crearProductoComercial,

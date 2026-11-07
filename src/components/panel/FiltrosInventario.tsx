@@ -15,6 +15,7 @@ export function FiltrosInventario({
   const router = useRouter();
   const pathname = usePathname();
   const [referencia, setReferencia] = useState(filtros.referencia ?? '');
+  const [codigoBarras, setCodigoBarras] = useState(filtros.codigoBarras ?? '');
   const [marca, setMarca] = useState(filtros.marca ?? '');
   const [talla, setTalla] = useState(filtros.talla ?? '');
   const [soloDisponibles, setSoloDisponibles] = useState(filtros.soloDisponibles ?? false);
@@ -23,6 +24,7 @@ export function FiltrosInventario({
     const temporizador = window.setTimeout(() => {
       const parametros = new URLSearchParams();
       if (referencia.trim()) parametros.set('referencia', referencia.trim());
+      if (codigoBarras.trim()) parametros.set('codigoBarras', codigoBarras.trim());
       if (marca.trim()) parametros.set('marca', marca.trim());
       if (talla.trim()) parametros.set('talla', talla.trim());
       if (soloDisponibles) parametros.set('soloDisponibles', 'true');
@@ -30,10 +32,11 @@ export function FiltrosInventario({
       router.replace(consulta ? `${pathname}?${consulta}` : pathname, { scroll: false });
     }, 300);
     return () => window.clearTimeout(temporizador);
-  }, [marca, pathname, referencia, router, soloDisponibles, talla]);
+  }, [codigoBarras, marca, pathname, referencia, router, soloDisponibles, talla]);
 
   function limpiarFiltros() {
     setReferencia('');
+    setCodigoBarras('');
     setMarca('');
     setTalla('');
     setSoloDisponibles(false);
@@ -47,6 +50,13 @@ export function FiltrosInventario({
         value={referencia}
         onChange={(evento) => setReferencia(evento.target.value)}
         autoComplete="off"
+      />
+      <Campo
+        etiqueta="Código de barras"
+        value={codigoBarras}
+        onChange={(evento) => setCodigoBarras(evento.target.value)}
+        autoComplete="off"
+        inputMode="numeric"
       />
       <Campo
         etiqueta="Marca"

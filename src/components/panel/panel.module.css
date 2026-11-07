@@ -60,6 +60,19 @@
   background: var(--color-primario-suave);
 }
 
+.insigniaReposicion {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: #fff;
+  background: #b83232;
+  font: 700 11px Arial, sans-serif;
+}
+
 .usuarioNav {
   display: flex;
   align-items: center;
@@ -86,7 +99,7 @@
 
 .botonMenu {
   display: none;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid var(--color-borde);
   border-radius: 8px;
@@ -246,7 +259,7 @@
 
 .botonEnlace {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   padding: 9px 16px;
@@ -259,6 +272,13 @@
 
 .botonEnlace:hover {
   background: #203d72;
+}
+
+.accionesPagina {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .listaAgotados {
@@ -478,6 +498,25 @@
   background: var(--color-superficie);
 }
 
+.filaPorReponer {
+  background: #fff8f1;
+}
+
+.tarjetaPorReponer {
+  border-color: var(--color-acento);
+}
+
+.etiquetaPorReponer {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #70480f;
+  background: #f5e4bd;
+  font: 700 11px Arial, sans-serif;
+  white-space: nowrap;
+}
+
 .tarjetaInventario header {
   display: flex;
   align-items: center;
@@ -640,6 +679,39 @@
   margin-left: 12px;
   color: var(--color-texto-suave);
   font-size: 13px;
+}
+
+.filtrosKardex {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.filtrosKardex label {
+  display: grid;
+  min-width: 150px;
+  flex: 1 1 150px;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.filtrosKardex input,
+.filtrosKardex select,
+.filtrosKardex button {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+  font: inherit;
+}
+
+.filtrosKardex button {
+  color: #fff;
+  background: var(--color-primario);
+  cursor: pointer;
 }
 
 :where(.enlace, .botonMenu, .accesoRapido):focus-visible {

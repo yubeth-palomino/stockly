@@ -10,22 +10,37 @@ import { obtenerProducto } from '@/lib/dataService';
 import { formatearCantidad, formatearFecha, formatearPesos } from '@/lib/formato';
 import { ErrorDeNegocio } from '@/lib/reglas/errores';
 import { totalLineaVenta } from '@/lib/reglas/venta';
+import { esquemaFiltrosKardex } from '@/lib/validacion/esquemas';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ desde?: string | string[]; hasta?: string | string[]; tipo?: string | string[] }>;
+};
 
-export default async function DetalleProductoPage({ params }: Props) {
+export default async function DetalleProductoPage({ params, searchParams }: Props) {
   const usuario = await obtenerUsuario();
   if (!usuario) throw new Error('No se encontró el usuario Stockly autenticado.');
   const { id } = await params;
   const productoId = z.string().uuid().safeParse(id);
   if (!productoId.success) notFound();
+  const parametros = await searchParams;
+  const filtrosSinValidar: Record<string, unknown> = {};
+  if (parametros.desde !== undefined) filtrosSinValidar.desde = parametros.desde;
+  if (parametros.hasta !== undefined) filtrosSinValidar.hasta = parametros.hasta;
+  if (parametros.tipo !== undefined) filtrosSinValidar.tipo = parametros.tipo;
+  const filtros = esquemaFiltrosKardex.parse(filtrosSinValidar);
+  const exportParams = new URLSearchParams();
+  if (filtros.desde) exportParams.set('desde', filtros.desde);
+  if (filtros.hasta) exportParams.set('hasta', filtros.hasta);
+  if (filtros.tipo) exportParams.set('tipo', filtros.tipo);
+  const exportQuery = exportParams.toString();
 
   let producto;
   try {
-    producto = await obtenerProducto(productoId.data, usuario.rol, usuario.id);
+    producto = await obtenerProducto(productoId.data, usuario.rol, usuario.id, filtros);
   } catch (error) {
     if (error instanceof ErrorDeNegocio && error.codigo === 'PRODUCTO_NO_ENCONTRADO') notFound();
     throw error;
@@ -52,7 +67,17 @@ export default async function DetalleProductoPage({ params }: Props) {
             <div><dt>Talla</dt><dd>{producto.talla}</dd></div>
             <div><dt>Cantidad</dt><dd>{formatearCantidad(producto.cantidad)}</dd></div>
             <div><dt>Precio de venta</dt><dd>{formatearPesos(producto.precioVenta)}</dd></div>
+            {usuario.rol === 'dueno' && (
+              <div>
+                <dt>Stock mínimo</dt>
+                <dd>{producto.stockMinimo ?? 'Sin configurar'}</dd>
+              </div>
+            )}
             <div><dt>Fecha de entrada</dt><dd>{formatearFecha(producto.fechaEntrada)}</dd></div>
+            <div>
+              <dt>Código de barras</dt>
+              <dd>{producto.codigoBarras ?? 'Pendiente de código'}</dd>
+            </div>
             {usuario.rol === 'dueno' && (
               <div>
                 <dt>Precio compra</dt>
@@ -84,7 +109,11 @@ export default async function DetalleProductoPage({ params }: Props) {
             descripcionInicial={producto.descripcion}
             precioVentaInicial={producto.precioVenta}
             precioCompraInicial={producto.precioCompra ?? null}
+            stockMinimoInicial={producto.stockMinimo ?? null}
           />
+          <Link className={styles.enlaceTexto} href={`/panel/etiquetas?id=${producto.id}`}>
+            Imprimir etiquetas
+          </Link>
         </Tarjeta>
       </div>
 
@@ -113,6 +142,32 @@ export default async function DetalleProductoPage({ params }: Props) {
 
       <section className={styles.seccionResumen}>
         <h2>Historial de movimientos</h2>
+        <form className={styles.filtrosKardex} method="get">
+          <label>
+            Desde
+            <input defaultValue={filtros.desde} name="desde" type="date" />
+          </label>
+          <label>
+            Hasta
+            <input defaultValue={filtros.hasta} name="hasta" type="date" />
+          </label>
+          <label>
+            Tipo de movimiento
+            <select defaultValue={filtros.tipo ?? ''} name="tipo">
+              <option value="">Todos</option>
+              {producto.tiposEventos.map((tipo) => (
+                <option key={tipo} value={tipo}>{tipo.replaceAll('_', ' ')}</option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Filtrar</button>
+          <Link
+            className={styles.enlaceTexto}
+            href={`/api/panel/productos/${producto.id}/kardex${exportQuery ? `?${exportQuery}` : ''}`}
+          >
+            Exportar Kardex CSV
+          </Link>
+        </form>
         {producto.eventos.length === 0 ? (
           <EstadoVacio titulo="Este producto todavía no tiene movimientos" />
         ) : (

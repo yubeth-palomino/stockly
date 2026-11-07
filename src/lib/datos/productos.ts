@@ -2,6 +2,7 @@ import { conTransaccion, consultar } from '@/lib/db/conexion';
 import { ErrorDeNegocio } from '@/lib/reglas/errores';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import { normalizarReferencia, normalizarTalla, validarEntrada } from '@/lib/reglas/producto';
+import { generarCodigoBarras } from '@/lib/reglas/codigoBarras';
 import {
   gananciaPotencialProducto,
   inversionProducto,
@@ -16,10 +17,12 @@ import type {
   FilaEvento,
   FilaProducto,
   FilaVenta,
+  FiltrosKardex,
 } from '@/lib/datos/tipos';
 import type { Rol } from '@/lib/reglas/roles';
 
 type FilaId = { id: string };
+type FilaSecuencia = { secuencia: string };
 type FilaCantidad = {
   id: string;
   cantidad: number;
@@ -62,6 +65,8 @@ export function columnasProducto(rol: Rol): string {
     'fecha_entrada AS "fechaEntrada"',
     'activo',
     'disponible',
+    'codigo_barras AS "codigoBarras"',
+    'stock_minimo AS "stockMinimo"',
   ];
   if (rol === 'dueno') columnas.push('precio_compra AS "precioCompra"');
   return columnas.join(', ');
@@ -69,6 +74,7 @@ export function columnasProducto(rol: Rol): string {
 
 function filtrosInventario(filtros: {
   referencia?: string;
+  codigoBarras?: string;
   marca?: string;
   talla?: string;
   soloDisponibles?: boolean;
@@ -79,6 +85,10 @@ function filtrosInventario(filtros: {
   if (filtros.referencia?.trim()) {
     valores.push(`%${normalizarReferencia(filtros.referencia)}%`);
     condiciones.push(`clave_referencia LIKE $${valores.length}`);
+  }
+  if (filtros.codigoBarras?.trim()) {
+    valores.push(filtros.codigoBarras.trim());
+    condiciones.push(`codigo_barras = $${valores.length}`);
   }
   if (filtros.marca?.trim()) {
     valores.push(`%${filtros.marca.trim().toLowerCase()}%`);
@@ -154,10 +164,16 @@ export async function registrarEntrada(
       }
 
       if (precioCompra !== undefined) validarPrecioCompra(precioCompra, datos.precioVenta);
+      const secuencias = await tx.query<FilaSecuencia>(
+        `SELECT nextval('public.codigo_barras_producto_seq')::text AS secuencia`,
+      );
+      const secuencia = secuencias.rows[0]?.secuencia;
+      if (!secuencia) throw new Error('No se pudo reservar la secuencia del código de barras.');
+      const codigoBarras = generarCodigoBarras(secuencia);
       const filas = await tx.query<FilaId & { cantidad: number }>(
         `INSERT INTO productos
-           (referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           (referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, cantidad`,
         [
           datos.referencia.trim(),
@@ -168,6 +184,7 @@ export async function registrarEntrada(
           datos.precioVenta,
           precioCompra ?? null,
           datos.fechaEntrada,
+          codigoBarras,
         ],
       );
       const creado = filas.rows[0];
@@ -193,6 +210,7 @@ export async function registrarEntrada(
 export async function listarInventario(
   filtros: {
     referencia?: string;
+    codigoBarras?: string;
     marca?: string;
     talla?: string;
     soloDisponibles?: boolean;
@@ -211,10 +229,31 @@ export async function listarInventario(
   );
 }
 
+export async function exportarInventario(
+  filtros: {
+    referencia?: string;
+    codigoBarras?: string;
+    marca?: string;
+    talla?: string;
+    soloDisponibles?: boolean;
+  },
+  rol: Rol,
+): Promise<FilaProducto[]> {
+  const { condiciones, valores } = filtrosInventario(filtros);
+  return consultar<FilaProducto>(
+    `SELECT ${columnasProducto(rol)}
+     FROM v_productos
+     WHERE ${condiciones.join(' AND ')}
+     ORDER BY clave_referencia ASC, clave_talla ASC`,
+    valores,
+  );
+}
+
 export async function obtenerProducto(
   id: string,
   rol: Rol,
   usuarioId: string,
+  filtros: FiltrosKardex = {},
 ): Promise<DetalleProducto> {
   const productos = await consultar<DetalleProducto>(
     `SELECT ${columnasProducto(rol)}
@@ -226,17 +265,9 @@ export async function obtenerProducto(
   const producto = productos[0];
   if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
 
-  const condicionesEventos =
-    rol === 'dueno' ? 'producto_id = $1' : 'producto_id = $1 AND usuario_id = $2';
-  const valoresEventos = rol === 'dueno' ? [id] : [id, usuarioId];
-  const [eventos, ventas] = await Promise.all([
-    consultar<FilaEvento>(
-      `SELECT id, tipo, detalle, created_at::text AS "createdAt"
-       FROM eventos_inventario
-       WHERE ${condicionesEventos}
-       ORDER BY created_at DESC, id DESC`,
-      valoresEventos,
-    ),
+  const [eventos, tiposEventos, ventas] = await Promise.all([
+    listarEventosProducto(id, rol, usuarioId, filtros),
+    listarTiposEventosProducto(id, rol, usuarioId),
     consultar<FilaVenta>(
       `SELECT v.id, v.producto_id AS "productoId", v.usuario_id AS "usuarioId",
               u.nombre AS "nombreUsuario", v.referencia, v.talla, v.cantidad,
@@ -249,7 +280,7 @@ export async function obtenerProducto(
     ),
   ]);
 
-  const detalle = { ...producto, eventos, ventas };
+  const detalle = { ...producto, eventos, tiposEventos, ventas };
   if (rol !== 'dueno') return detalle;
   if (producto.precioCompra == null) {
     return { ...detalle, inversion: null, gananciaPotencial: null };
@@ -263,6 +294,64 @@ export async function obtenerProducto(
       producto.cantidad,
     ),
   };
+}
+
+function condicionesVisibilidadEventos(
+  id: string,
+  rol: Rol,
+  usuarioId: string,
+): { condiciones: string[]; valores: Array<string | number> } {
+  const valores: Array<string | number> = [id];
+  const condiciones = ['producto_id = $1'];
+  if (rol !== 'dueno') {
+    valores.push(usuarioId);
+    condiciones.push(`usuario_id = $${valores.length}`);
+  }
+  return { condiciones, valores };
+}
+
+export async function listarEventosProducto(
+  id: string,
+  rol: Rol,
+  usuarioId: string,
+  filtros: FiltrosKardex = {},
+): Promise<FilaEvento[]> {
+  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId);
+  if (filtros.desde) {
+    valores.push(filtros.desde);
+    condiciones.push(`(created_at AT TIME ZONE 'America/Bogota')::date >= $${valores.length}::date`);
+  }
+  if (filtros.hasta) {
+    valores.push(filtros.hasta);
+    condiciones.push(`(created_at AT TIME ZONE 'America/Bogota')::date <= $${valores.length}::date`);
+  }
+  if (filtros.tipo) {
+    valores.push(filtros.tipo);
+    condiciones.push(`tipo = $${valores.length}`);
+  }
+  return consultar<FilaEvento>(
+    `SELECT id, tipo, detalle, created_at::text AS "createdAt"
+     FROM eventos_inventario
+     WHERE ${condiciones.join(' AND ')}
+     ORDER BY created_at DESC, id DESC`,
+    valores,
+  );
+}
+
+async function listarTiposEventosProducto(
+  id: string,
+  rol: Rol,
+  usuarioId: string,
+): Promise<string[]> {
+  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId);
+  const filas = await consultar<{ tipo: string }>(
+    `SELECT DISTINCT tipo
+     FROM eventos_inventario
+     WHERE ${condiciones.join(' AND ')}
+     ORDER BY tipo`,
+    valores,
+  );
+  return filas.map(({ tipo }) => tipo);
 }
 
 export async function actualizarProducto(
@@ -310,6 +399,10 @@ export async function actualizarProducto(
         valores.push(cambios.precioCompra);
         asignaciones.push(`precio_compra = $${valores.length}`);
       }
+      if (rol === 'dueno' && cambios.stockMinimo !== undefined) {
+        valores.push(cambios.stockMinimo);
+        asignaciones.push(`stock_minimo = $${valores.length}`);
+      }
       if (asignaciones.length === 0) throw new ErrorDeNegocio('DATOS_INVALIDOS');
 
       valores.push(id);
@@ -324,6 +417,9 @@ export async function actualizarProducto(
         ...(cambios.marca !== undefined ? { marca: cambios.marca } : {}),
         ...(cambios.descripcion !== undefined ? { descripcion: cambios.descripcion } : {}),
         ...(cambios.precioVenta !== undefined ? { precioVenta: cambios.precioVenta } : {}),
+        ...(rol === 'dueno' && cambios.stockMinimo !== undefined
+          ? { stockMinimo: cambios.stockMinimo }
+          : {}),
       };
       await registrarEvento(tx, {
         tipo: 'PRODUCTO_ACTUALIZADO',

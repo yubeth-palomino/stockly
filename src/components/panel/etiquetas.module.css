@@ -1,0 +1,152 @@
+.selector {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 18px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.selector h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.filaSeleccion {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 88px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-borde);
+  font: 14px/1.4 Arial, sans-serif;
+}
+
+.filaSeleccion input,
+.formato select {
+  min-width: 0;
+  min-height: 44px;
+}
+
+.filaSeleccion input[type='number'] {
+  width: 88px;
+  padding: 6px;
+}
+
+.formato {
+  display: grid;
+  max-width: 360px;
+  gap: 6px;
+  font: 13px Arial, sans-serif;
+}
+
+.botonImprimir {
+  min-height: 46px;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--color-primario);
+  font: 700 14px Arial, sans-serif;
+}
+
+.botonImprimir:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.etiquetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 50mm);
+  justify-content: center;
+  gap: 3mm;
+}
+
+.etiqueta {
+  display: grid;
+  width: 50mm;
+  height: 30mm;
+  align-content: space-between;
+  overflow: hidden;
+  padding: 2mm;
+  border: 1px dashed #d1d1d1;
+  color: #171717;
+  font: 7pt Arial, sans-serif;
+}
+
+.etiqueta strong {
+  overflow: hidden;
+  font-size: 8pt;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etiqueta span,
+.etiqueta small {
+  overflow: hidden;
+  font-size: 6pt;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.etiqueta svg {
+  width: 100%;
+  height: 12mm;
+}
+
+.etiquetaIndividual {
+  grid-template-columns: 50mm;
+}
+
+.etiquetaIndividual .etiqueta {
+  border: 0;
+}
+
+@page a4 {
+  size: A4 portrait;
+  margin: 5mm;
+}
+
+@page etiqueta {
+  size: 50mm 30mm;
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .filaSeleccion {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .filaSeleccion input[type='number'] {
+    grid-column: 2;
+  }
+}
+
+@media print {
+  :global(body) {
+    background: #fff;
+  }
+
+  .ocultoImpresion {
+    display: none !important;
+  }
+
+  .laminaA4 {
+    page: a4;
+    grid-template-columns: repeat(3, 50mm);
+    justify-content: start;
+    gap: 2mm;
+  }
+
+  .etiquetaIndividual {
+    page: etiqueta;
+    grid-template-columns: 50mm;
+    gap: 0;
+  }
+
+  .etiqueta {
+    break-inside: avoid;
+    border: 0;
+  }
+}

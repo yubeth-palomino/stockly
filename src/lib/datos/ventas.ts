@@ -77,11 +77,14 @@ export async function registrarVenta(
   });
 }
 
-export async function listarVentas(filtros: {
-  referencia?: string;
-  desde?: string;
-  hasta?: string;
-}): Promise<FilaVenta[]> {
+async function consultarVentas(
+  filtros: {
+    referencia?: string;
+    desde?: string;
+    hasta?: string;
+  },
+  limitar: boolean,
+): Promise<FilaVenta[]> {
   const condiciones: string[] = [];
   const valores: Array<string | number> = [];
 
@@ -97,7 +100,7 @@ export async function listarVentas(filtros: {
     valores.push(filtros.hasta);
     condiciones.push(`v.fecha_venta <= $${valores.length}`);
   }
-  valores.push(LIMITE_LISTADO);
+  if (limitar) valores.push(LIMITE_LISTADO);
 
   return consultar<FilaVenta>(
     `SELECT v.id, v.producto_id AS "productoId", v.usuario_id AS "usuarioId",
@@ -107,7 +110,23 @@ export async function listarVentas(filtros: {
      LEFT JOIN usuarios u ON u.id = v.usuario_id
      ${condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : ''}
      ORDER BY v.fecha_venta DESC, v.id DESC
-     LIMIT $${valores.length}`,
+     ${limitar ? `LIMIT $${valores.length}` : ''}`,
     valores,
   );
+}
+
+export async function listarVentas(filtros: {
+  referencia?: string;
+  desde?: string;
+  hasta?: string;
+}): Promise<FilaVenta[]> {
+  return consultarVentas(filtros, true);
+}
+
+export async function exportarVentas(filtros: {
+  referencia?: string;
+  desde?: string;
+  hasta?: string;
+}): Promise<FilaVenta[]> {
+  return consultarVentas(filtros, false);
 }

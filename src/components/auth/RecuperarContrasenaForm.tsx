@@ -50,6 +50,9 @@ export function RecuperarContrasenaForm() {
       </section>
       <section className={styles.formPanel}>
         <div className={styles.formContent}>
+          <Link className={styles.brand} href="/" aria-label="Stockly, inicio">
+            <span className={styles.brandMark}>S</span><span>Stockly</span>
+          </Link>
           <p className={styles.formKicker}>RECUPERACIÓN DE CUENTA</p>
           <h2>Restablece tu contraseña</h2>
           <p className={styles.formIntro}>Escribe el correo asociado a tu cuenta de Stockly.</p>
@@ -69,7 +72,12 @@ export function RecuperarContrasenaForm() {
             </div>
             {error && <p className={styles.authError} role="alert">{error}</p>}
             {mensaje && <p className={styles.recoveryMessage} role="status">{mensaje}</p>}
-            <button className={styles.submitButton} type="submit" disabled={procesando}>
+            <button
+              aria-busy={procesando}
+              className={styles.submitButton}
+              type="submit"
+              disabled={procesando}
+            >
               {procesando ? 'Enviando…' : 'Enviar enlace'}
             </button>
             <Link className={styles.backToLogin} href="/login">Volver a iniciar sesión</Link>

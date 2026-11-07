@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { Aviso } from '@/components/ui/Aviso';
 import { Boton } from '@/components/ui/Boton';
@@ -28,6 +28,10 @@ export function FormularioVenta() {
   const [resultado, setResultado] = useState('');
   const [agotado, setAgotado] = useState(false);
   const [reintentos, setReintentos] = useState(0);
+  const alEscanear = useCallback((productoEscaneado: ProductoSeleccionado | null) => {
+    setProducto(productoEscaneado);
+    setCantidad(productoEscaneado ? '1' : '');
+  }, []);
 
   const unidades = Number(cantidad);
   const cantidadValida = Number.isInteger(unidades) && unidades > 0;
@@ -106,6 +110,7 @@ export function FormularioVenta() {
         producto={producto}
         alSeleccionar={setProducto}
         reintentos={reintentos}
+        alEscanear={alEscanear}
       />
       <Campo
         etiqueta="Cantidad"

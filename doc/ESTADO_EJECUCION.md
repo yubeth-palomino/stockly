@@ -208,3 +208,13 @@ DEMO-008    34     0         No
 - **Corrección verificada:** el detalle de movimientos de un trabajador consultaba eventos de todos los usuarios mediante la conexión directa `pg`. Ahora la ruta entrega el ID autenticado y el servicio filtra los eventos por `usuario_id`; la prueba de regresión pasa.
 - **Artefactos pendientes de validación:** se prepararon migraciones de RLS/RPC e invariantes SQL, pero no se aplicaron. `npx supabase@latest db lint --local` no pudo conectar a `127.0.0.1:54322` (`ECONNREFUSED`); no se ejecutaron invariantes, pruebas RPC, E2E ni Advisors.
 - **Verificación actual:** `npm test` pasó 35 archivos/135 pruebas; `npm run lint`, `npm run build` y `npm run type-check` terminaron correctamente con URLs locales. Las operaciones de la aplicación aún usan escrituras SQL directas; la integración RPC y la aceptación completa permanecen pendientes. Estado: NO LISTO.
+
+### Mejoras de interfaz, evolución, códigos de barras e inventario · avance 2026-11-07
+
+- **Login y recuperación:** tema camel/beige, visibilidad de contraseña y estados accesibles; autenticación sin cambios. Browser local a 360/390/768/1024/1440 px en login y recuperación: sin scroll horizontal, botones de 52 px.
+- **Evolución y etiquetas:** KPIs, series y desglose consultados/agregados en servidor; EAN-13 interno, lector/cámara cuando está disponible y etiquetas imprimibles. Tests unitarios para KPIs y verificación EAN.
+- **Stock mínimo y Kardex:** dueño puede configurar el umbral; panel, badge de navegación y resaltado en inventario; historial con fecha/tipo y exportación CSV. Las rutas restringen los eventos del trabajador a los propios.
+- **Exportaciones:** inventario y ventas CSV conservan filtros; el costo de compra solo aparece para el dueño. Se protegen celdas que podrían interpretarse como fórmulas.
+- **Pruebas locales:** `npm run build`, `npm run type-check`, `npm run lint`, `git diff --check` correctos; `npm test`: 41 archivos, 153 pruebas aprobadas. Vitest emite la advertencia preexistente de `configLoader: 'native'`.
+- **No verificado:** no hay PostgreSQL/Supabase local disponible (la URL de prueba es `127.0.0.1`; conexión local rechazada en intento previo). Migraciones, scripts de relleno, invariantes, consultas KPI frente a SQL manual, RPC, roles reales, Security/Performance Advisors y pantallas autenticadas responsive no se ejecutaron. No se conectó ni modificó producción.
+- **Pendientes:** importación CSV con vista previa; fotos/Storage; conteo físico; cierre diario; filtros avanzados; análisis ABC/rotación; pulido integral/PWA. D1–D3 se consideran implementación parcial hasta probar migraciones y datos aislados. No declarar listo para producción.

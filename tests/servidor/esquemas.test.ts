@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   esquemaEntradaProducto,
   esquemaFiltrosInventario,
+  esquemaFiltrosKardex,
   esquemaFiltrosVentas,
   esquemaUsuario,
 } from '@/lib/validacion/esquemas';
@@ -62,5 +63,21 @@ describe('esquemas de servidor', () => {
     expect(
       esquemaFiltrosVentas.safeParse({ desde: '2030-06-16', hasta: '2030-06-15' }).success,
     ).toBe(false);
+  });
+
+  it('valida filtros de Kardex y rechaza rangos invertidos', () => {
+    expect(esquemaFiltrosKardex.parse({
+      desde: '2030-06-01',
+      hasta: '2030-06-15',
+      tipo: 'ENTRADA_REGISTRADA',
+    })).toEqual({
+      desde: '2030-06-01',
+      hasta: '2030-06-15',
+      tipo: 'ENTRADA_REGISTRADA',
+    });
+    expect(esquemaFiltrosKardex.safeParse({
+      desde: '2030-06-16',
+      hasta: '2030-06-15',
+    }).success).toBe(false);
   });
 });

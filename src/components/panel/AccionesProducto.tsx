@@ -22,6 +22,7 @@ export function AccionesProducto({
   descripcionInicial,
   precioVentaInicial,
   precioCompraInicial,
+  stockMinimoInicial,
 }: {
   id: string;
   rol: Rol;
@@ -30,6 +31,7 @@ export function AccionesProducto({
   descripcionInicial: string;
   precioVentaInicial: number;
   precioCompraInicial: number | null;
+  stockMinimoInicial: number | null;
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -38,6 +40,9 @@ export function AccionesProducto({
   const [precioVenta, setPrecioVenta] = useState(String(precioVentaInicial));
   const [precioCompra, setPrecioCompra] = useState(
     precioCompraInicial === null ? '' : String(precioCompraInicial),
+  );
+  const [stockMinimo, setStockMinimo] = useState(
+    stockMinimoInicial === null ? '' : String(stockMinimoInicial),
   );
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +57,9 @@ export function AccionesProducto({
       precioVenta: Number(precioVenta),
       ...(rol === 'dueno' && precioCompra.trim()
         ? { precioCompra: Number(precioCompra) }
+        : {}),
+      ...(rol === 'dueno' && stockMinimo.trim()
+        ? { stockMinimo: Number(stockMinimo) }
         : {}),
     });
     if (!parsed.success) {
@@ -165,6 +173,16 @@ export function AccionesProducto({
                 setPrecioCompra(evento.target.value);
                 validarPrecios(evento.target.value, precioVenta);
               }}
+            />
+          )}
+          {rol === 'dueno' && (
+            <Campo
+              etiqueta="Stock mínimo"
+              type="number"
+              min="0"
+              step="1"
+              value={stockMinimo}
+              onChange={(evento) => setStockMinimo(evento.target.value)}
             />
           )}
           {error && <p className={styles.errorFormulario} role="alert">{error}</p>}

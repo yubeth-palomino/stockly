@@ -22,11 +22,19 @@ export default async function InventarioPage({ searchParams }: Props) {
   const parsed = esquemaFiltrosInventario.parse(parametros);
   const filtros = {
     ...(parsed.referencia !== undefined ? { referencia: parsed.referencia } : {}),
+    ...(parsed.codigoBarras !== undefined ? { codigoBarras: parsed.codigoBarras } : {}),
     ...(parsed.marca !== undefined ? { marca: parsed.marca } : {}),
     ...(parsed.talla !== undefined ? { talla: parsed.talla } : {}),
     ...(parsed.soloDisponibles !== undefined ? { soloDisponibles: parsed.soloDisponibles } : {}),
   };
   const productos = await listarInventario(filtros, usuario.rol);
+  const exportParams = new URLSearchParams();
+  if (filtros.referencia) exportParams.set('referencia', filtros.referencia);
+  if (filtros.codigoBarras) exportParams.set('codigoBarras', filtros.codigoBarras);
+  if (filtros.marca) exportParams.set('marca', filtros.marca);
+  if (filtros.talla) exportParams.set('talla', filtros.talla);
+  if (filtros.soloDisponibles) exportParams.set('soloDisponibles', 'true');
+  const exportQuery = exportParams.toString();
 
   return (
     <>
@@ -36,9 +44,14 @@ export default async function InventarioPage({ searchParams }: Props) {
           <h1 className={styles.titulo}>Inventario</h1>
           <p className={styles.descripcion}>Busca productos y consulta su disponibilidad actual.</p>
         </div>
-        <Link className={styles.botonEnlace} href="/panel/inventario/nuevo">
-          Registrar entrada
-        </Link>
+        <div className={styles.accionesPagina}>
+          <Link className={styles.botonEnlace} href={`/api/panel/inventario/exportar${exportQuery ? `?${exportQuery}` : ''}`}>
+            Exportar CSV
+          </Link>
+          <Link className={styles.botonEnlace} href="/panel/inventario/nuevo">
+            Registrar entrada
+          </Link>
+        </div>
       </header>
       <FiltrosInventario filtros={filtros} />
       {productos.length === 0 ? (

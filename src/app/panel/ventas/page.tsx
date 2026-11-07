@@ -22,6 +22,11 @@ export default async function VentasPage({ searchParams }: Props) {
     ...(parsed.hasta !== undefined ? { hasta: parsed.hasta } : {}),
   };
   const ventas = await listarVentas(filtros);
+  const exportParams = new URLSearchParams();
+  if (filtros.referencia) exportParams.set('referencia', filtros.referencia);
+  if (filtros.desde) exportParams.set('desde', filtros.desde);
+  if (filtros.hasta) exportParams.set('hasta', filtros.hasta);
+  const exportQuery = exportParams.toString();
 
   return (
     <>
@@ -31,7 +36,12 @@ export default async function VentasPage({ searchParams }: Props) {
           <h1 className={styles.titulo}>Ventas</h1>
           <p className={styles.descripcion}>Historial de ventas registradas, de la más reciente a la más antigua.</p>
         </div>
-        <Link className={styles.botonEnlace} href="/panel/ventas/nueva">Registrar venta</Link>
+        <div className={styles.accionesPagina}>
+          <Link className={styles.botonEnlace} href={`/api/panel/ventas/exportar${exportQuery ? `?${exportQuery}` : ''}`}>
+            Exportar CSV
+          </Link>
+          <Link className={styles.botonEnlace} href="/panel/ventas/nueva">Registrar venta</Link>
+        </div>
       </header>
       <FiltrosVentas filtros={filtros} />
       {ventas.length === 0 ? (

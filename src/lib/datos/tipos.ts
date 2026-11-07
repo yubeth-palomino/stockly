@@ -35,6 +35,7 @@ export type CambiosProducto = {
   descripcion?: string;
   precioVenta?: number;
   precioCompra?: number;
+  stockMinimo?: number;
 };
 
 export type FilaProducto = {
@@ -48,6 +49,8 @@ export type FilaProducto = {
   fechaEntrada: string;
   activo: boolean;
   disponible: boolean;
+  codigoBarras?: string | null;
+  stockMinimo?: number | null;
   precioCompra?: number | null;
 };
 
@@ -72,9 +75,16 @@ export type FilaVenta = {
 
 export type DetalleProducto = FilaProducto & {
   eventos: FilaEvento[];
+  tiposEventos: string[];
   ventas: FilaVenta[];
   inversion?: number | null;
   gananciaPotencial?: number | null;
+};
+
+export type FiltrosKardex = {
+  desde?: string | undefined;
+  hasta?: string | undefined;
+  tipo?: string | undefined;
 };
 
 export type FilaUsuario = {
@@ -96,8 +106,11 @@ export type ResumenPanel = {
   productosActivos: number;
   unidadesDisponibles: number;
   productosAgotados: number;
+  productosPorReponer: number;
+  stockMinimoConfigurado: boolean;
   ventasHoy: number;
   listaAgotados: FilaProducto[];
+  listaPorReponer: FilaProducto[];
   inversionTotal: number | null;
   gananciaPotencialTotal: number | null;
   gananciaRealizadaTotal: number | null;

@@ -11,6 +11,7 @@ async function obtenerProductos(request: Request) {
   const parsed = esquemaFiltrosInventario.parse(parametros);
   const filtros = {
     ...(parsed.referencia !== undefined ? { referencia: parsed.referencia } : {}),
+    ...(parsed.codigoBarras !== undefined ? { codigoBarras: parsed.codigoBarras } : {}),
     ...(parsed.marca !== undefined ? { marca: parsed.marca } : {}),
     ...(parsed.talla !== undefined ? { talla: parsed.talla } : {}),
     ...(parsed.soloDisponibles !== undefined ? { soloDisponibles: parsed.soloDisponibles } : {}),

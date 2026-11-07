@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { obtenerUsuario } from '@/lib/auth/sesion';
+import { contarProductosPorReponer } from '@/lib/dataService';
 import { Aviso } from '@/components/ui/Aviso';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 import { NavegacionPanel } from '@/components/panel/NavegacionPanel';
@@ -11,9 +12,14 @@ export const dynamic = 'force-dynamic';
 export default async function PanelLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const usuario = await obtenerUsuario();
   if (usuario) {
+    const productosPorReponer = await contarProductosPorReponer();
     return (
       <>
-        <NavegacionPanel rol={usuario.rol} nombre={usuario.nombre} />
+        <NavegacionPanel
+          rol={usuario.rol}
+          nombre={usuario.nombre}
+          productosPorReponer={productosPorReponer}
+        />
         <main className={styles.contenido}>{children}</main>
       </>
     );

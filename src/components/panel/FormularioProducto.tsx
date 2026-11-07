@@ -7,11 +7,13 @@ import { z } from 'zod';
 import { Aviso } from '@/components/ui/Aviso';
 import { Boton } from '@/components/ui/Boton';
 import { Campo } from '@/components/ui/Campo';
+import { EscanerCamara } from '@/components/panel/EscanerCamara';
 import { leerRespuestaApi } from '@/lib/http/cliente';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import { normalizarReferencia, normalizarTalla } from '@/lib/reglas/producto';
 import { ErrorDeNegocio } from '@/lib/reglas/errores';
 import { validarPrecioCompra } from '@/lib/reglas/economia';
+import { validarCodigoBarras } from '@/lib/reglas/codigoBarras';
 import type { Rol } from '@/lib/reglas/roles';
 import { esquemaEntradaProducto } from '@/lib/validacion/esquemas';
 import styles from './panel.module.css';
@@ -22,6 +24,11 @@ const esquemaProductoEncontrado = z.array(
     referencia: z.string(),
     talla: z.string(),
     cantidad: z.number().int(),
+    marca: z.string(),
+    descripcion: z.string(),
+    precioVenta: z.number().int(),
+    precioCompra: z.number().int().nullable().optional(),
+    codigoBarras: z.string().nullable().optional(),
   }),
 );
 const esquemaResultadoEntrada = z.object({
@@ -37,6 +44,7 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
   const [marca, setMarca] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [talla, setTalla] = useState('');
+  const [codigoBarras, setCodigoBarras] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
@@ -54,26 +62,42 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
   >(null);
 
   useEffect(() => {
-    if (!referencia.trim() || !talla.trim()) return;
+    const codigoListo = codigoBarras.length === 13 && validarCodigoBarras(codigoBarras);
+    if (codigoBarras.length > 0 && !codigoListo) return;
+    if (!codigoListo && (!referencia.trim() || !talla.trim())) return;
 
     const controlador = new AbortController();
     const temporizador = window.setTimeout(async () => {
       setCargandoExistencia(true);
       setErrorExistencia('');
-      const parametros = new URLSearchParams({ referencia, talla });
+      const parametros = codigoListo
+        ? new URLSearchParams({ codigoBarras })
+        : new URLSearchParams({ referencia, talla });
       try {
         const response = await fetch(`/api/panel/productos?${parametros}`, {
           signal: controlador.signal,
         });
         const productos = await leerRespuestaApi(response, esquemaProductoEncontrado);
-        const existente = productos.find(
-          (producto) =>
-            normalizarReferencia(producto.referencia) === normalizarReferencia(referencia) &&
-            normalizarTalla(producto.talla) === normalizarTalla(talla),
-        );
+        const existente = productos.find((producto) => codigoListo
+          ? producto.codigoBarras === codigoBarras
+          : normalizarReferencia(producto.referencia) === normalizarReferencia(referencia) &&
+            normalizarTalla(producto.talla) === normalizarTalla(talla));
         setProductoExistente(
           existente ? { id: existente.id, cantidad: existente.cantidad } : null,
         );
+        if (codigoListo && existente) {
+          setReferencia(existente.referencia);
+          setTalla(existente.talla);
+          setMarca(existente.marca);
+          setDescripcion(existente.descripcion);
+          setPrecioVenta(String(existente.precioVenta));
+          if (rol === 'dueno' && existente.precioCompra != null) {
+            setPrecioCompra(String(existente.precioCompra));
+          }
+          setCodigoBarras('');
+        } else if (codigoListo) {
+          setErrorExistencia('No existe una prenda con ese código de barras.');
+        }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setProductoExistente(null);
@@ -88,7 +112,7 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
       window.clearTimeout(temporizador);
       controlador.abort();
     };
-  }, [referencia, talla]);
+  }, [codigoBarras, referencia, rol, talla]);
 
   function validarCampo(campo: string, valor: string | number) {
     const borrador = {
@@ -238,6 +262,28 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
       )}
       {errores.general && <Aviso tipo="error">{errores.general}</Aviso>}
       <form className={styles.formularioPanel} onSubmit={enviar} noValidate>
+        <Campo
+          etiqueta="Escanear código para buscar una prenda existente"
+          value={codigoBarras}
+          onChange={(evento) => {
+            const codigo = evento.target.value.replace(/\D/g, '').slice(0, 13);
+            setCodigoBarras(codigo);
+            setErrorExistencia(
+              codigo.length === 13 && !validarCodigoBarras(codigo)
+                ? 'El código EAN-13 escaneado no es válido.'
+                : '',
+            );
+          }}
+          autoComplete="off"
+          inputMode="numeric"
+          autoFocus
+        />
+        <EscanerCamara
+          alLeer={(codigo) => {
+            setCodigoBarras(codigo);
+            setErrorExistencia('');
+          }}
+        />
         <Campo
           etiqueta="Referencia"
           value={referencia}

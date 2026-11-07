@@ -67,6 +67,42 @@ export default async function PanelPage() {
         </p>
       )}
 
+      {resumen.stockMinimoConfigurado && (
+        <section className={styles.seccionResumen} aria-labelledby="reponer-titulo">
+          <div className={styles.encabezadoSeccion}>
+            <div>
+              <h2 id="reponer-titulo">Por reponer ({formatearCantidad(resumen.productosPorReponer)})</h2>
+              <p>Productos agotados o en su umbral mínimo de existencias.</p>
+            </div>
+            <Link className={styles.enlaceTexto} href="/panel/inventario">
+              Ver inventario
+            </Link>
+          </div>
+          {resumen.listaPorReponer.length === 0 ? (
+            <EstadoVacio titulo="No hay productos por reponer">
+              Todo tu inventario está por encima de su stock mínimo.
+            </EstadoVacio>
+          ) : (
+            <div className={styles.listaAgotados}>
+              {resumen.listaPorReponer.map((producto) => (
+                <article className={styles.filaAgotado} key={producto.id}>
+                  <strong>{producto.referencia}</strong>
+                  <span className={styles.textoSuave}>
+                    {producto.marca} · Talla {producto.talla}
+                  </span>
+                  <span className={styles.textoSuave}>
+                    {formatearCantidad(producto.cantidad)} / mínimo {formatearCantidad(producto.stockMinimo ?? 0)}
+                  </span>
+                  <Link className={styles.enlaceTexto} href={`/panel/inventario/${producto.id}`}>
+                    Ver detalle
+                  </Link>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       <section className={styles.seccionResumen} aria-labelledby="agotados-titulo">
         <div className={styles.encabezadoSeccion}>
           <div>
@@ -116,6 +152,13 @@ export default async function PanelPage() {
           <span>
             <strong>Registrar venta</strong>
             <small>Registra una salida de productos.</small>
+          </span>
+          <span aria-hidden="true">→</span>
+        </Link>
+        <Link className={styles.accesoRapido} href="/panel/evolucion">
+          <span>
+            <strong>Evolución de ventas</strong>
+            <small>Consulta ingresos, unidades y rotación.</small>
           </span>
           <span aria-hidden="true">→</span>
         </Link>

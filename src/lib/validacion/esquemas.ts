@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ROLES } from '@/lib/config/stockly';
 import { esFechaValida } from '@/lib/reglas/fechas';
+import { validarCodigoBarras } from '@/lib/reglas/codigoBarras';
 
 const texto = (minimo: number, maximo: number) =>
   z
@@ -38,6 +39,7 @@ const camposCambiosProducto = z.object({
   descripcion: texto(2, 200).optional(),
   precioVenta: enteroPositivo('El precio de venta').optional(),
   precioCompra: enteroPositivo('El precio de compra').optional(),
+  stockMinimo: z.number().int().min(0).max(2_147_483_647).optional(),
 });
 
 function tieneCambios(cambios: Record<string, unknown>): boolean {
@@ -49,7 +51,7 @@ export const esquemaCambiosProducto = camposCambiosProducto.refine(tieneCambios,
 });
 
 export const esquemaCambiosProductoTrabajador = camposCambiosProducto
-  .omit({ precioCompra: true })
+  .omit({ precioCompra: true, stockMinimo: true })
   .refine(tieneCambios, {
     message: 'Debe indicar al menos un campo para actualizar.',
   });
@@ -156,6 +158,9 @@ export const esquemaVentaComercial = z
 
 export const esquemaFiltrosInventario = z.object({
   referencia: texto(1, 60).optional(),
+  codigoBarras: z.string().trim().refine(validarCodigoBarras, {
+    message: 'El código EAN-13 no es válido.',
+  }).optional(),
   marca: texto(1, 80).optional(),
   talla: texto(1, 20).optional(),
   soloDisponibles: z.preprocess(
@@ -207,9 +212,45 @@ export const esquemaFiltrosVentas = z
     { message: 'La fecha inicial no puede ser posterior a la fecha final.' },
   );
 
+export const esquemaFiltrosKardex = z
+  .object({
+    desde: fecha.optional(),
+    hasta: fecha.optional(),
+    tipo: texto(1, 60).optional(),
+  })
+  .refine(
+    (filtros) =>
+      filtros.desde === undefined || filtros.hasta === undefined || filtros.desde <= filtros.hasta,
+    { message: 'La fecha inicial no puede ser posterior a la fecha final.' },
+  );
+
 export const esquemaFiltrosEconomia = z.object({
   marca: texto(1, 80).optional(),
 });
+
+export const esquemaFiltrosEvolucion = z
+  .object({
+    rango: z.enum(['hoy', '7dias', '30dias', 'mes', 'personalizado']).default('30dias'),
+    agrupacion: z.enum(['dia', 'semana', 'mes']).default('dia'),
+    desde: fecha.optional(),
+    hasta: fecha.optional(),
+  })
+  .superRefine((filtros, contexto) => {
+    if (filtros.rango === 'personalizado' && (!filtros.desde || !filtros.hasta)) {
+      contexto.addIssue({
+        code: 'custom',
+        message: 'Selecciona la fecha inicial y final del rango personalizado.',
+        path: ['desde'],
+      });
+    }
+    if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) {
+      contexto.addIssue({
+        code: 'custom',
+        message: 'La fecha inicial no puede ser posterior a la fecha final.',
+        path: ['hasta'],
+      });
+    }
+  });
 
 export type EntradaProducto = z.infer<typeof esquemaEntradaProducto>;
 export type CambiosProductoValidos = z.infer<typeof esquemaCambiosProducto>;
@@ -223,3 +264,4 @@ export type UsuarioValido = z.infer<typeof esquemaUsuario>;
 export type CambiosUsuarioValidos = z.infer<typeof esquemaCambiosUsuario>;
 export type FiltrosVentasValidos = z.infer<typeof esquemaFiltrosVentas>;
 export type FiltrosEconomiaValidos = z.infer<typeof esquemaFiltrosEconomia>;
+export type FiltrosEvolucionValidos = z.infer<typeof esquemaFiltrosEvolucion>;

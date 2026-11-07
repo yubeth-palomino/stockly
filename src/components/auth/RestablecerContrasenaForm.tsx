@@ -9,6 +9,7 @@ export function RestablecerContrasenaForm({ token }: { token: string | null }) {
   const router = useRouter();
   const [contrasena, setContrasena] = useState('');
   const [confirmacion, setConfirmacion] = useState('');
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [error, setError] = useState('');
   const [procesando, setProcesando] = useState(false);
 
@@ -63,6 +64,9 @@ export function RestablecerContrasenaForm({ token }: { token: string | null }) {
       </section>
       <section className={styles.formPanel}>
         <div className={styles.formContent}>
+          <Link className={styles.brand} href="/" aria-label="Stockly, inicio">
+            <span className={styles.brandMark}>S</span><span>Stockly</span>
+          </Link>
           <p className={styles.formKicker}>RECUPERACIÓN DE CUENTA</p>
           <h2>Crea una contraseña nueva</h2>
           <p className={styles.formIntro}>El enlace es válido durante 30 minutos y solo se puede usar una vez.</p>
@@ -75,14 +79,32 @@ export function RestablecerContrasenaForm({ token }: { token: string | null }) {
             <form className={styles.form} onSubmit={guardarContrasena}>
               <div className={styles.field}>
                 <label htmlFor="nueva-contrasena">Nueva contraseña</label>
-                <input autoComplete="new-password" id="nueva-contrasena" minLength={8} onChange={(evento) => setContrasena(evento.target.value)} required type="password" value={contrasena} />
+                <div className={styles.passwordInput}>
+                  <input autoComplete="new-password" id="nueva-contrasena" minLength={8} onChange={(evento) => setContrasena(evento.target.value)} required type={mostrarContrasena ? 'text' : 'password'} value={contrasena} />
+                  <button
+                    aria-label={mostrarContrasena ? 'Ocultar contraseñas' : 'Mostrar contraseñas'}
+                    aria-pressed={mostrarContrasena}
+                    className={styles.passwordToggle}
+                    onClick={() => setMostrarContrasena((visible) => !visible)}
+                    type="button"
+                  >
+                    {mostrarContrasena ? 'Ocultar' : 'Mostrar'}
+                  </button>
+                </div>
               </div>
               <div className={styles.field}>
                 <label htmlFor="confirmacion-contrasena">Confirmar contraseña</label>
-                <input autoComplete="new-password" id="confirmacion-contrasena" minLength={8} onChange={(evento) => setConfirmacion(evento.target.value)} required type="password" value={confirmacion} />
+                <div className={styles.passwordInput}>
+                  <input autoComplete="new-password" id="confirmacion-contrasena" minLength={8} onChange={(evento) => setConfirmacion(evento.target.value)} required type={mostrarContrasena ? 'text' : 'password'} value={confirmacion} />
+                </div>
               </div>
               {error && <p className={styles.authError} role="alert">{error}</p>}
-              <button className={styles.submitButton} type="submit" disabled={procesando}>
+              <button
+                aria-busy={procesando}
+                className={styles.submitButton}
+                type="submit"
+                disabled={procesando}
+              >
                 {procesando ? 'Guardando…' : 'Guardar contraseña'}
               </button>
               <Link className={styles.backToLogin} href="/login">Volver a iniciar sesión</Link>

@@ -1,0 +1,322 @@
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie);
+}
+
+.filtros label {
+  display: grid;
+  min-width: 145px;
+  flex: 1;
+  gap: 6px;
+  color: var(--color-texto);
+  font: 13px Arial, sans-serif;
+}
+
+.filtros select,
+.filtros input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-borde);
+  border-radius: 7px;
+  color: var(--color-texto);
+  background: #fff;
+  font: 14px Arial, sans-serif;
+}
+
+.filtros button {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--color-primario);
+  font: 700 14px Arial, sans-serif;
+}
+
+.rangoTexto,
+.nota {
+  color: var(--color-texto-suave);
+  font: 13px/1.5 Arial, sans-serif;
+}
+
+.kpis,
+.kpisEconomicos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.kpis article,
+.kpisEconomicos article {
+  display: grid;
+  min-width: 0;
+  min-height: 105px;
+  align-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  background: var(--color-superficie);
+}
+
+.kpis article span,
+.kpisEconomicos article span {
+  color: var(--color-texto-suave);
+  font: 13px/1.4 Arial, sans-serif;
+}
+
+.kpis article strong,
+.kpisEconomicos article strong {
+  overflow-wrap: anywhere;
+  color: var(--color-texto);
+  font-size: clamp(18px, 2vw, 24px);
+  font-variant-numeric: tabular-nums;
+}
+
+.graficos,
+.seccion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.tarjeta {
+  min-width: 0;
+  margin: 16px 0;
+  padding: clamp(16px, 2.5vw, 24px);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  background: var(--color-superficie);
+}
+
+.seccion > .tarjeta {
+  margin: 0;
+}
+
+.tarjeta h2 {
+  margin: 0 0 12px;
+  color: var(--color-texto);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.tarjeta p {
+  color: var(--color-texto-suave);
+  line-height: 1.55;
+}
+
+.encabezadoTarjeta {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.encabezadoTarjeta h2 {
+  margin-bottom: 5px;
+}
+
+.encabezadoTarjeta p {
+  margin: 0;
+  font: 13px/1.5 Arial, sans-serif;
+}
+
+.encabezadoTarjeta > strong {
+  color: var(--color-texto);
+  font-size: 18px;
+  text-align: right;
+}
+
+.graficoContenedor {
+  width: 100%;
+  overflow: hidden;
+}
+
+.grafico {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grafico text {
+  fill: var(--color-texto-suave);
+  font: 11px Arial, sans-serif;
+}
+
+.vacio {
+  padding: 20px 0;
+  color: var(--color-texto-suave);
+  font: 14px/1.5 Arial, sans-serif;
+}
+
+.barras {
+  display: flex;
+  min-height: 240px;
+  align-items: end;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 18px 0 2px;
+}
+
+.columnaBarra {
+  display: grid;
+  min-width: 28px;
+  height: 190px;
+  flex: 1 0 28px;
+  grid-template-rows: 18px 1fr 30px;
+  justify-items: center;
+  gap: 5px;
+}
+
+.valorBarra,
+.etiquetaBarra {
+  color: var(--color-texto-suave);
+  font: 10px Arial, sans-serif;
+  white-space: nowrap;
+}
+
+.barra {
+  width: min(100%, 26px);
+  align-self: end;
+  border-radius: 4px 4px 0 0;
+  background: var(--auth-camel, #c19a6b);
+}
+
+.etiquetaBarra {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tablaContenedor {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tablaContenedor table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 13px Arial, sans-serif;
+  text-align: left;
+}
+
+.tablaContenedor th,
+.tablaContenedor td {
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--color-borde);
+  white-space: nowrap;
+}
+
+.tablaContenedor th {
+  color: var(--color-texto-suave);
+  font-size: 12px;
+}
+
+.tablaContenedor td:first-child {
+  white-space: normal;
+}
+
+.tablaContenedor td strong,
+.tablaContenedor td small {
+  display: block;
+}
+
+.tablaContenedor td small {
+  margin-top: 3px;
+  color: var(--color-texto-suave);
+}
+
+.listaCategorias {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listaCategorias li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-borde);
+  font: 14px Arial, sans-serif;
+}
+
+.listaCategorias li small {
+  color: var(--color-texto-suave);
+}
+
+.listaCategorias li strong {
+  grid-column: 1 / -1;
+  font-size: 13px;
+}
+
+.tarjeta a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--color-primario);
+}
+
+.comparacion {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--color-borde);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.comparacion summary {
+  min-height: 44px;
+  align-content: center;
+  color: var(--color-texto);
+  font: 700 14px Arial, sans-serif;
+  cursor: pointer;
+}
+
+.comparacion p {
+  overflow-wrap: anywhere;
+  font: 13px/1.5 Arial, sans-serif;
+}
+
+@media (max-width: 760px) {
+  .graficos,
+  .seccion {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filtros label {
+    min-width: min(100%, 160px);
+  }
+}
+
+@media (max-width: 420px) {
+  .filtros {
+    align-items: stretch;
+  }
+
+  .filtros label,
+  .filtros button {
+    width: 100%;
+  }
+
+  .encabezadoTarjeta {
+    flex-direction: column;
+  }
+
+  .encabezadoTarjeta > strong {
+    text-align: left;
+  }
+}
