@@ -1,14 +1,18 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { type FormEvent, useState } from 'react';
 import styles from './LoginForm.module.css';
 
 type LoginErrors = { email?: string | undefined; password?: string | undefined };
 
-export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boolean }) {
-  const router = useRouter();
+export function LoginForm({
+  passwordUpdated = false,
+  destino = '/panel',
+}: {
+  passwordUpdated?: boolean;
+  destino?: string;
+}) {
   const [mode, setMode] = useState<'login' | 'recovery'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +53,7 @@ export function LoginForm({ passwordUpdated = false }: { passwordUpdated?: boole
       });
 
       if (response.ok) {
-        router.replace('/panel');
+        window.location.replace(destino);
       } else {
         const result = (await response.json()) as { error?: string };
         setAuthError(result.error ?? 'Correo o contraseña incorrectos');

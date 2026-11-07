@@ -1,21 +1,35 @@
 import { NextResponse } from 'next/server';
+import { consultar } from '@/lib/db/conexion';
 import { createClient } from '@/lib/supabase/server';
+
+type FilaAccesoStockly = {
+  id: string;
+  nombre: string;
+  rol: string;
+};
+
+function respuesta(error: string, status: number) {
+  return NextResponse.json(
+    { error },
+    { status, headers: { 'Cache-Control': 'no-store' } },
+  );
+}
 
 export async function POST(request: Request) {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Solicitud invalida.' }, { status: 400 });
+    return respuesta('Solicitud inválida.', 400);
   }
 
   if (!body || typeof body !== 'object') {
-    return NextResponse.json({ error: 'Correo o contraseña incorrectos.' }, { status: 401 });
+    return respuesta('Correo o contraseña incorrectos.', 401);
   }
 
   const { email, password } = body as Record<string, unknown>;
   if (typeof email !== 'string' || typeof password !== 'string') {
-    return NextResponse.json({ error: 'Correo o contraseña incorrectos.' }, { status: 401 });
+    return respuesta('Correo o contraseña incorrectos.', 401);
   }
 
   const supabase = await createClient();
@@ -24,23 +38,40 @@ export async function POST(request: Request) {
     password,
   });
 
-  if (authError || !authData.user) {
-    return NextResponse.json({ error: 'Correo o contraseña incorrectos.' }, { status: 401 });
+  if (authError || !authData.user || !authData.session) {
+    return respuesta('Correo o contraseña incorrectos.', 401);
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('id, email, full_name, role')
-    .eq('id', authData.user.id)
-    .maybeSingle();
-
-  if (profileError || !profile) {
-    await supabase.auth.signOut({ scope: 'local' });
-    return NextResponse.json(
-      { error: 'No se encontró el perfil en Supabase. Aplica la migración de users y vuelve a intentar.' },
-      { status: 503 },
+  let usuarios: FilaAccesoStockly[];
+  try {
+    usuarios = await consultar<FilaAccesoStockly>(
+      `SELECT id, nombre, rol
+       FROM usuarios
+       WHERE auth_ref = $1 AND activo = true
+       LIMIT 1`,
+      [authData.user.id],
     );
+  } catch (error) {
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+    console.error('No se pudo validar el acceso a Stockly después de autenticar.', error);
+    if (signOutError) {
+      console.error('Tampoco se pudo cerrar la sesión no validada de Supabase.', signOutError);
+    }
+    return respuesta('No se pudo validar el acceso a Stockly. Intenta nuevamente.', 503);
   }
 
-  return NextResponse.json({ user: profile });
+  const usuario = usuarios[0];
+  if (!usuario || (usuario.rol !== 'dueno' && usuario.rol !== 'trabajador')) {
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+    if (signOutError) {
+      console.error('No se pudo cerrar la sesión de una cuenta sin acceso activo a Stockly.', signOutError);
+      return respuesta('No se pudo completar el inicio de sesión. Intenta nuevamente.', 503);
+    }
+    return respuesta('Esta cuenta no tiene acceso activo a Stockly. Contacta al dueño.', 403);
+  }
+
+  return NextResponse.json(
+    { user: usuario },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

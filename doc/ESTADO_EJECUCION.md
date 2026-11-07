@@ -218,3 +218,11 @@ DEMO-008    34     0         No
 - **Pruebas locales:** `npm run build`, `npm run type-check`, `npm run lint`, `git diff --check` correctos; `npm test`: 41 archivos, 153 pruebas aprobadas. Vitest emite la advertencia preexistente de `configLoader: 'native'`.
 - **No verificado:** no hay PostgreSQL/Supabase local disponible (la URL de prueba es `127.0.0.1`; conexión local rechazada en intento previo). Migraciones, scripts de relleno, invariantes, consultas KPI frente a SQL manual, RPC, roles reales, Security/Performance Advisors y pantallas autenticadas responsive no se ejecutaron. No se conectó ni modificó producción.
 - **Pendientes:** importación CSV con vista previa; fotos/Storage; conteo físico; cierre diario; filtros avanzados; análisis ABC/rotación; pulido integral/PWA. D1–D3 se consideran implementación parcial hasta probar migraciones y datos aislados. No declarar listo para producción.
+
+### Corrección del inicio de sesión · 2026-11-07
+
+- **Causa corregida:** el endpoint autenticaba contra Supabase Auth y después exigía un perfil de `public.users` (rol legacy), aunque el acceso real a Stockly depende de `public.usuarios`, `auth_ref`, `activo` y el rol `dueno|trabajador`. Esto podía aceptar una identidad que el panel no reconoce o bloquear una cuenta Stockly válida por faltar el perfil legacy.
+- **Cambio:** login valida una sesión Supabase real y la fila activa en `usuarios`; cuenta ausente/inactiva o rol no válido revoca la sesión y presenta error. Fallo de BD responde 503 y revoca el inicio. Todas las respuestas evitan caché.
+- **Navegación:** tras autenticarse se usa navegación completa del navegador para que la cookie recién emitida sea enviada en la siguiente petición; conserva destinos internos protegidos y rechaza redirecciones externas.
+- **Pruebas focalizadas:** 2 archivos, 8 pruebas aprobadas; incluyen credenciales inválidas, sesión ausente, perfil inactivo/rol incorrecto, fallo BD y destino externo. `npm run lint` y `npm run type-check` correctos.
+- **Límite:** no se probaron credenciales ni se conectó a Supabase real; el acceso real depende de que exista `usuarios.auth_ref = auth.users.id` con `activo = true`. El cambio está en `audit/stockly`; no está desplegado a producción.
