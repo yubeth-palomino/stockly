@@ -162,9 +162,10 @@ pendientes. Esto no es una declaración de sistema completo.
 Se observó en producción autenticada como dueño la carga de Resumen, Ventas y
 Economía, y la lectura de inventario y usuarios. No se enviaron operaciones de
 escritura. La página de Economía en producción mostró $450.000 de ganancia
-realizada calculada con el costo actual; el código local fue corregido para no
-mostrar ese cálculo sin costo histórico por venta. Debe desplegarse antes de
-considerar resuelto el riesgo en producción.
+realizada calculada con el costo actual; el código se corrigió para no mostrar
+ese cálculo sin costo histórico por venta. El commit `b9b9366` se desplegó y la
+página se volvió a cargar: ahora muestra “No disponible” y la explicación del
+alcance no verificado.
 
 La primera corrección local consultó las ventas comerciales con costo histórico,
 pero una revisión de seguridad detectó que el resumen no tenía contexto de
