@@ -3,13 +3,16 @@ import { EstadoVacio } from '@/components/ui/EstadoVacio';
 import { FormularioUsuario } from '@/components/panel/FormularioUsuario';
 import { TablaUsuarios } from '@/components/panel/TablaUsuarios';
 import styles from '@/components/panel/panel.module.css';
-import { exigirDueno } from '@/lib/auth/sesion';
+import { obtenerUsuario } from '@/lib/auth/sesion';
 import { listarUsuarios } from '@/lib/dataService';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsuariosPage() {
-  const duenoActual = await exigirDueno();
+  const duenoActual = await obtenerUsuario();
+  if (!duenoActual) redirect('/login');
+  if (duenoActual.rol !== 'dueno') redirect('/panel');
   const usuarios = await listarUsuarios();
   const duenosActivos = usuarios.filter((usuario) => usuario.rol === 'dueno' && usuario.activo).length;
 

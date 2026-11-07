@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cantidadTrasVenta, validarVenta } from '@/lib/reglas/venta';
+import { cantidadTrasVenta, totalLineaVenta, validarVenta } from '@/lib/reglas/venta';
 import { esperarCodigo } from './ayudas';
 
 const ventaValida = { referencia: 'CAM001', talla: 'M', cantidad: 1 };
@@ -38,5 +38,11 @@ describe('reglas de venta', () => {
 
   it('T-19 rechaza vender si no hay existencias', () => {
     esperarCodigo(() => cantidadTrasVenta(0, 1), 'STOCK_INSUFICIENTE');
+  });
+
+  it('calcula el total de una línea sin perder precisión en montos grandes', () => {
+    expect(totalLineaVenta(2_147_483_647, 2_147_483_647)).toBe(
+      4_611_686_014_132_420_609n,
+    );
   });
 });

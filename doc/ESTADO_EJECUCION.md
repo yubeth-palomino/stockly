@@ -9,11 +9,11 @@
 | P04 Datos | completado | correcto | 80/80 | 2026-10-31 |
 | P05 API | completado | correcto | 84/84 | 2026-10-31 |
 | P06 Interfaz base y resumen | completado | correcto | 84/84 | 2026-10-31 |
-| P07 Inventario | completado | correcto | 95/95 | 2026-11-07 |
-| P08 Entrada de mercancía | completado | correcto | 95/95 | 2026-11-07 |
-| P09 Ventas | completado | correcto | 95/95 | 2026-11-07 |
-| P10 Usuarios y aceptación | completado; aceptación manual pendiente | correcto | 95/95 | 2026-11-07 |
-| P11 Módulo económico (opcional) | completado; aceptación manual pendiente | correcto | 95/95 | 2026-11-07 |
+| P07 Inventario | completado | correcto | 98/98 | 2026-11-07 |
+| P08 Entrada de mercancía | completado | correcto | 98/98 | 2026-11-07 |
+| P09 Ventas | completado | correcto | 98/98 | 2026-11-07 |
+| P10 Usuarios y aceptación | implementación completada; aceptación manual pendiente | correcto | 98/98 | 2026-11-07 |
+| P11 Módulo económico (opcional) | implementación completada; aceptación manual pendiente | correcto | 98/98 | 2026-11-07 |
 
 ## Bitácora
 
@@ -149,3 +149,11 @@ DEMO-008    34     0         No
 - **Verificación local:** `npm run type-check`, `npm test` (26 archivos, 95/95), `npm run lint` y `npm run build` correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; eliminó solo sus datos temporales `PRUEBA` (3 ventas, 10 eventos, 3 productos y 1 usuario).
 - **Aceptación manual pendiente:** A-01 a A-23 permanecen sin resultado ni evidencia; no se verificó la sesión autenticada de trabajador ni la aceptación de ambos roles en Vercel. Completarla antes de declarar aprobada la aceptación de producción.
 - **Aviso:** Vitest conserva la advertencia preexistente de `configLoader: 'native'`; no afecta las pruebas.
+
+### Auditoría integral P00–P11 · 2026-11-07
+
+- **Corrección monetaria:** los totales de línea se calculaban con multiplicación `number`, que puede redondear cuando precio y cantidad son enteros grandes válidos de PostgreSQL. Se agregó `totalLineaVenta()` con `bigint`, se usa en formulario, historial y detalle, y `formatearPesos()` rechaza números fuera del rango entero seguro. Se añadieron pruebas de cálculo exacto y formato.
+- **Acceso a Usuarios:** un trabajador que entraba directamente a `/panel/usuarios` recibía un error de renderizado por la excepción de `exigirDueno()`. Ahora la página lo redirige a `/panel`; la API sigue respondiendo 403 para operaciones de trabajador.
+- **Revisión estática:** rutas `/api/panel/*` llaman el guard correspondiente antes de leer parámetros o datos; los campos económicos se seleccionan por rol y Economía exige dueño; las consultas SQL usan parámetros y las interpolaciones restantes corresponden a fragmentos/columnas controlados por el código. No se encontraron archivos `.env.local` versionados ni valores de credenciales en archivos rastreados.
+- **Verificación actual:** `npm test`: 27 archivos, 98/98 pruebas; `npm run build`, `npm run lint` y `npm run type-check`: correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; limpieza final de solo sus datos temporales.
+- **Alcance pendiente:** A-01 a A-23 siguen sin evidencia de ejecución autenticada en Vercel. P11 también exige como precondición la aceptación diligenciada; su implementación está lista, pero no se declara aceptación completa hasta que se cumpla esa precondición con dueño y trabajador reales.

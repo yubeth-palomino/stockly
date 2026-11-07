@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { BuscadorProducto, type ProductoSeleccionado } from '@/components/panel/BuscadorProducto';
 import { leerRespuestaApi, ErrorRespuestaApi } from '@/lib/http/cliente';
 import { formatearPesos } from '@/lib/formato';
+import { totalLineaVenta } from '@/lib/reglas/venta';
 import { esquemaVenta } from '@/lib/validacion/esquemas';
 import styles from './panel.module.css';
 
@@ -30,7 +31,8 @@ export function FormularioVenta() {
 
   const unidades = Number(cantidad);
   const cantidadValida = Number.isInteger(unidades) && unidades > 0;
-  const total = producto ? producto.precioVenta * unidades : 0;
+  const total =
+    producto && cantidadValida ? totalLineaVenta(producto.precioVenta, unidades) : 0n;
   const cantidadExcedeStock = Boolean(producto && cantidadValida && unidades > producto.cantidad);
   const errorCantidad =
     cantidad !== '' && !cantidadValida

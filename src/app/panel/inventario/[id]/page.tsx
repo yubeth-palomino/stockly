@@ -9,6 +9,7 @@ import { obtenerUsuario } from '@/lib/auth/sesion';
 import { obtenerProducto } from '@/lib/dataService';
 import { formatearCantidad, formatearFecha, formatearPesos } from '@/lib/formato';
 import { ErrorDeNegocio } from '@/lib/reglas/errores';
+import { totalLineaVenta } from '@/lib/reglas/venta';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -101,7 +102,7 @@ export default async function DetalleProductoPage({ params }: Props) {
                     <td>{formatearFecha(venta.fechaVenta)}</td>
                     <td>{formatearCantidad(venta.cantidad)}</td>
                     <td>{formatearPesos(venta.precioVenta)}</td>
-                    <td>{formatearPesos(venta.precioVenta * venta.cantidad)}</td>
+                    <td>{formatearPesos(totalLineaVenta(venta.precioVenta, venta.cantidad))}</td>
                   </tr>
                 ))}
               </tbody>

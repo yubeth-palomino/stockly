@@ -19,3 +19,15 @@ export function cantidadTrasVenta(disponible: number, vendida: number): number {
   }
   return disponible - vendida;
 }
+
+export function totalLineaVenta(precioVenta: number, cantidad: number): bigint {
+  if (
+    !Number.isSafeInteger(precioVenta) ||
+    precioVenta <= 0 ||
+    !Number.isSafeInteger(cantidad) ||
+    cantidad <= 0
+  ) {
+    throw new ErrorDeNegocio('DATOS_INVALIDOS');
+  }
+  return BigInt(precioVenta) * BigInt(cantidad);
+}

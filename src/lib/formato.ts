@@ -13,8 +13,10 @@ const formatoFecha = new Intl.DateTimeFormat('es-CO', {
   timeZone: 'UTC',
 });
 
-export function formatearPesos(valor: number): string {
-  if (!Number.isInteger(valor)) throw new RangeError('El monto debe expresarse en pesos enteros.');
+export function formatearPesos(valor: number | bigint): string {
+  if (typeof valor === 'number' && !Number.isSafeInteger(valor)) {
+    throw new RangeError('El monto debe expresarse como un entero seguro de pesos.');
+  }
   return formatoPesos.format(valor);
 }
 

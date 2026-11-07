@@ -1,5 +1,6 @@
 import type { FilaVenta } from '@/lib/datos/tipos';
 import { formatearCantidad, formatearFecha, formatearPesos } from '@/lib/formato';
+import { totalLineaVenta } from '@/lib/reglas/venta';
 import styles from './panel.module.css';
 
 export function TablaVentas({ ventas }: { ventas: FilaVenta[] }) {
@@ -25,7 +26,7 @@ export function TablaVentas({ ventas }: { ventas: FilaVenta[] }) {
               <td>{venta.talla}</td>
               <td className={styles.numeroTabular}>{formatearCantidad(venta.cantidad)}</td>
               <td>{formatearPesos(venta.precioVenta)}</td>
-              <td>{formatearPesos(venta.precioVenta * venta.cantidad)}</td>
+              <td>{formatearPesos(totalLineaVenta(venta.precioVenta, venta.cantidad))}</td>
               <td>{venta.nombreUsuario ?? 'Usuario no disponible'}</td>
             </tr>
           ))}
@@ -38,7 +39,7 @@ export function TablaVentas({ ventas }: { ventas: FilaVenta[] }) {
             <p>Talla {venta.talla} · {formatearCantidad(venta.cantidad)} unidades</p>
             <dl>
               <div><dt>Precio unitario</dt><dd>{formatearPesos(venta.precioVenta)}</dd></div>
-              <div><dt>Total</dt><dd>{formatearPesos(venta.precioVenta * venta.cantidad)}</dd></div>
+              <div><dt>Total</dt><dd>{formatearPesos(totalLineaVenta(venta.precioVenta, venta.cantidad))}</dd></div>
               <div><dt>Registró</dt><dd>{venta.nombreUsuario ?? 'Usuario no disponible'}</dd></div>
             </dl>
           </article>
