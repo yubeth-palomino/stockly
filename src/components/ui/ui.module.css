@@ -343,6 +343,14 @@
   box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
 }
 
+.boton,
+.campo,
+.insignia,
+.aviso,
+.modal {
+  font-family: var(--fuente-inter), sans-serif;
+}
+
 .insignia_neutro,
 .insignia_inactivo {
   color: var(--color-texto);
@@ -362,6 +370,11 @@
 .insignia_agotado {
   color: var(--color-texto);
   background: var(--color-agotado);
+}
+
+.insignia_advertencia {
+  color: var(--color-texto);
+  background: var(--color-acento);
 }
 
 .insignia_dueno {

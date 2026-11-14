@@ -48,6 +48,7 @@ export function TablaInventario({ productos, rol }: { productos: FilaProducto[];
                 <InsigniaDisponibilidad
                   activo={producto.activo}
                   disponible={producto.disponible}
+                  stockBajo={porReponer}
                 />
               </td>
               <td>
@@ -86,6 +87,7 @@ export function TablaInventario({ productos, rol }: { productos: FilaProducto[];
               <InsigniaDisponibilidad
                 activo={producto.activo}
                 disponible={producto.disponible}
+                stockBajo={porReponer}
               />
             </header>
             <p>{producto.marca} · {producto.descripcion}</p>

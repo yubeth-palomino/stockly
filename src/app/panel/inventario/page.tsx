@@ -45,11 +45,16 @@ export default async function InventarioPage({ searchParams }: Props) {
           <p className={styles.descripcion}>Busca productos y consulta su disponibilidad actual.</p>
         </div>
         <div className={styles.accionesPagina}>
-          <Link className={styles.botonEnlace} href={`/api/panel/inventario/exportar${exportQuery ? `?${exportQuery}` : ''}`}>
+          <Link
+            className={styles.botonEnlace}
+            href={`/api/panel/inventario/exportar${exportQuery ? `?${exportQuery}` : ''}`}
+          >
+            <span aria-hidden="true">↓</span>
             Exportar CSV
           </Link>
           <Link className={styles.botonEnlace} href="/panel/inventario/nuevo">
-            Registrar entrada
+            <span aria-hidden="true">+</span>
+            Agregar producto
           </Link>
         </div>
       </header>
@@ -62,7 +67,8 @@ export default async function InventarioPage({ searchParams }: Props) {
         <>
           {productos.length >= LIMITE_LISTADO && (
             <Aviso tipo="advertencia" titulo="Límite de resultados">
-              Se muestran los primeros {LIMITE_LISTADO} productos. Usa los filtros para acotar la búsqueda.
+              Se muestran los primeros {LIMITE_LISTADO} productos. Usa los filtros para acotar la
+              búsqueda.
             </Aviso>
           )}
           <TablaInventario productos={productos} rol={usuario.rol} />

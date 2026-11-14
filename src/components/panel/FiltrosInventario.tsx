@@ -7,11 +7,7 @@ import { Campo } from '@/components/ui/Campo';
 import type { FiltrosInventarioValidos } from '@/lib/validacion/esquemas';
 import styles from './panel.module.css';
 
-export function FiltrosInventario({
-  filtros,
-}: {
-  filtros: FiltrosInventarioValidos;
-}) {
+export function FiltrosInventario({ filtros }: { filtros: FiltrosInventarioValidos }) {
   const router = useRouter();
   const pathname = usePathname();
   const [referencia, setReferencia] = useState(filtros.referencia ?? '');
@@ -46,9 +42,11 @@ export function FiltrosInventario({
   return (
     <section className={styles.filtros} aria-label="Filtros de inventario">
       <Campo
-        etiqueta="Referencia"
+        etiqueta="Buscar producto"
         value={referencia}
         onChange={(evento) => setReferencia(evento.target.value)}
+        placeholder="Buscar producto..."
+        className={styles.campoBusqueda}
         autoComplete="off"
       />
       <Campo

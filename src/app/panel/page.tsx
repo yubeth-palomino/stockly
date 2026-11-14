@@ -16,48 +16,61 @@ export default async function PanelPage() {
   }
   const resumen = await obtenerResumen(usuario.rol);
 
+  const inversionDisponible =
+    usuario.rol === 'dueno' && MODULO_ECONOMICO_ACTIVO ? resumen.inversionTotal : null;
   const metricas = [
-    { etiqueta: 'Productos activos', valor: formatearCantidad(resumen.productosActivos) },
-    { etiqueta: 'Unidades disponibles', valor: formatearCantidad(resumen.unidadesDisponibles) },
-    { etiqueta: 'Productos agotados', valor: formatearCantidad(resumen.productosAgotados) },
-    { etiqueta: 'Ventas de hoy', valor: formatearCantidad(resumen.ventasHoy) },
+    {
+      etiqueta: 'Total de productos',
+      valor: formatearCantidad(resumen.productosActivos),
+      icono: '📦',
+      nota: 'Referencias activas',
+      tono: 'metricaVerde',
+    },
+    {
+      etiqueta: 'Stock bajo',
+      valor: resumen.stockMinimoConfigurado ? formatearCantidad(resumen.productosPorReponer) : '—',
+      icono: '⚠️',
+      nota: resumen.stockMinimoConfigurado ? 'Productos por reponer' : 'Umbrales sin configurar',
+      tono: 'metricaAmbar',
+    },
+    {
+      etiqueta: inversionDisponible !== null ? 'Valor del inventario' : 'Unidades disponibles',
+      valor:
+        inversionDisponible !== null
+          ? formatearPesos(inversionDisponible)
+          : formatearCantidad(resumen.unidadesDisponibles),
+      icono: inversionDisponible !== null ? '◈' : '▦',
+      nota: inversionDisponible !== null ? 'Inversión en existencias' : 'Unidades en existencias',
+      tono: 'metricaAzul',
+    },
+    {
+      etiqueta: 'Ventas de hoy',
+      valor: formatearCantidad(resumen.ventasHoy),
+      icono: '↗',
+      nota: 'Operaciones registradas',
+      tono: 'metricaRosa',
+    },
   ];
-
-  if (usuario.rol === 'dueno' && MODULO_ECONOMICO_ACTIVO) {
-    if (resumen.inversionTotal !== null) {
-      metricas.push({ etiqueta: 'Inversión total', valor: formatearPesos(resumen.inversionTotal) });
-    }
-    if (resumen.gananciaPotencialTotal !== null) {
-      metricas.push({
-        etiqueta: 'Ganancia potencial',
-        valor: formatearPesos(resumen.gananciaPotencialTotal),
-      });
-    }
-    if (resumen.gananciaRealizadaTotal !== null) {
-      metricas.push({
-        etiqueta: 'Ganancia realizada',
-        valor: formatearPesos(resumen.gananciaRealizadaTotal),
-      });
-    } else {
-      metricas.push({ etiqueta: 'Ganancia realizada', valor: 'No disponible' });
-    }
-  }
 
   return (
     <>
       <header className={styles.encabezadoPagina}>
         <div>
-          <p className={styles.sobretitulo}>Vista general</p>
-          <h1 className={styles.titulo}>Resumen</h1>
-          <p className={styles.descripcion}>El estado de tu inventario y actividad de hoy.</p>
+          <p className={styles.sobretitulo}>VISTA GENERAL</p>
+          <h1 className={styles.titulo}>Tu inventario, en equilibrio.</h1>
+          <p className={styles.descripcion}>Un resumen claro de tus existencias y actividad.</p>
         </div>
       </header>
 
       <section className={styles.metricas} aria-label="Indicadores del inventario">
         {metricas.map((metrica) => (
-          <article className={styles.metrica} key={metrica.etiqueta}>
+          <article className={`${styles.metrica} ${styles[metrica.tono]}`} key={metrica.etiqueta}>
+            <span className={styles.iconoMetrica} aria-hidden="true">
+              {metrica.icono}
+            </span>
             <span className={styles.metricaEtiqueta}>{metrica.etiqueta}</span>
             <strong className={styles.metricaValor}>{metrica.valor}</strong>
+            <span className={styles.metricaNota}>{metrica.nota}</span>
           </article>
         ))}
       </section>
@@ -71,7 +84,9 @@ export default async function PanelPage() {
         <section className={styles.seccionResumen} aria-labelledby="reponer-titulo">
           <div className={styles.encabezadoSeccion}>
             <div>
-              <h2 id="reponer-titulo">Por reponer ({formatearCantidad(resumen.productosPorReponer)})</h2>
+              <h2 id="reponer-titulo">
+                Por reponer ({formatearCantidad(resumen.productosPorReponer)})
+              </h2>
               <p>Productos agotados o en su umbral mínimo de existencias.</p>
             </div>
             <Link className={styles.enlaceTexto} href="/panel/inventario">
@@ -91,7 +106,8 @@ export default async function PanelPage() {
                     {producto.marca} · Talla {producto.talla}
                   </span>
                   <span className={styles.textoSuave}>
-                    {formatearCantidad(producto.cantidad)} / mínimo {formatearCantidad(producto.stockMinimo ?? 0)}
+                    {formatearCantidad(producto.cantidad)} / mínimo{' '}
+                    {formatearCantidad(producto.stockMinimo ?? 0)}
                   </span>
                   <Link className={styles.enlaceTexto} href={`/panel/inventario/${producto.id}`}>
                     Ver detalle
@@ -165,8 +181,8 @@ export default async function PanelPage() {
       </nav>
 
       <footer className={styles.pie}>
-        <span>Stockly · Gestión de inventario</span>
-        <span>Panel actualizado en tiempo real al cargar la página</span>
+        <span>Stockly © 2026</span>
+        <span>Gestión de inventario · Datos actualizados al cargar</span>
       </footer>
     </>
   );

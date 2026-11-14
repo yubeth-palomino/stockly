@@ -18,7 +18,7 @@
 | Evolución comercial                      | inventario y ventas API local parcial; BD sin migrar                                              | correcto                      | 130/130                       | 2026-11-07      |
 | P13 Base de datos comercial              | migraciones aditivas aplicadas y verificadas en pruebas; integridad concurrente probada           | correcto                      | 171/171                       | 2026-11-14      |
 | P14 Servicios y API                      | reglas, transacciones, idempotencia y autorización implementadas; integradas contra BD de pruebas | correcto                      | 171/171                       | 2026-11-14      |
-| P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                               | correcto                      | 171/171                       | 2026-11-14      |
+| P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                              | correcto                      | 171/171                       | 2026-11-14      |
 | P16 Proveedores, clientes y créditos     | páginas, API, saldos y abonos concurrentes; aceptación manual pendiente                           | correcto                      | 171/171                       | 2026-11-14      |
 | P17 Dashboard y aceptación               | dashboard con series y filtros reales; aceptación A-24–A-44 sin diligenciar                       | correcto                      | 171/171                       | 2026-11-14      |
 
@@ -263,3 +263,13 @@ DEMO-008    34     0         No
 - **Navegación:** tras autenticarse se usa navegación completa del navegador para que la cookie recién emitida sea enviada en la siguiente petición; conserva destinos internos protegidos y rechaza redirecciones externas.
 - **Pruebas focalizadas:** 2 archivos, 8 pruebas aprobadas; incluyen credenciales inválidas, sesión ausente, perfil inactivo/rol incorrecto, fallo BD y destino externo. `npm run lint` y `npm run type-check` correctos.
 - **Límite:** no se probaron credenciales ni se conectó a Supabase real; el acceso real depende de que exista `usuarios.auth_ref = auth.users.id` con `activo = true`. El cambio está en `audit/stockly`; no está desplegado a producción.
+
+### Rediseño integral de interfaz · 2026-11-14
+
+- **Interfaz:** navegación lateral con accesos por rol, versión superior desplazable en móvil, encabezado de dashboard, cuatro indicadores con datos existentes, tarjetas pastel, pie de página y tipografías Poppins/Inter servidas con `next/font`.
+- **Inventario:** buscador destacado con el filtro de referencia ya existente, acceso visual a agregar producto, tabla refinada y tarjetas adaptables en móvil. Los estados distinguen En stock, Stock bajo (cuando hay umbral configurado), Agotado e Inactivo.
+- **Paleta:** fondo `#FAF6EF`, sidebar `#FFFDF8`, tarjetas blancas, bordes `#E8DDD0`, acentos beige y pasteles indicados.
+- **Integridad de datos:** no se agregaron consultas, rutas ni reglas de negocio. El valor mostrado es la inversión existente, solo para dueños; trabajadores ven unidades disponibles. Si no se configuró el stock mínimo se indica “—”, no cero. No se inventó un conteo de “productos nuevos” porque el resumen actual no define un período para esa métrica; el cuarto indicador usa ventas reales de hoy.
+- **Archivos modificados:** `src/app/globals.css`, `src/app/layout.tsx`, `src/app/panel/inventario/page.tsx`, `src/app/panel/layout.tsx`, `src/app/panel/page.tsx`, `src/components/panel/FiltrosInventario.tsx`, `src/components/panel/InsigniaDisponibilidad.tsx`, `src/components/panel/NavegacionPanel.tsx`, `src/components/panel/TablaInventario.tsx`, `src/components/panel/panel.module.css`, `src/components/ui/Insignia.tsx`, `src/components/ui/ui.module.css`.
+- **Validación:** `npm run type-check`, `npm test` (52 archivos/172 pruebas), `npm run lint`, `npm run build` y `git diff --check` correctos. Vitest conserva su advertencia existente sobre `configLoader: 'native'`.
+- **Alcance visual:** no se modificaron rutas, operaciones ni autenticación; se mantienen los accesos por rol y el filtro existente.

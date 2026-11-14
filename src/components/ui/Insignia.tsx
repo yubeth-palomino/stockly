@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import styles from './ui.module.css';
 
-export type TonoInsignia = 'neutro' | 'primario' | 'disponible' | 'agotado' | 'inactivo' | 'dueno';
+export type TonoInsignia =
+  'neutro' | 'primario' | 'disponible' | 'agotado' | 'inactivo' | 'dueno' | 'advertencia';
 
 export function Insignia({
   tono = 'neutro',
