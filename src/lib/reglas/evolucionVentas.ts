@@ -1,6 +1,15 @@
 export type PeriodoEvolucion = 'dia' | 'semana' | 'mes';
 export type FiltroRangoEvolucion = 'hoy' | '7dias' | '30dias' | 'mes' | 'personalizado';
 
+export function unidadSqlPeriodo(periodo: PeriodoEvolucion): 'day' | 'week' | 'month' {
+  const unidades: Record<PeriodoEvolucion, 'day' | 'week' | 'month'> = {
+    dia: 'day',
+    semana: 'week',
+    mes: 'month',
+  };
+  return unidades[periodo];
+}
+
 export type RangoFechas = {
   desde: string;
   hasta: string;

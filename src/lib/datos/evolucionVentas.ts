@@ -4,6 +4,7 @@ import {
   inicioSemanaBogota,
   obtenerRangoAnterior,
   obtenerRangoEvolucion,
+  unidadSqlPeriodo,
   type FiltroRangoEvolucion,
   type PeriodoEvolucion,
   type RangoFechas,
@@ -181,8 +182,8 @@ export async function obtenerEvolucionVentas(
          date_trunc($3, $1::date::timestamp),
          date_trunc($3, $2::date::timestamp),
          CASE $3
-           WHEN 'mes' THEN interval '1 month'
-           WHEN 'semana' THEN interval '1 week'
+           WHEN 'month' THEN interval '1 month'
+           WHEN 'week' THEN interval '1 week'
            ELSE interval '1 day'
          END
        )::date AS fecha
@@ -201,7 +202,7 @@ export async function obtenerEvolucionVentas(
      FROM calendario
      LEFT JOIN agregados USING (fecha)
      ORDER BY calendario.fecha`,
-    [rango.desde, rango.hasta, filtros.agrupacion],
+    [rango.desde, rango.hasta, unidadSqlPeriodo(filtros.agrupacion)],
   );
 
   const consultaInventario = consultar<FilaInventario>(

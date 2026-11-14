@@ -5,6 +5,7 @@ import {
   inicioSemanaBogota,
   obtenerRangoAnterior,
   obtenerRangoEvolucion,
+  unidadSqlPeriodo,
   variacionPorcentual,
 } from '@/lib/reglas/evolucionVentas';
 
@@ -61,5 +62,11 @@ describe('reglas de evolución de ventas', () => {
 
   it('inicia la semana el lunes en fecha de calendario', () => {
     expect(inicioSemanaBogota('2026-11-07')).toBe('2026-11-02');
+  });
+
+  it('traduce la agrupación visible a unidades aceptadas por PostgreSQL', () => {
+    expect(unidadSqlPeriodo('dia')).toBe('day');
+    expect(unidadSqlPeriodo('semana')).toBe('week');
+    expect(unidadSqlPeriodo('mes')).toBe('month');
   });
 });
