@@ -17,7 +17,8 @@
     "db:vincular-dueno": "node --env-file=.env.local scripts/vincular-dueno.mjs",
     "db:limpiar": "node --env-file=.env.local scripts/limpiar-prueba.mjs",
     "db:demo": "node --env-file=.env.local --import tsx scripts/cargar-demo.ts",
-    "probar:flujo": "node --env-file=.env.local --import tsx scripts/probar-flujo.ts"
+    "probar:flujo": "node --env-file=.env.local --import tsx scripts/probar-flujo.ts",
+    "probar:comercial": "node --env-file=.env.local --import tsx scripts/probar-comercial.ts"
   },
   "bugs": {
     "url": "https://github.com/yubeth-palomino/stockly/issues"

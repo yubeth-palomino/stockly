@@ -38,7 +38,10 @@ export async function invalidarTokensPendientes(usuarioId: string): Promise<void
   if (error) throw error;
 }
 
-export async function crearTokenRecuperacion(usuarioId: string, tokenHash: string): Promise<string> {
+export async function crearTokenRecuperacion(
+  usuarioId: string,
+  tokenHash: string,
+): Promise<string> {
   const { data, error } = await createAdminClient().rpc('crear_token_restab', {
     p_usuario_id: usuarioId,
     p_token_hash: tokenHash,
@@ -55,7 +58,7 @@ export async function buscarTokenVigente(tokenHash: string): Promise<TokenRecupe
   });
 
   if (error) throw error;
-  return Array.isArray(data) ? (data[0] as TokenRecuperacion | undefined) ?? null : null;
+  return Array.isArray(data) ? ((data[0] as TokenRecuperacion | undefined) ?? null) : null;
 }
 
 export async function marcarTokenComoUsado(tokenId: string): Promise<boolean> {
@@ -67,8 +70,13 @@ export async function marcarTokenComoUsado(tokenId: string): Promise<boolean> {
   return data === true;
 }
 
-export async function actualizarContrasenaUsuario(usuarioId: string, contrasena: string): Promise<void> {
-  const { error } = await createAdminClient().auth.admin.updateUserById(usuarioId, { password: contrasena });
+export async function actualizarContrasenaUsuario(
+  usuarioId: string,
+  contrasena: string,
+): Promise<void> {
+  const { error } = await createAdminClient().auth.admin.updateUserById(usuarioId, {
+    password: contrasena,
+  });
 
   if (error) throw error;
 }
@@ -89,9 +97,34 @@ export {
   listarUsuarios,
   obtenerUsuarioActual,
 } from '@/lib/datos/usuarios';
-export { exportarVentas, listarVentas, registrarVenta } from '@/lib/datos/ventas';
+export {
+  exportarVentas,
+  listarVentas,
+  registrarVenta,
+  registrarVentaConPago,
+} from '@/lib/datos/ventas';
 export { obtenerEconomia } from '@/lib/datos/economia';
 export { obtenerEvolucionVentas } from '@/lib/datos/evolucionVentas';
+export {
+  actualizarCliente,
+  actualizarProveedor,
+  abrirCaja,
+  cerrarCaja,
+  guardarCliente,
+  guardarProveedor,
+  listarAbonos,
+  listarClientes,
+  listarCuentasPorCobrar,
+  listarHistorialCajas,
+  listarProveedores,
+  obtenerDetalleCliente,
+  obtenerProveedor,
+  obtenerCajaActual,
+  obtenerDetalleCaja,
+  obtenerDashboardComercial,
+  registrarAbono,
+  registrarMovimientoCaja,
+} from '@/lib/datos/operacionesComerciales';
 export {
   ajustarExistenciasComercial,
   crearProductoComercial,
@@ -115,4 +148,5 @@ export type {
   ResumenPanel,
   ResumenEconomico,
   ResultadoVenta,
+  ResultadoVentaComercial,
 } from '@/lib/datos/tipos';

@@ -1,5 +1,5 @@
 import { exigirUsuario } from '@/lib/auth/sesion';
-import { listarVentas, registrarVenta } from '@/lib/dataService';
+import { listarVentas, registrarVentaConPago } from '@/lib/dataService';
 import { conManejoDeErrores, leerCuerpo, responderOk } from '@/lib/http/respuestas';
 import { esquemaFiltrosVentas, esquemaVenta } from '@/lib/validacion/esquemas';
 
@@ -20,7 +20,7 @@ async function obtenerVentas(request: Request) {
 async function crearVenta(request: Request) {
   const usuario = await exigirUsuario();
   const datos = await leerCuerpo(request, esquemaVenta);
-  return responderOk(await registrarVenta(datos, usuario.id), 201);
+  return responderOk(await registrarVentaConPago(datos, usuario.id, usuario.rol), 201);
 }
 
 export const GET = conManejoDeErrores(obtenerVentas);

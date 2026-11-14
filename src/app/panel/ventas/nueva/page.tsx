@@ -1,7 +1,12 @@
+import { redirect } from 'next/navigation';
 import { FormularioVenta } from '@/components/panel/FormularioVenta';
 import styles from '@/components/panel/panel.module.css';
+import { obtenerUsuario } from '@/lib/auth/sesion';
 
-export default function NuevaVentaPage() {
+export default async function NuevaVentaPage() {
+  const usuario = await obtenerUsuario();
+  if (!usuario) redirect('/login');
+
   return (
     <>
       <header className={styles.encabezadoPagina}>
@@ -13,7 +18,7 @@ export default function NuevaVentaPage() {
           </p>
         </div>
       </header>
-      <FormularioVenta />
+      <FormularioVenta rol={usuario.rol} />
     </>
   );
 }

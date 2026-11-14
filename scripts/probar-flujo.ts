@@ -236,7 +236,7 @@ async function ejecutar(): Promise<void> {
     }
   });
 
-  await paso(15, 'ocultar costos a trabajador y calcular ganancia realizada', async () => {
+  await paso(15, 'ocultar costos a trabajador y limitar economía al inventario actual', async () => {
     if (!productoEconomicoId) throw new Error('No se creó PRUEBA-ECONOMIA.');
     const detalleTrabajador = await obtenerProducto(
       productoEconomicoId,
@@ -263,15 +263,15 @@ async function ejecutar(): Promise<void> {
     const economia = await obtenerEconomia({ marca: 'Marca economía prueba' });
     if (
       economia.productos.length !== 1 ||
-      economia.gananciaRealizadaTotal !== 20_000 ||
+      economia.gananciaRealizadaTotal !== null ||
       economia.inversionTotal !== 30_000 ||
       economia.gananciaPotencialTotal !== 30_000
     ) {
-      throw new Error('Los totales no coinciden después de vender dos unidades.');
+      throw new Error('La economía del inventario actual o la ganancia histórica no coincide.');
     }
   });
 
-  await paso(16, 'actualizar costo en re-stock y recalcular ventas históricas', async () => {
+  await paso(16, 'actualizar costo del inventario restante sin reescribir ventas históricas', async () => {
     const reingreso = await registrarEntrada(
       entrada({
         referencia: 'PRUEBA-ECONOMIA',
@@ -290,9 +290,9 @@ async function ejecutar(): Promise<void> {
       reingreso.cantidadResultante !== 5 ||
       economia.inversionTotal !== 60_000 ||
       economia.gananciaPotencialTotal !== 40_000 ||
-      economia.gananciaRealizadaTotal !== 16_000
+      economia.gananciaRealizadaTotal !== null
     ) {
-      throw new Error('No se conservó el nuevo costo o la ganancia histórica recalculada.');
+      throw new Error('No se conservó el costo del inventario o se calculó utilidad histórica.');
     }
     await debeFallarCon('PRECIO_VENTA_NO_SUPERA_COMPRA', () =>
       actualizarProducto(
@@ -331,7 +331,7 @@ async function ejecutar(): Promise<void> {
       economia.productos[0].inversion !== null ||
       economia.inversionTotal !== 0 ||
       economia.gananciaPotencialTotal !== 0 ||
-      economia.gananciaRealizadaTotal !== 0
+      economia.gananciaRealizadaTotal !== null
     ) {
       throw new Error('El producto sin costo no está marcado o alteró los totales.');
     }

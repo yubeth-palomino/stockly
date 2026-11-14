@@ -60,10 +60,11 @@ export function BuscadorProducto({
         });
         const productos = await leerRespuestaApi(response, esquemaProductos);
         const encontrado =
-          productos.find(
-            (item) =>
-              normalizarReferencia(item.referencia) === normalizarReferencia(referencia) &&
-              normalizarTalla(item.talla) === normalizarTalla(talla),
+          productos.find((item) =>
+            codigoListo
+              ? item.codigoBarras === codigoBarras
+              : normalizarReferencia(item.referencia) === normalizarReferencia(referencia) &&
+                normalizarTalla(item.talla) === normalizarTalla(talla),
           ) ?? null;
         alSeleccionar(encontrado);
         if (codigoListo) alEscanear?.(encontrado);
@@ -136,10 +137,18 @@ export function BuscadorProducto({
           alSeleccionar(null);
         }}
       />
-      {buscando && <p className={styles.textoSuave} role="status">Buscando producto…</p>}
+      {buscando && (
+        <p className={styles.textoSuave} role="status">
+          Buscando producto…
+        </p>
+      )}
       {error && <Aviso tipo="error">{error}</Aviso>}
       {!buscando && !error && busquedaRealizada && !producto && (
-        <Aviso tipo="advertencia">No existe un producto con esa referencia y talla.</Aviso>
+        <Aviso tipo="advertencia">
+          {codigoBarras
+            ? 'No existe una prenda con ese código de barras.'
+            : 'No existe un producto con esa referencia y talla.'}
+        </Aviso>
       )}
       {!buscando && producto && (
         <Aviso tipo={producto.cantidad > 0 ? 'info' : 'advertencia'} titulo={producto.referencia}>

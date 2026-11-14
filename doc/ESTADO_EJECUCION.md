@@ -1,22 +1,59 @@
 # Estado de ejecución · Stockly
 
-| Prompt | Estado | Build | Tests | Fecha de cierre |
-|---|---|---|---|---|
-| P00 Auditoría | completado | correcto | no ejecutados | 2026-10-31 |
-| P01 Base de datos | completado | correcto | 0 fallas | 2026-10-31 |
-| P02 Reglas de negocio | completado | correcto | 68/68 | 2026-10-31 |
-| P03 Servidor y roles | completado | correcto | 80/80 | 2026-10-31 |
-| P04 Datos | completado | correcto | 80/80 | 2026-10-31 |
-| P05 API | completado | correcto | 84/84 | 2026-10-31 |
-| P06 Interfaz base y resumen | completado | correcto | 84/84 | 2026-10-31 |
-| P07 Inventario | completado | correcto | 98/98 | 2026-11-07 |
-| P08 Entrada de mercancía | completado | correcto | 98/98 | 2026-11-07 |
-| P09 Ventas | completado | correcto | 98/98 | 2026-11-07 |
-| P10 Usuarios y aceptación | implementación completada; aceptación manual pendiente | correcto | 98/98 | 2026-11-07 |
-| P11 Módulo económico (opcional) | parcial; utilidad histórica pendiente de costos por venta y empresa activa | correcto | 130/130 | 2026-11-07 |
-| Evolución comercial | inventario y ventas API local parcial; BD sin migrar | correcto | 130/130 | 2026-11-07 |
+| Prompt                                   | Estado                                                                                            | Build                         | Tests                         | Fecha de cierre |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------- | --------------- |
+| P00 Auditoría                            | completado                                                                                        | correcto                      | no ejecutados                 | 2026-10-31      |
+| P01 Base de datos                        | completado                                                                                        | correcto                      | 0 fallas                      | 2026-10-31      |
+| P02 Reglas de negocio                    | completado                                                                                        | correcto                      | 68/68                         | 2026-10-31      |
+| P03 Servidor y roles                     | completado                                                                                        | correcto                      | 80/80                         | 2026-10-31      |
+| P04 Datos                                | completado                                                                                        | correcto                      | 80/80                         | 2026-10-31      |
+| P05 API                                  | completado                                                                                        | correcto                      | 84/84                         | 2026-10-31      |
+| P06 Interfaz base y resumen              | completado                                                                                        | correcto                      | 84/84                         | 2026-10-31      |
+| P07 Inventario                           | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
+| P08 Entrada de mercancía                 | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
+| P09 Ventas                               | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
+| P10 Usuarios y aceptación                | implementación completada; aceptación manual pendiente                                            | correcto                      | 98/98                         | 2026-11-07      |
+| P11 Módulo económico (opcional)          | parcial; utilidad histórica pendiente de costos por venta y empresa activa                        | correcto                      | 130/130                       | 2026-11-07      |
+| P12 Auditoría y planificación de mejoras | completado; auditoría real y diseño aprobatorio sin cambios en producción                         | correcto                      | 158/158                       | 2026-11-14      |
+| Evolución comercial                      | inventario y ventas API local parcial; BD sin migrar                                              | correcto                      | 130/130                       | 2026-11-07      |
+| P13 Base de datos comercial              | migraciones aditivas aplicadas y verificadas en pruebas; integridad concurrente probada           | correcto                      | 171/171                       | 2026-11-14      |
+| P14 Servicios y API                      | reglas, transacciones, idempotencia y autorización implementadas; integradas contra BD de pruebas | correcto                      | 171/171                       | 2026-11-14      |
+| P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                               | correcto                      | 171/171                       | 2026-11-14      |
+| P16 Proveedores, clientes y créditos     | páginas, API, saldos y abonos concurrentes; aceptación manual pendiente                           | correcto                      | 171/171                       | 2026-11-14      |
+| P17 Dashboard y aceptación               | dashboard con series y filtros reales; aceptación A-24–A-44 sin diligenciar                       | correcto                      | 171/171                       | 2026-11-14      |
 
 ## Bitácora
+
+### P12 · Auditoría y planificación de mejoras
+
+- **Archivos creados:** `doc/PLAN_MEJORAS.md`, `doc/checkpoints/FASE_8_COMPLETADA.md`.
+- **Archivos consultados:** `doc/PLAN_STOCKLY.md`, `doc/PROMPTS_STOCKLY.md`, `doc/ESTADO_ACTUAL.md`, `doc/ESTADO_EJECUCION.md`, `src/lib/reglas/`, `src/lib/datos/`, `src/app/api/panel/`, `src/app/panel/`, `src/components/panel/`, `src/lib/validacion/esquemas.ts`, `supabase/propuestas/20261107000100_evolucion_comercial.sql`.
+- **Auditoría real:** el repositorio ya está funcional y con pruebas verdes; no se reescribió la autenticación ni se alteraron rutas productivas.
+- **Decisiones clave:** variante/SKU como nivel de código de barras; caja separada entre efectivo y otros medios; ganancia solo si existe costo histórico confiable; proveedores no implican compras ni deuda sin evidencia real; los movimientos financieros conservan trazabilidad y responsable.
+- **Verificación:** `npm test` terminó con 42 archivos y 158 pruebas aprobadas; `npm run build` compiló correctamente.
+- **Límite del plan:** la migración estructural comercial queda suspendida hasta aprobación del responsable, respaldo de la base de pruebas y confirmación del ámbito de caja y del modelo de variantes.
+- **Cierre:** P12 queda documentado como auditoría y diseño, con la siguiente etapa segura en P13 sólo tras aprobación del responsable y validación del entorno de pruebas.
+
+### P13–P17 · Mejoras comerciales · 2026-11-14
+
+- **Decisiones aplicadas:** esquema legado sin empresa/sucursal; una caja global abierta; código único por producto; ventas y datos económicos sensibles visibles solo para dueño. La base usada fue la de desarrollo/pruebas confirmada previamente, no producción.
+- **P13, migraciones:** se aplicaron `20261114000100_operaciones_comerciales.sql`, `20261114000200_idempotencia_caja.sql`, `20261114000300_cliente_venta.sql`, `20261114000400_indices_financieros.sql` y `20261114000500_vista_productos_campos_comerciales.sql`. Son aditivas; conservan filas legadas y no clasifican cobros históricos. La última migración sincroniza `v_productos` con `codigo_barras` y `stock_minimo` sin cambiar su seguridad `security_invoker`. `npm run db:verificar` aprobó tablas, RLS, índices, columnas y restricciones requeridas (0 fallas).
+- **P14, API/datos:** se añadieron transacciones de ventas pagadas/a crédito, pagos reales, caja, directorios, cuenta por cobrar, abonos y dashboard. Claves idempotentes, bloqueo de saldo concurrente, una sola caja abierta e ingresos/egresos auditables. Se probó el rechazo a trabajador en rutas de caja/dashboard/directorios, cuentas y abonos, y en el servicio de venta con cliente/crédito.
+- **P15, funciones compartidas:** se conservaron los códigos de barras/EAN y alertas existentes; se corrigió la selección por código. La caja separa efectivo y otros medios, entradas por ventas/abonos, movimientos manuales y detalle del cierre, con confirmación y bloqueo de egresos de efectivo excesivos.
+- **P16, funciones de dueño:** clientes con historial de ventas, detalle de proveedores sin compras ficticias, crédito con pago inicial opcional, filtro de cuentas por cliente/fecha/estado y abonos parciales/finales con clave de reintento.
+- **P17, dashboard:** consultas agregadas para ventas, pagos, créditos, abonos, saldos, stock y series diaria/semanal/mensual; rangos 7/30 días, mes, año y personalizado. Las ventas no clasificadas se cuentan, sin imputar método ni utilidad histórica.
+- **Integración PostgreSQL:** `npm run probar:comercial` completó 14 comprobaciones en la base de pruebas: apertura concurrente, reintento de venta/abono/cierre, crédito, doble abono sobre saldo, rechazo de egreso, separación de efectivo/transferencia, detalle del cliente y conciliación básica del dashboard. Limpieza automática ejecutada; conteos de las nuevas tablas volvieron a cero.
+- **Flujo heredado:** `npm run probar:flujo` completó 17/17 pasos. La ejecución inicial encontró que la vista `v_productos` no exponía las columnas comerciales; la migración anterior corrigió la causa. Se ajustaron las expectativas económicas del flujo al alcance vigente: los costos del trabajador se ocultan, inversión/ganancia potencial reflejan existencias actuales y la ganancia realizada histórica continúa sin calcularse por falta de costo por venta. Limpieza final: 3 ventas, 10 eventos, 3 productos y 1 usuario temporales eliminados.
+- **Verificación final:** `npm test` pasó 52 archivos/171 pruebas; `npm run lint`, `npm run type-check` y `npm run build` terminaron correctamente. `npm run db:verificar` finalizó con 0 fallas, incluidas las columnas nuevas de `v_productos`. `npm run probar:comercial` completó 14/14 comprobaciones y limpió sus datos temporales.
+- **Aceptación manual pendiente:** A-24–A-44 quedan vacíos en `doc/ACEPTACION_MEJORAS.md`. No se afirma aceptación visual, prueba de cámara/lector físico ni sesión real de trabajador.
+- **Límites:** proveedores son catálogo; no existe compras/cuentas por pagar. Ventas históricas conservan método sin clasificar. Caja, directorios y panel financiero son exclusivos del dueño por la regla de confidencialidad del proyecto.
+
+### Ajuste de migración para `stock_minimo` · 2026-11-14
+
+- **Causa real:** la migración `20261107000500_stock_minimo_no_nulo.sql` imponía `NOT NULL` sobre `public.productos.stock_minimo` sin rellenar primero los registros existentes con valor `0`. La base conectada ya tenía filas con `NULL` y la migración fallaba de forma determinista.
+- **Corrección aplicada:** se actualizó el SQL de la migración para ejecutar `UPDATE public.productos SET stock_minimo = 0 WHERE stock_minimo IS NULL;` antes de `ALTER COLUMN ... SET NOT NULL;`.
+- **Resguardo de seguridad:** la migración comercial no aprobada `20261114000100_stockly_comercial_base.sql` se retiró de `supabase/migrations` y quedó como borrador en `supabase/propuestas/`, de acuerdo con la política del proyecto de no ejecutar SQL estructural sin aprobación y respaldo.
+- **Verificación real:** `npm run db:migrar` completó la cola activa sin errores tras el ajuste; `npm run build` compiló correctamente y `npm test` terminó con 42 archivos y 158 pruebas aprobadas.
 
 ### P00 · Auditoría
 

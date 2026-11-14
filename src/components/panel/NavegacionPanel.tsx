@@ -30,6 +30,11 @@ export function NavegacionPanel({
   ];
   if (rol === 'dueno') {
     enlaces.push({ href: '/panel/usuarios', etiqueta: 'Usuarios' });
+    enlaces.push({ href: '/panel/dashboard', etiqueta: 'Dashboard' });
+    enlaces.push({ href: '/panel/caja', etiqueta: 'Caja' });
+    enlaces.push({ href: '/panel/proveedores', etiqueta: 'Proveedores' });
+    enlaces.push({ href: '/panel/clientes', etiqueta: 'Clientes' });
+    enlaces.push({ href: '/panel/cuentas-por-cobrar', etiqueta: 'Cuentas por cobrar' });
     if (MODULO_ECONOMICO_ACTIVO) {
       enlaces.push({ href: '/panel/economia', etiqueta: 'Economía' });
     }

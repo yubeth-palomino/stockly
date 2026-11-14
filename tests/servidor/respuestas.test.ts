@@ -54,11 +54,24 @@ describe('respuestas HTTP', () => {
     const datos = await leerCuerpo(
       new Request('http://localhost/api', {
         method: 'POST',
-        body: JSON.stringify({ referencia: 'CAM001', talla: 'M', cantidad: 2 }),
+        body: JSON.stringify({
+          referencia: 'CAM001',
+          talla: 'M',
+          cantidad: 2,
+          tipoPago: 'PAGADA',
+          pagos: [{ metodo: 'EFECTIVO', monto: 100_000 }],
+          claveIdempotencia: '00000000-0000-4000-8000-000000000001',
+        }),
       }),
       esquemaVenta,
     );
-    expect(datos).toEqual({ referencia: 'CAM001', talla: 'M', cantidad: 2 });
+    expect(datos).toMatchObject({
+      referencia: 'CAM001',
+      talla: 'M',
+      cantidad: 2,
+      tipoPago: 'PAGADA',
+      pagos: [{ metodo: 'EFECTIVO', monto: 100_000 }],
+    });
 
     const response = await leerCuerpo(
       new Request('http://localhost/api', {

@@ -1,4 +1,5 @@
 import type { Rol } from '@/lib/reglas/roles';
+import type { MetodoPago } from '@/lib/reglas/finanzasComerciales';
 
 export type DatosEntrada = {
   referencia: string;
@@ -15,6 +16,14 @@ export type DatosVenta = {
   referencia: string;
   talla: string;
   cantidad: number;
+};
+
+export type DatosVentaComercial = DatosVenta & {
+  tipoPago: 'PAGADA' | 'CREDITO';
+  pagos: Array<{ metodo: MetodoPago; monto: number }>;
+  clienteId?: string | undefined;
+  fechaVencimiento?: string | undefined;
+  claveIdempotencia: string;
 };
 
 export type DatosUsuario = {
@@ -100,6 +109,13 @@ export type ResultadoVenta = {
   venta: FilaVenta;
   cantidadResultante: number;
   agotado: boolean;
+};
+
+export type ResultadoVentaComercial = ResultadoVenta & {
+  total: number;
+  totalPagado: number;
+  saldoPendiente: number;
+  repetida: boolean;
 };
 
 export type ResumenPanel = {

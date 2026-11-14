@@ -17,6 +17,17 @@ export type CodigoError =
   | 'ULTIMO_DUENO'
   | 'PRECIO_VENTA_NO_SUPERA_COMPRA'
   | 'COSTO_PROMEDIO_NO_REGISTRADO'
+  | 'CAJA_NO_ABIERTA'
+  | 'CAJA_YA_ABIERTA'
+  | 'CAJA_NO_ENCONTRADA'
+  | 'CAJA_CERRADA'
+  | 'CLIENTE_NO_ENCONTRADO'
+  | 'CLIENTE_DUPLICADO'
+  | 'PROVEEDOR_NO_ENCONTRADO'
+  | 'PROVEEDOR_DUPLICADO'
+  | 'CUENTA_NO_ENCONTRADA'
+  | 'ABONO_SUPERA_SALDO'
+  | 'CAJA_EFECTIVO_INSUFICIENTE'
   | 'ERROR_INTERNO';
 
 export const MENSAJES: Record<CodigoError, string> = {
@@ -31,8 +42,7 @@ export const MENSAJES: Record<CodigoError, string> = {
   STOCK_INSUFICIENTE: 'No hay suficientes unidades disponibles.',
   FUNCIONALIDAD_NO_ACTIVA: 'El módulo comercial aún no está habilitado en esta base de datos.',
   IDEMPOTENCIA_CONFLICTO: 'La clave de operación ya fue usada con datos diferentes.',
-  REFERENCIA_CATALOGO_INCONSISTENTE:
-    'La referencia ya existe con datos de catálogo diferentes.',
+  REFERENCIA_CATALOGO_INCONSISTENTE: 'La referencia ya existe con datos de catálogo diferentes.',
   PAGO_VENTA_NO_COINCIDE: 'La suma de los pagos debe coincidir con el total de la venta.',
   USUARIO_DUPLICADO: 'Ya existe un usuario con ese nombre de usuario.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe.',
@@ -40,6 +50,17 @@ export const MENSAJES: Record<CodigoError, string> = {
   PRECIO_VENTA_NO_SUPERA_COMPRA: 'El precio de venta debe ser mayor que el precio de compra.',
   COSTO_PROMEDIO_NO_REGISTRADO:
     'Debe validar el costo promedio antes de agregar unidades a esta existencia.',
+  CAJA_NO_ABIERTA: 'Debe abrir la caja antes de registrar un pago.',
+  CAJA_YA_ABIERTA: 'Ya existe una caja abierta.',
+  CAJA_NO_ENCONTRADA: 'No existe un cierre de caja con ese identificador.',
+  CAJA_CERRADA: 'La caja ya está cerrada y no admite movimientos.',
+  CLIENTE_NO_ENCONTRADO: 'No existe un cliente activo con ese identificador.',
+  CLIENTE_DUPLICADO: 'Ya existe un cliente con esa identificación.',
+  PROVEEDOR_NO_ENCONTRADO: 'No existe un proveedor con ese identificador.',
+  PROVEEDOR_DUPLICADO: 'Ya existe un proveedor con esa identificación.',
+  CUENTA_NO_ENCONTRADA: 'No existe una cuenta por cobrar pendiente.',
+  ABONO_SUPERA_SALDO: 'El abono supera el saldo pendiente de la cuenta.',
+  CAJA_EFECTIVO_INSUFICIENTE: 'El egreso supera el efectivo disponible en caja.',
   ERROR_INTERNO: 'Ocurrió un error inesperado. Intente de nuevo.',
 };
 
@@ -62,6 +83,17 @@ export const ESTADO_HTTP: Record<CodigoError, number> = {
   ULTIMO_DUENO: 409,
   PRECIO_VENTA_NO_SUPERA_COMPRA: 422,
   COSTO_PROMEDIO_NO_REGISTRADO: 409,
+  CAJA_NO_ABIERTA: 409,
+  CAJA_YA_ABIERTA: 409,
+  CAJA_NO_ENCONTRADA: 404,
+  CAJA_CERRADA: 409,
+  CLIENTE_NO_ENCONTRADO: 404,
+  CLIENTE_DUPLICADO: 409,
+  PROVEEDOR_NO_ENCONTRADO: 404,
+  PROVEEDOR_DUPLICADO: 409,
+  CUENTA_NO_ENCONTRADA: 404,
+  ABONO_SUPERA_SALDO: 409,
+  CAJA_EFECTIVO_INSUFICIENTE: 409,
   ERROR_INTERNO: 500,
 };
 

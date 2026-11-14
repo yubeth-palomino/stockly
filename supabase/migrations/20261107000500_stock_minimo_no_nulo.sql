@@ -1,3 +1,7 @@
+UPDATE public.productos
+SET stock_minimo = 0
+WHERE stock_minimo IS NULL;
+
 ALTER TABLE public.productos
   ALTER COLUMN stock_minimo SET NOT NULL;
 

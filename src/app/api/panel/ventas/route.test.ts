@@ -3,11 +3,11 @@ import { ErrorDeNegocio } from '@/lib/reglas/errores';
 
 const mocks = vi.hoisted(() => ({
   exigirUsuario: vi.fn(),
-  registrarVenta: vi.fn(),
+  registrarVentaConPago: vi.fn(),
 }));
 
 vi.mock('@/lib/auth/sesion', () => ({ exigirUsuario: mocks.exigirUsuario }));
-vi.mock('@/lib/dataService', () => ({ registrarVenta: mocks.registrarVenta }));
+vi.mock('@/lib/dataService', () => ({ registrarVentaConPago: mocks.registrarVentaConPago }));
 
 import { POST } from './route';
 
@@ -26,7 +26,7 @@ describe('POST /api/panel/ventas', () => {
     );
 
     expect(response.status).toBe(401);
-    expect(mocks.registrarVenta).not.toHaveBeenCalled();
+    expect(mocks.registrarVentaConPago).not.toHaveBeenCalled();
   });
 
   it('registra una venta válida para el usuario autenticado', async () => {
@@ -35,28 +35,55 @@ describe('POST /api/panel/ventas', () => {
       nombre: 'Trabajador',
       rol: 'trabajador',
     });
-    mocks.registrarVenta.mockResolvedValue({
+    mocks.registrarVentaConPago.mockResolvedValue({
       venta: { id: 42 },
       cantidadResultante: 3,
       agotado: false,
+      total: 100_000,
+      totalPagado: 100_000,
+      saldoPendiente: 0,
+      repetida: false,
     });
 
     const response = await POST(
       new Request('http://localhost/api/panel/ventas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia: 'CAM001', talla: 'M', cantidad: 2 }),
+        body: JSON.stringify({
+          referencia: 'CAM001',
+          talla: 'M',
+          cantidad: 2,
+          tipoPago: 'PAGADA',
+          pagos: [{ metodo: 'EFECTIVO', monto: 100_000 }],
+          claveIdempotencia: '00000000-0000-4000-8000-000000000001',
+        }),
       }),
     );
 
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({
       ok: true,
-      datos: { venta: { id: 42 }, cantidadResultante: 3, agotado: false },
+      datos: {
+        venta: { id: 42 },
+        cantidadResultante: 3,
+        agotado: false,
+        total: 100_000,
+        totalPagado: 100_000,
+        saldoPendiente: 0,
+        repetida: false,
+      },
     });
-    expect(mocks.registrarVenta).toHaveBeenCalledWith(
-      { referencia: 'CAM001', talla: 'M', cantidad: 2 },
+    expect(mocks.registrarVentaConPago).toHaveBeenCalledWith(
+      {
+        referencia: 'CAM001',
+        talla: 'M',
+        cantidad: 2,
+        tipoPago: 'PAGADA',
+        pagos: [{ metodo: 'EFECTIVO', monto: 100_000 }],
+        claveIdempotencia: '00000000-0000-4000-8000-000000000001',
+      },
       'usuario-trabajador',
+      'trabajador',
     );
   });
 
@@ -71,11 +98,18 @@ describe('POST /api/panel/ventas', () => {
       new Request('http://localhost/api/panel/ventas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia: 'CAM001', talla: 'M', cantidad: 0 }),
+        body: JSON.stringify({
+          referencia: 'CAM001',
+          talla: 'M',
+          cantidad: 0,
+          tipoPago: 'PAGADA',
+          pagos: [{ metodo: 'EFECTIVO', monto: 100 }],
+          claveIdempotencia: '00000000-0000-4000-8000-000000000002',
+        }),
       }),
     );
 
     expect(response.status).toBe(400);
-    expect(mocks.registrarVenta).not.toHaveBeenCalled();
+    expect(mocks.registrarVentaConPago).not.toHaveBeenCalled();
   });
 });

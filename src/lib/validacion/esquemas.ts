@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ROLES } from '@/lib/config/stockly';
 import { esFechaValida } from '@/lib/reglas/fechas';
 import { validarCodigoBarras } from '@/lib/reglas/codigoBarras';
+import { METODOS_PAGO } from '@/lib/reglas/finanzasComerciales';
 
 const texto = (minimo: number, maximo: number) =>
   z
@@ -10,7 +11,10 @@ const texto = (minimo: number, maximo: number) =>
     .min(minimo, { error: `Debe tener al menos ${minimo} caracteres.` })
     .max(maximo, { error: `No puede superar ${maximo} caracteres.` });
 const uuidComercial = (mensaje: string) =>
-  z.string().uuid({ error: mensaje }).transform((valor) => valor.toLowerCase());
+  z
+    .string()
+    .uuid({ error: mensaje })
+    .transform((valor) => valor.toLowerCase());
 const enteroPositivo = (campo: string) =>
   z
     .number({ error: `${campo} debe ser un número.` })
@@ -56,11 +60,146 @@ export const esquemaCambiosProductoTrabajador = camposCambiosProducto
     message: 'Debe indicar al menos un campo para actualizar.',
   });
 
-export const esquemaVenta = z.object({
-  referencia: texto(1, 60),
-  talla: texto(1, 20),
-  cantidad: enteroPositivo('La cantidad'),
+const esquemaPago = z.object({
+  metodo: z.enum(METODOS_PAGO, { error: 'Seleccione un método de pago válido.' }),
+  monto: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
 });
+
+export const esquemaVenta = z
+  .object({
+    referencia: texto(1, 60),
+    talla: texto(1, 20),
+    cantidad: enteroPositivo('La cantidad'),
+    tipoPago: z.enum(['PAGADA', 'CREDITO']),
+    pagos: z.array(esquemaPago).max(4),
+    clienteId: uuidComercial('Seleccione un cliente válido.').optional(),
+    fechaVencimiento: fecha.optional(),
+    claveIdempotencia: uuidComercial('La clave de operación no es válida.'),
+  })
+  .superRefine((datos, contexto) => {
+    if (new Set(datos.pagos.map((pago) => pago.metodo)).size !== datos.pagos.length) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['pagos'],
+        message: 'No repita métodos de pago; combine sus importes.',
+      });
+    }
+    if (datos.tipoPago === 'PAGADA' && !datos.pagos.length) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['pagos'],
+        message: 'Registre al menos un pago para completar la venta.',
+      });
+    }
+    if (datos.tipoPago === 'CREDITO' && !datos.clienteId) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['clienteId'],
+        message: 'Seleccione un cliente para registrar la venta a crédito.',
+      });
+    }
+    if (datos.tipoPago === 'PAGADA' && datos.fechaVencimiento) {
+      contexto.addIssue({
+        code: 'custom',
+        path: ['fechaVencimiento'],
+        message: 'Solo las ventas a crédito pueden tener fecha de vencimiento.',
+      });
+    }
+  });
+
+export const esquemaAbono = z.object({
+  cuentaId: uuidComercial('Seleccione una cuenta válida.'),
+  monto: enteroPositivo('El abono').max(Number.MAX_SAFE_INTEGER),
+  metodo: z.enum(METODOS_PAGO, { error: 'Seleccione un método de pago válido.' }),
+  claveIdempotencia: uuidComercial('La clave de operación no es válida.'),
+  observacion: texto(2, 300).optional(),
+});
+
+const esquemaContactoComercial = z.object({
+  nombre: texto(2, 160),
+  identificacion: texto(1, 40).optional(),
+  contacto: texto(2, 120).optional(),
+  telefono: texto(3, 40).optional(),
+  correo: z.string().trim().email().max(254).optional(),
+  direccion: texto(3, 240).optional(),
+  observaciones: texto(2, 500).optional(),
+});
+
+export const esquemaProveedor = esquemaContactoComercial;
+export const esquemaCliente = esquemaContactoComercial.omit({ contacto: true });
+
+export const esquemaCambiosProveedor = esquemaProveedor
+  .partial()
+  .extend({
+    activo: z.boolean().optional(),
+  })
+  .refine(tieneCambios, { message: 'Debe indicar al menos un campo para actualizar.' });
+export const esquemaCambiosCliente = esquemaCliente
+  .partial()
+  .extend({
+    activo: z.boolean().optional(),
+  })
+  .refine(tieneCambios, { message: 'Debe indicar al menos un campo para actualizar.' });
+
+export const esquemaAperturaCaja = z.object({
+  montoApertura: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  claveApertura: uuidComercial('La clave de apertura no es válida.'),
+  observacion: texto(2, 300).optional(),
+});
+
+export const esquemaMovimientoCaja = z.object({
+  tipo: z.enum(['INGRESO', 'EGRESO']),
+  metodo: z.enum(METODOS_PAGO),
+  monto: enteroPositivo('El monto').max(Number.MAX_SAFE_INTEGER),
+  concepto: texto(3, 240),
+  claveIdempotencia: uuidComercial('La clave de operación no es válida.'),
+});
+
+export const esquemaCierreCaja = z.object({
+  montoContado: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+  claveCierre: uuidComercial('La clave de cierre no es válida.'),
+  observacion: texto(2, 300).optional(),
+});
+
+export const esquemaFiltrosCuentas = z
+  .object({
+    clienteId: uuidComercial('Seleccione un cliente válido.').optional(),
+    estado: z.enum(['PENDIENTE', 'ABONO_PARCIAL', 'VENCIDA', 'TODAS']).default('TODAS'),
+    desde: fecha.optional(),
+    hasta: fecha.optional(),
+  })
+  .superRefine((filtros, contexto) => {
+    if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) {
+      contexto.addIssue({
+        code: 'custom',
+        message: 'La fecha inicial no puede ser posterior a la final.',
+        path: ['hasta'],
+      });
+    }
+  });
+
+export const esquemaFiltrosDashboardComercial = z
+  .object({
+    rango: z.enum(['7dias', '30dias', 'mes', 'anio', 'personalizado']).default('30dias'),
+    desde: fecha.optional(),
+    hasta: fecha.optional(),
+  })
+  .superRefine((filtros, contexto) => {
+    if (filtros.rango === 'personalizado' && (!filtros.desde || !filtros.hasta)) {
+      contexto.addIssue({
+        code: 'custom',
+        message: 'Selecciona la fecha inicial y final del rango personalizado.',
+        path: ['desde'],
+      });
+    }
+    if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) {
+      contexto.addIssue({
+        code: 'custom',
+        message: 'La fecha inicial no puede ser posterior a la final.',
+        path: ['hasta'],
+      });
+    }
+  });
 
 const esquemaVarianteComercial = z.object({
   talla: texto(1, 20),
@@ -97,9 +236,7 @@ export const esquemaAjusteComercial = z
   })
   .refine(
     (datos) =>
-      datos.delta > 0
-        ? datos.costoUnitario !== undefined
-        : datos.costoUnitario === undefined,
+      datos.delta > 0 ? datos.costoUnitario !== undefined : datos.costoUnitario === undefined,
     {
       path: ['costoUnitario'],
       message: 'Indique costo unitario solo para aumentos de existencias.',
@@ -158,9 +295,13 @@ export const esquemaVentaComercial = z
 
 export const esquemaFiltrosInventario = z.object({
   referencia: texto(1, 60).optional(),
-  codigoBarras: z.string().trim().refine(validarCodigoBarras, {
-    message: 'El código EAN-13 no es válido.',
-  }).optional(),
+  codigoBarras: z
+    .string()
+    .trim()
+    .refine(validarCodigoBarras, {
+      message: 'El código EAN-13 no es válido.',
+    })
+    .optional(),
   marca: texto(1, 80).optional(),
   talla: texto(1, 20).optional(),
   soloDisponibles: z.preprocess(
