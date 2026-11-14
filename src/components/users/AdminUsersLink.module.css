@@ -22,3 +22,16 @@
     display: inline-flex;
   }
 }
+
+.link {
+  border-color: var(--color-borde);
+  border-radius: 11px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.link:hover {
+  border-color: var(--color-primario);
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}

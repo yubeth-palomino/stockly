@@ -150,3 +150,28 @@
     border: 0;
   }
 }
+
+.selector {
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+}
+
+.formato select {
+  padding: 9px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.botonImprimir {
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-primario);
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.botonImprimir:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--color-hover-primario);
+}

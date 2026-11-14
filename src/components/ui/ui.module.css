@@ -259,3 +259,155 @@
     transition: none;
   }
 }
+
+.boton {
+  min-height: 44px;
+  border-radius: 12px;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.boton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.boton_primario {
+  border-color: var(--color-disponible);
+  color: var(--color-texto);
+  background: var(--color-disponible);
+}
+
+.boton_primario:hover:not(:disabled) {
+  border-color: var(--color-hover-guardar);
+  background: var(--color-hover-guardar);
+}
+
+.boton_secundario {
+  border-color: var(--color-borde);
+  color: var(--color-texto);
+  background: var(--color-editar);
+}
+
+.boton_secundario:hover:not(:disabled) {
+  border-color: #93B6CB;
+  background: #93B6CB;
+}
+
+.boton_peligro {
+  border-color: var(--color-agotado);
+  color: var(--color-texto);
+  background: var(--color-agotado);
+}
+
+.boton_peligro:hover:not(:disabled) {
+  border-color: #E5A09D;
+  background: #E5A09D;
+}
+
+.boton_fantasma:hover:not(:disabled) {
+  background: var(--color-primario-suave);
+}
+
+.campo {
+  gap: 8px;
+  color: var(--color-texto);
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  min-height: 46px;
+  padding: 10px 13px;
+  border-color: var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font-weight: 400;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgb(201 162 126 / 16%);
+  outline: 0;
+}
+
+.campo input[aria-invalid='true'],
+.campo select[aria-invalid='true'] {
+  border-color: #D68D88;
+}
+
+.tarjeta {
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+}
+
+.insignia_neutro,
+.insignia_inactivo {
+  color: var(--color-texto);
+  background: #F4EDE5;
+}
+
+.insignia_primario {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.insignia_disponible {
+  color: var(--color-texto);
+  background: var(--color-disponible);
+}
+
+.insignia_agotado {
+  color: var(--color-texto);
+  background: var(--color-agotado);
+}
+
+.insignia_dueno {
+  color: var(--color-texto);
+  background: #F4EDE5;
+}
+
+.aviso {
+  border-radius: 14px;
+}
+
+.aviso_info {
+  color: var(--color-texto);
+  background: #F4EDE5;
+}
+
+.aviso_exito {
+  color: var(--color-texto);
+  background: var(--color-disponible);
+}
+
+.aviso_advertencia {
+  color: var(--color-texto);
+  background: var(--color-acento);
+}
+
+.aviso_error {
+  color: var(--color-texto);
+  background: var(--color-agotado);
+}
+
+.fondoModal {
+  background: rgb(74 63 53 / 32%);
+}
+
+.modal {
+  border: 1px solid var(--color-borde);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgb(74 63 53 / 14%);
+}
+
+.estadoVacio > span {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+:where(.boton, .campo input, .campo select, .cerrarAviso, .modal):focus-visible {
+  outline-color: rgb(201 162 126 / 70%);
+}

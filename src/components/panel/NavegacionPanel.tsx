@@ -47,7 +47,10 @@ export function NavegacionPanel({
           <span className={styles.marcaIcono} aria-hidden="true">
             S
           </span>
-          Stockly
+          <span className={styles.marcaTexto}>
+            <strong>Stockly</strong>
+            <small>Sistema de Inventario</small>
+          </span>
         </Link>
         <button
           className={styles.botonMenu}

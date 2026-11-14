@@ -210,3 +210,53 @@
     flex-direction: column;
   }
 }
+
+.panel,
+.tarjeta,
+.metrica,
+.filtros,
+.formulario,
+.lista,
+.filaCabecera,
+.caja,
+.cierre {
+  border-radius: 16px;
+}
+
+.panel,
+.tarjeta,
+.metrica {
+  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+}
+
+.tabla {
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-superficie);
+}
+
+.tabla th {
+  color: var(--color-texto);
+  background: var(--color-borde);
+}
+
+.tabla tbody tr:nth-child(even) {
+  background: var(--color-fondo);
+}
+
+.estado {
+  border-radius: 999px;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.barraGrafico span {
+  background: var(--color-primario);
+}
+
+.nota {
+  color: var(--color-texto-suave);
+}

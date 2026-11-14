@@ -320,3 +320,66 @@
     text-align: left;
   }
 }
+
+.filtros,
+.kpis article,
+.kpisEconomicos article,
+.tarjeta,
+.comparacion {
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+}
+
+.filtros select,
+.filtros input {
+  border-color: var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.filtros button {
+  border: 1px solid var(--color-primario);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-primario);
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.filtros button:hover {
+  transform: translateY(-1px);
+  background: var(--color-hover-primario);
+}
+
+.kpis article,
+.kpisEconomicos article {
+  padding: 20px;
+}
+
+.tarjeta h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+}
+
+.barra {
+  border-radius: 8px 8px 2px 2px;
+  background: var(--color-primario);
+}
+
+.tablaContenedor table {
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--color-superficie);
+}
+
+.tablaContenedor th {
+  color: var(--color-texto);
+  background: var(--color-borde);
+}
+
+.tablaContenedor tbody tr:nth-child(even) {
+  background: var(--color-fondo);
+}

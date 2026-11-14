@@ -59,3 +59,23 @@
     clip-path: inset(50%);
   }
 }
+
+.button {
+  min-height: 40px;
+  padding: 0 13px;
+  border-color: var(--color-borde);
+  border-radius: 11px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--color-primario);
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.error {
+  color: #A76A65;
+}

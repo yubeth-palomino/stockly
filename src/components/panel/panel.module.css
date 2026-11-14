@@ -856,3 +856,193 @@
     gap: 5px;
   }
 }
+
+.navegacion {
+  border-color: var(--color-borde);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 4px 18px rgb(74 63 53 / 4%);
+}
+
+.barra {
+  gap: 18px;
+}
+
+.marca {
+  color: var(--color-texto);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 25px;
+  letter-spacing: -0.6px;
+}
+
+.marcaTexto {
+  display: grid;
+  gap: 2px;
+}
+
+.marcaTexto strong {
+  font-weight: 600;
+}
+
+.marcaTexto small {
+  color: var(--color-texto-suave);
+  font: 11px Arial, sans-serif;
+  letter-spacing: 0;
+}
+
+.marcaIcono {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-borde);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: #F4EDE5;
+}
+
+.enlaces {
+  gap: 3px;
+}
+
+.enlace {
+  border-radius: 11px;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.enlace:hover,
+.enlaceActivo {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.insigniaReposicion {
+  color: var(--color-texto);
+  background: var(--color-acento);
+}
+
+.botonMenu {
+  border-radius: 11px;
+  background: var(--color-superficie);
+}
+
+.contenido {
+  padding-top: 40px;
+}
+
+.tarjetaCuenta,
+.metrica,
+.listaAgotados,
+.accesoRapido,
+.filtros,
+.filtrosEconomia,
+.tablaDesbordable,
+.tarjetaInventario,
+.formularioUsuario,
+.resumenVenta {
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+}
+
+.tarjetaCuenta h1,
+.titulo,
+.encabezadoSeccion h2,
+.encabezadoSeccion h3,
+.detalleProducto h2,
+.formularioUsuario h2 {
+  color: var(--color-texto);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.sobretitulo,
+.enlaceTexto {
+  color: var(--color-hover-primario);
+}
+
+.metrica {
+  min-height: 150px;
+  padding: 22px;
+}
+
+.metricaValor {
+  margin-top: 18px;
+}
+
+.botonEnlace {
+  border: 1px solid var(--color-primario);
+  border-radius: 12px;
+  color: var(--color-texto);
+  background: var(--color-primario);
+  transition: background-color 140ms ease, transform 140ms ease;
+}
+
+.botonEnlace:hover {
+  transform: translateY(-1px);
+  background: var(--color-hover-primario);
+}
+
+.accesoRapido {
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+}
+
+.accesoRapido:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primario);
+  background: #F4EDE5;
+}
+
+.filtrosEconomia input,
+.filtrosKardex input,
+.filtrosKardex select {
+  border-color: var(--color-borde);
+  border-radius: 11px;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.filtrosEconomia button,
+.filtrosKardex button {
+  border-radius: 11px;
+  color: var(--color-texto);
+  background: var(--color-primario);
+  transition: background-color 140ms ease;
+}
+
+.filtrosEconomia button:hover,
+.filtrosKardex button:hover {
+  background: var(--color-hover-primario);
+}
+
+.tablaPanel thead th {
+  color: var(--color-texto);
+  background: var(--color-borde);
+}
+
+.tablaPanel tbody tr:nth-child(even) {
+  background: var(--color-fondo);
+}
+
+.filaPorReponer,
+.tarjetaPorReponer {
+  background: #FDE68A;
+}
+
+.etiquetaPorReponer {
+  color: var(--color-texto);
+  background: #FDE68A;
+}
+
+:where(.enlace, .botonMenu, .accesoRapido, .botonEnlace):focus-visible {
+  outline-color: rgb(201 162 126 / 65%);
+}
+
+@media (max-width: 640px) {
+  .barra {
+    gap: 10px 12px;
+  }
+
+  .contenido {
+    padding-top: 28px;
+  }
+
+  .enlace {
+    border-radius: 10px;
+  }
+}
