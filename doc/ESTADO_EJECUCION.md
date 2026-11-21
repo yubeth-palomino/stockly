@@ -297,3 +297,18 @@ DEMO-008    34     0         No
 - **Corrección:** producción ahora exige `RESEND_FROM` de un dominio verificado; el remitente de prueba queda solo para desarrollo. Los fallos del proveedor y de la solicitud se registran en el servidor sin incluir el correo del usuario; si el envío falla, se invalida el token recién creado. La respuesta pública sigue siendo neutral para no revelar si la cuenta existe.
 - **Configuración pendiente para envío real:** definir `RESEND_FROM` en Vercel con una dirección de dominio verificado en Resend. La clave puede venir del conector de Vercel o de `RESEND_API_KEY`; `APP_URL` es opcional si Vercel ya publica la URL de producción correcta.
 - **Verificación:** `npm test` pasó 53 archivos y 180 pruebas; `npm run build`, `npm run lint`, `npm run type-check` y `git diff --check` finalizaron correctamente. El primer type-check concurrente con el build encontró archivos `.next` mientras se regeneraban; la ejecución secuencial posterior pasó.
+
+### Rediseño visual del panel · 2026-11-21
+
+- **Cambios de estilo:** fondo lila, panel flotante blanco, sidebar marino de 180 px, tarjetas de resumen turquesa/moradas, tipografía Inter y controles redondeados. Se ajustaron los gráficos comerciales para usar morados.
+- **Alcance:** solo CSS; se conservan rutas, nombres, funciones, acciones y datos reales. No se agregaron valores ficticios de ingresos/almacenamiento ni controles que no existían; la navegación móvil continúa en formato horizontal para mantener sus enlaces accesibles.
+- **Archivos modificados:** `src/app/globals.css`, `src/components/panel/panel.module.css`, `src/components/panel/comercial.module.css`, `src/components/ui/ui.module.css`.
+- **Verificación:** `npm run build`, `npm test` (55 archivos/188 pruebas), `npm run lint` y `git diff --check` correctos.
+- **Revisión visual:** el navegador local agotó el tiempo al abrir `/panel`, así que no se pudo validar una captura en esta sesión.
+
+### Rediseño visual del inicio de sesión · 2026-11-21
+
+- **Cambios visuales:** formulario principal en una tarjeta blanca sobre fondo lila, panel marino con ilustración SVG, campos con iconos SVG, acentos morados/turquesa y diseño adaptable a celular.
+- **Alcance:** solo presentación. Se conservan validaciones, estados, rutas, accesibilidad y flujos de inicio y recuperación; los estilos compartidos mantienen la coherencia visual en las pantallas de autenticación.
+- **Archivos modificados:** `src/components/auth/LoginForm.tsx`, `src/components/auth/LoginForm.module.css`.
+- **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (55 archivos/188 pruebas) y `git diff --check` correctos. No fue posible abrir el navegador de prueba porque falta Chromium de Playwright; no se instaló un navegador.

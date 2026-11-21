@@ -29,7 +29,7 @@
 }
 
 .boton_primario:hover:not(:disabled) {
-  background: #203d72;
+  background: #8B7CF6;
 }
 
 .boton_secundario {
@@ -48,7 +48,7 @@
 }
 
 .boton_peligro:hover:not(:disabled) {
-  background: #962626;
+  background: #8B7CF6;
 }
 
 .boton_fantasma {
@@ -118,7 +118,7 @@
 .insignia_neutro,
 .insignia_inactivo {
   color: var(--color-inactivo);
-  background: #edf0f2;
+  background: #F8F7FF;
 }
 
 .insignia_primario {
@@ -128,17 +128,17 @@
 
 .insignia_disponible {
   color: var(--color-disponible);
-  background: #e7f3eb;
+  background: #8FE3E3;
 }
 
 .insignia_agotado {
   color: var(--color-agotado);
-  background: #f9e8e8;
+  background: #C4B5FD;
 }
 
 .insignia_dueno {
   color: var(--color-dueno);
-  background: #f5eddf;
+  background: #F8F7FF;
 }
 
 .aviso {
@@ -159,23 +159,23 @@
 }
 
 .aviso_info {
-  color: #244b80;
-  background: #eaf0f9;
+  color: #191A35;
+  background: #F8F7FF;
 }
 
 .aviso_exito {
-  color: #24633d;
-  background: #e8f3eb;
+  color: #191A35;
+  background: #8FE3E3;
 }
 
 .aviso_advertencia {
-  color: #76500d;
-  background: #f8f0df;
+  color: #191A35;
+  background: #C4B5FD;
 }
 
 .aviso_error {
-  color: #912929;
-  background: #f9e9e9;
+  color: #191A35;
+  background: #C4B5FD;
 }
 
 .cerrarAviso {
@@ -194,7 +194,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgb(18 27 38 / 55%);
+  background: rgb(25 26 53 / 55%);
 }
 
 .modal {
@@ -204,7 +204,7 @@
   padding: 22px;
   border-radius: 10px;
   background: var(--color-superficie);
-  box-shadow: 0 18px 60px rgb(18 27 38 / 25%);
+  box-shadow: 0 18px 60px rgb(25 26 53 / 25%);
 }
 
 .encabezadoModal {
@@ -250,7 +250,7 @@
 }
 
 :where(.boton, .campo input, .campo select, .cerrarAviso, .modal):focus-visible {
-  outline: 3px solid #f0ad3d;
+  outline: 3px solid #8B7CF6;
   outline-offset: 2px;
 }
 
@@ -262,7 +262,7 @@
 
 .boton {
   min-height: 44px;
-  border-radius: 12px;
+  border-radius: 16px;
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
 }
 
@@ -288,19 +288,19 @@
 }
 
 .boton_secundario:hover:not(:disabled) {
-  border-color: #93B6CB;
-  background: #93B6CB;
+  border-color: #8FE3E3;
+  background: #8FE3E3;
 }
 
 .boton_peligro {
-  border-color: var(--color-agotado);
-  color: var(--color-texto);
-  background: var(--color-agotado);
+  border-color: #8B7CF6;
+  color: #FFFFFF;
+  background: #8B7CF6;
 }
 
 .boton_peligro:hover:not(:disabled) {
-  border-color: #E5A09D;
-  background: #E5A09D;
+  border-color: #4F46E5;
+  background: #4F46E5;
 }
 
 .boton_fantasma:hover:not(:disabled) {
@@ -318,7 +318,7 @@
   min-height: 46px;
   padding: 10px 13px;
   border-color: var(--color-borde);
-  border-radius: 12px;
+  border-radius: 16px;
   color: var(--color-texto);
   background: var(--color-superficie);
   font-weight: 400;
@@ -328,19 +328,19 @@
 .campo input:focus,
 .campo select:focus {
   border-color: var(--color-primario);
-  box-shadow: 0 0 0 3px rgb(201 162 126 / 16%);
+  box-shadow: 0 0 0 3px rgb(139 124 246 / 16%);
   outline: 0;
 }
 
 .campo input[aria-invalid='true'],
 .campo select[aria-invalid='true'] {
-  border-color: #D68D88;
+  border-color: #8B7CF6;
 }
 
 .tarjeta {
   padding: 24px;
   border-radius: 16px;
-  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+  box-shadow: 0 8px 26px rgb(25 26 53 / 4%);
 }
 
 .boton,
@@ -354,7 +354,7 @@
 .insignia_neutro,
 .insignia_inactivo {
   color: var(--color-texto);
-  background: #F4EDE5;
+  background: #F8F7FF;
 }
 
 .insignia_primario {
@@ -379,7 +379,7 @@
 
 .insignia_dueno {
   color: var(--color-texto);
-  background: #F4EDE5;
+  background: #F8F7FF;
 }
 
 .aviso {
@@ -388,7 +388,7 @@
 
 .aviso_info {
   color: var(--color-texto);
-  background: #F4EDE5;
+  background: #F8F7FF;
 }
 
 .aviso_exito {
@@ -407,13 +407,13 @@
 }
 
 .fondoModal {
-  background: rgb(74 63 53 / 32%);
+  background: rgb(25 26 53 / 32%);
 }
 
 .modal {
   border: 1px solid var(--color-borde);
-  border-radius: 18px;
-  box-shadow: 0 18px 60px rgb(74 63 53 / 14%);
+  border-radius: 22px;
+  box-shadow: 0 18px 60px rgb(25 26 53 / 14%);
 }
 
 .estadoVacio > span {
@@ -422,5 +422,17 @@
 }
 
 :where(.boton, .campo input, .campo select, .cerrarAviso, .modal):focus-visible {
-  outline-color: rgb(201 162 126 / 70%);
+  outline-color: rgb(139 124 246 / 70%);
+}
+
+.boton,
+.campo input,
+.campo select,
+.tarjeta,
+.aviso {
+  border-radius: 18px;
+}
+
+.campo .errorTexto {
+  color: #4F46E5;
 }

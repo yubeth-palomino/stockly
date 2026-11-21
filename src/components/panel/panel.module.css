@@ -69,7 +69,7 @@
   padding: 0 5px;
   border-radius: 999px;
   color: #fff;
-  background: #b83232;
+  background: #8B7CF6;
   font: 700 11px Arial, sans-serif;
 }
 
@@ -271,7 +271,7 @@
 }
 
 .botonEnlace:hover {
-  background: #203d72;
+  background: #8B7CF6;
 }
 
 .accionesPagina {
@@ -456,7 +456,7 @@
 
 .tablaPanel thead th {
   color: var(--color-texto-suave);
-  background: #f7f8fa;
+  background: #F8F7FF;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -499,7 +499,7 @@
 }
 
 .filaPorReponer {
-  background: #fff8f1;
+  background: #F8F7FF;
 }
 
 .tarjetaPorReponer {
@@ -511,8 +511,8 @@
   margin-left: 8px;
   padding: 3px 7px;
   border-radius: 999px;
-  color: #70480f;
-  background: #f5e4bd;
+  color: #191A35;
+  background: #C4B5FD;
   font: 700 11px Arial, sans-serif;
   white-space: nowrap;
 }
@@ -715,7 +715,7 @@
 }
 
 :where(.enlace, .botonMenu, .accesoRapido):focus-visible {
-  outline: 3px solid #f0ad3d;
+  outline: 3px solid #8B7CF6;
   outline-offset: 3px;
 }
 
@@ -873,8 +873,8 @@
   flex: 0 0 258px;
   border: 0;
   border-right: 1px solid var(--color-borde);
-  background: #FFFDF8;
-  box-shadow: 5px 0 24px rgb(74 63 53 / 3%);
+  background: #191A35;
+  box-shadow: 5px 0 24px rgb(25 26 53 / 3%);
   backdrop-filter: none;
 }
 
@@ -954,12 +954,12 @@
 .enlace:hover {
   transform: translateX(2px);
   color: var(--color-texto);
-  background: #F7F1E9;
+  background: #2A2B4A;
 }
 
 .enlaceActivo {
   color: var(--color-texto);
-  background: #F1E8DC;
+  background: #2A2B4A;
   font-weight: 600;
 }
 
@@ -975,13 +975,13 @@
 
 .enlaceActivo .iconoEnlace {
   color: var(--color-texto);
-  background: rgb(201 162 126 / 18%);
+  background: rgb(126 221 221 / 12%);
 }
 
 .insigniaReposicion {
   min-width: 23px;
   height: 23px;
-  border: 1px solid rgb(74 63 53 / 8%);
+  border: 1px solid rgb(25 26 53 / 8%);
   color: var(--color-texto);
   background: var(--color-acento);
   font: 600 11px var(--fuente-inter), sans-serif;
@@ -1005,7 +1005,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 50%;
   color: var(--color-texto);
-  background: #F1E8DC;
+  background: #2A2B4A;
   font: 600 13px var(--fuente-poppins), sans-serif;
 }
 
@@ -1037,7 +1037,7 @@
 }
 
 .sobretitulo {
-  color: #A77D58;
+  color: #8B7CF6;
   font: 600 10px var(--fuente-inter), sans-serif;
   letter-spacing: 1.6px;
 }
@@ -1072,29 +1072,29 @@
   align-content: start;
   padding: 20px;
   border-radius: 18px;
-  box-shadow: 0 9px 28px rgb(74 63 53 / 5%);
+  box-shadow: 0 9px 28px rgb(25 26 53 / 5%);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .metrica:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgb(74 63 53 / 8%);
+  box-shadow: 0 14px 32px rgb(25 26 53 / 8%);
 }
 
 .metricaVerde {
-  background: linear-gradient(140deg, #FFFFFF 48%, #D6E8CF 180%);
+  background: linear-gradient(140deg, #FFFFFF 48%, #8FE3E3 180%);
 }
 
 .metricaAmbar {
-  background: linear-gradient(140deg, #FFFFFF 48%, #FDEEC4 180%);
+  background: linear-gradient(140deg, #FFFFFF 48%, #C4B5FD 180%);
 }
 
 .metricaAzul {
-  background: linear-gradient(140deg, #FFFFFF 48%, #D0E2EC 180%);
+  background: linear-gradient(140deg, #FFFFFF 48%, #8FE3E3 180%);
 }
 
 .metricaRosa {
-  background: linear-gradient(140deg, #FFFFFF 48%, #F8D7D4 180%);
+  background: linear-gradient(140deg, #FFFFFF 48%, #C4B5FD 180%);
 }
 
 .metricaEtiqueta {
@@ -1110,7 +1110,7 @@
   grid-column: 2;
   grid-row: 1 / span 2;
   place-items: center;
-  border: 1px solid rgb(74 63 53 / 7%);
+  border: 1px solid rgb(25 26 53 / 7%);
   border-radius: 13px;
   color: var(--color-texto);
   background: rgb(255 255 255 / 62%);
@@ -1157,7 +1157,7 @@
 .formularioUsuario,
 .resumenVenta {
   border-radius: 18px;
-  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+  box-shadow: 0 8px 26px rgb(25 26 53 / 4%);
 }
 
 .listaAgotados {
@@ -1171,7 +1171,7 @@
 }
 
 .filaAgotado:hover {
-  background: #FBF8F3;
+  background: #F8F7FF;
 }
 
 .accesosRapidos {
@@ -1187,7 +1187,7 @@
 
 .accesoRapido:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgb(74 63 53 / 7%);
+  box-shadow: 0 12px 30px rgb(25 26 53 / 7%);
 }
 
 .accesoRapido strong {
@@ -1201,7 +1201,7 @@
 .pie {
   margin-top: 42px;
   padding-top: 17px;
-  border-top: 1px solid rgb(232 221 208 / 72%);
+  border-top: 1px solid rgb(237 237 242 / 72%);
   font: 10px var(--fuente-inter), sans-serif;
 }
 
@@ -1250,7 +1250,7 @@
 .tablaDesbordable {
   overflow: auto;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgb(74 63 53 / 5%);
+  box-shadow: 0 10px 30px rgb(25 26 53 / 5%);
 }
 
 .tablaPanel {
@@ -1260,14 +1260,14 @@
 .tablaPanel th,
 .tablaPanel td {
   padding: 16px 15px;
-  border-bottom-color: #F0E8DE;
+  border-bottom-color: #EDEDF2;
 }
 
 .tablaPanel thead th {
   padding-top: 15px;
   padding-bottom: 15px;
   color: var(--color-texto);
-  background: #F1E8DC;
+  background: #F8F7FF;
   font: 600 10px var(--fuente-inter), sans-serif;
   letter-spacing: 0.2px;
 }
@@ -1277,11 +1277,11 @@
 }
 
 .tablaPanel tbody tr:nth-child(even) {
-  background: #FCFAF7;
+  background: #F8F7FF;
 }
 
 .tablaPanel tbody tr:hover {
-  background: #F7F1E9;
+  background: #E9E4FF;
 }
 
 .tablaPanel tbody th {
@@ -1311,7 +1311,7 @@
 }
 
 :where(.enlace, .accesoRapido, .botonEnlace, .filtros input, .filtros select):focus-visible {
-  outline: 3px solid rgb(201 162 126 / 55%);
+  outline: 3px solid rgb(139 124 246 / 55%);
   outline-offset: 3px;
 }
 
@@ -1363,7 +1363,7 @@
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--color-borde);
-    box-shadow: 0 5px 20px rgb(74 63 53 / 4%);
+    box-shadow: 0 5px 20px rgb(25 26 53 / 4%);
   }
 
   .barra {
@@ -1399,7 +1399,7 @@
     overflow-x: auto;
     margin-top: 10px;
     padding: 7px 0 2px;
-    border-top: 1px solid rgb(232 221 208 / 72%);
+    border-top: 1px solid rgb(255 255 255 / 14%);
     scrollbar-width: thin;
   }
 
@@ -1571,7 +1571,7 @@
 .navegacion {
   border-color: var(--color-borde);
   background: rgb(255 255 255 / 94%);
-  box-shadow: 0 4px 18px rgb(74 63 53 / 4%);
+  box-shadow: 0 4px 18px rgb(25 26 53 / 4%);
 }
 
 .barra {
@@ -1606,7 +1606,7 @@
   border: 1px solid var(--color-borde);
   border-radius: 12px;
   color: var(--color-texto);
-  background: #F4EDE5;
+  background: #2A2B4A;
 }
 
 .enlaces {
@@ -1649,7 +1649,7 @@
 .formularioUsuario,
 .resumenVenta {
   border-radius: 16px;
-  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+  box-shadow: 0 8px 26px rgb(25 26 53 / 4%);
 }
 
 .tarjetaCuenta h1,
@@ -1696,7 +1696,7 @@
 .accesoRapido:hover {
   transform: translateY(-1px);
   border-color: var(--color-primario);
-  background: #F4EDE5;
+  background: #F8F7FF;
 }
 
 .filtrosEconomia input,
@@ -1732,16 +1732,16 @@
 
 .filaPorReponer,
 .tarjetaPorReponer {
-  background: #FDE68A;
+  background: #C4B5FD;
 }
 
 .etiquetaPorReponer {
   color: var(--color-texto);
-  background: #FDE68A;
+  background: #C4B5FD;
 }
 
 :where(.enlace, .botonMenu, .accesoRapido, .botonEnlace):focus-visible {
-  outline-color: rgb(201 162 126 / 65%);
+  outline-color: rgb(139 124 246 / 65%);
 }
 
 @media (max-width: 640px) {
@@ -1756,4 +1756,393 @@
   .enlace {
     border-radius: 10px;
   }
+}
+
+.aplicacion {
+  width: min(1440px, calc(100% - 48px));
+  min-height: calc(100vh - 48px);
+  margin: 24px auto;
+  overflow: hidden;
+  border: 1px solid rgb(139 124 246 / 12%);
+  border-radius: 24px;
+  background: #FFFFFF;
+  box-shadow: 0 24px 72px rgb(25 26 53 / 10%);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.aplicacion :where(*) {
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.navegacion {
+  position: relative;
+  top: auto;
+  width: 180px;
+  height: auto;
+  min-height: 100%;
+  flex: 0 0 180px;
+  border: 0;
+  border-radius: 24px 0 0 24px;
+  background: #191A35;
+  box-shadow: none;
+}
+
+.barra {
+  padding: 24px 12px 20px;
+}
+
+.marca {
+  gap: 10px;
+  color: #FFFFFF;
+  font-size: 20px;
+}
+
+.marcaIcono {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgb(126 221 221 / 42%);
+  border-radius: 50%;
+  color: transparent;
+  background: #2A2B4A;
+  font-size: 0;
+}
+
+.marcaIcono::before {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7EDDDD;
+  content: '';
+  transform: translateX(-50%);
+}
+
+.marcaIcono::after {
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  width: 17px;
+  height: 9px;
+  border-radius: 9px 9px 5px 5px;
+  background: #7EDDDD;
+  content: '';
+  transform: translateX(-50%);
+}
+
+.marcaTexto small {
+  color: #A0A0C0;
+}
+
+.etiquetaNavegacion {
+  margin: 38px 10px 12px;
+  color: #8A8AA3;
+}
+
+.enlace {
+  min-height: 44px;
+  border-radius: 16px;
+  color: #A0A0C0;
+  font-size: 13px;
+}
+
+.enlace:hover {
+  color: #FFFFFF;
+  background: rgb(126 221 221 / 12%);
+}
+
+.enlaceActivo {
+  color: #FFFFFF;
+  background: #2A2B4A;
+  box-shadow: inset 3px 0 #7EDDDD;
+}
+
+.iconoEnlace {
+  color: #7EDDDD;
+}
+
+.enlaceActivo .iconoEnlace {
+  color: #7EDDDD;
+  background: rgb(126 221 221 / 12%);
+}
+
+.insigniaReposicion {
+  border: 0;
+  color: #191A35;
+  background: #8FE3E3;
+}
+
+.usuarioNav {
+  border-top-color: rgb(255 255 255 / 14%);
+}
+
+.avatarUsuario {
+  border-color: rgb(126 221 221 / 42%);
+  color: #7EDDDD;
+  background: #2A2B4A;
+}
+
+.nombreUsuario {
+  color: #FFFFFF;
+}
+
+.contenido {
+  min-height: calc(100vh - 48px);
+  padding: 30px clamp(22px, 3vw, 42px) 36px;
+  background: #F8F7FF;
+}
+
+.encabezadoPagina {
+  min-height: 86px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 18px 22px;
+  border: 1px solid #EDEDF2;
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 6px 22px rgb(25 26 53 / 4%);
+}
+
+.sobretitulo {
+  color: #4F46E5;
+}
+
+.titulo {
+  color: #1A1A35;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.descripcion {
+  margin-top: 5px;
+  color: #8A8AA3;
+  font-size: 12px;
+}
+
+.metricas {
+  gap: 16px;
+}
+
+.metrica {
+  min-height: 156px;
+  padding: 20px;
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 7px 22px rgb(25 26 53 / 5%);
+}
+
+.metricaVerde {
+  color: #191A35;
+  background: #8FE3E3;
+}
+
+.metricaAmbar {
+  color: #191A35;
+  background: #C4B5FD;
+}
+
+.metricaAzul {
+  color: #1A1A35;
+  background: #FFFFFF;
+}
+
+.metricaRosa {
+  color: #FFFFFF;
+  background: #191A35;
+}
+
+.metricaVerde .metricaEtiqueta,
+.metricaVerde .metricaValor,
+.metricaVerde .metricaNota,
+.metricaAmbar .metricaEtiqueta,
+.metricaAmbar .metricaValor,
+.metricaAmbar .metricaNota,
+.metricaAzul .metricaEtiqueta,
+.metricaAzul .metricaValor,
+.metricaAzul .metricaNota {
+  color: #191A35;
+}
+
+.metricaRosa .metricaEtiqueta,
+.metricaRosa .metricaValor,
+.metricaRosa .metricaNota {
+  color: #FFFFFF;
+}
+
+.iconoMetrica {
+  border-color: rgb(25 26 53 / 8%);
+  border-radius: 50%;
+  color: #191A35;
+  background: rgb(255 255 255 / 52%);
+}
+
+.metricaRosa .iconoMetrica {
+  border-color: rgb(126 221 221 / 28%);
+  color: #7EDDDD;
+  background: #2A2B4A;
+}
+
+.metrica:hover {
+  box-shadow: 0 12px 28px rgb(25 26 53 / 9%);
+}
+
+.seccionResumen {
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid #EDEDF2;
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 7px 22px rgb(25 26 53 / 4%);
+}
+
+.encabezadoSeccion h2 {
+  color: #1A1A35;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.encabezadoSeccion p {
+  color: #8A8AA3;
+  font-size: 12px;
+}
+
+.enlaceTexto {
+  color: #4F46E5;
+  font-size: 12px;
+}
+
+.listaAgotados {
+  border-color: #EDEDF2;
+  border-radius: 16px;
+  background: #FFFFFF;
+  box-shadow: none;
+}
+
+.filaAgotado {
+  border-color: #EDEDF2;
+}
+
+.filaAgotado:hover {
+  background: #F8F7FF;
+}
+
+.filaPorReponer,
+.tarjetaPorReponer,
+.etiquetaPorReponer {
+  color: #191A35;
+  background: #C4B5FD;
+}
+
+.accesosRapidos {
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.accesoRapido {
+  min-height: 90px;
+  border: 0;
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 7px 22px rgb(25 26 53 / 5%);
+}
+
+.accesoRapido:hover {
+  border-color: #7EDDDD;
+  background: #FFFFFF;
+  box-shadow: 0 12px 28px rgb(25 26 53 / 8%);
+}
+
+.pie {
+  color: #8A8AA3;
+}
+
+:where(.enlace, .accesoRapido, .botonEnlace, .filtros input, .filtros select):focus-visible {
+  outline-color: rgb(139 124 246 / 60%);
+}
+
+@media (max-width: 800px) {
+  .aplicacion {
+    width: calc(100% - 24px);
+    min-height: calc(100vh - 24px);
+    margin: 12px auto;
+    border-radius: 20px;
+  }
+
+  .navegacion {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: 0 0 100%;
+    border-right: 0;
+    border-bottom: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 0;
+  }
+
+  .barra {
+    width: 100%;
+    min-height: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 12px;
+    margin: 0;
+    padding: 12px 16px 10px;
+  }
+
+  .contenido {
+    min-height: calc(100vh - 150px);
+    padding: 22px 18px 28px;
+  }
+
+  .encabezadoPagina {
+    align-items: flex-start;
+  }
+
+  .metricas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .aplicacion {
+    width: calc(100% - 16px);
+    min-height: calc(100vh - 16px);
+    margin: 8px auto;
+    border-radius: 18px;
+  }
+
+  .contenido {
+    padding: 18px 14px 22px;
+  }
+
+  .encabezadoPagina {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .metricas {
+    grid-template-columns: 1fr;
+  }
+
+  .seccionResumen {
+    padding: 16px;
+  }
+}
+
+.botonEnlace,
+.botonMenu,
+.filtros :where(input, select),
+.filtrosEconomia :where(input, select, button),
+.filtrosKardex :where(input, select, button),
+.tablaDesbordable,
+.tarjetaInventario,
+.formularioUsuario,
+.resumenVenta,
+.tarjetaCuenta {
+  border-radius: 18px;
 }

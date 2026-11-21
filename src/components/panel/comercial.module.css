@@ -226,7 +226,7 @@
 .panel,
 .tarjeta,
 .metrica {
-  box-shadow: 0 8px 26px rgb(74 63 53 / 4%);
+  box-shadow: 0 8px 26px rgb(25 26 53 / 4%);
 }
 
 .tabla {
@@ -259,4 +259,26 @@
 
 .nota {
   color: var(--color-texto-suave);
+}
+
+.panel {
+  gap: 16px;
+}
+
+.tarjeta {
+  border-color: #EDEDF2;
+  border-radius: 18px;
+  background: #FFFFFF;
+}
+
+.metrica {
+  border: 0;
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 7px 22px rgb(25 26 53 / 5%);
+}
+
+.barraGrafico span {
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, #8B7CF6 0%, #C4B5FD 100%);
 }

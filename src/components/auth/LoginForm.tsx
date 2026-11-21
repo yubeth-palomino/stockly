@@ -6,6 +6,50 @@ import styles from './LoginForm.module.css';
 
 type LoginErrors = { email?: string | undefined; password?: string | undefined };
 
+function IconoMarca() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M5 18V6h4l3 5 3-5h4v12h-4v-6l-3 4-3-4v6H5Z" />
+    </svg>
+  );
+}
+
+function IconoCorreo() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <rect x="3.5" y="5.5" width="17" height="13" rx="3" />
+      <path d="m5 7 7 5.5L19 7" />
+    </svg>
+  );
+}
+
+function IconoCandado() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <rect x="4.5" y="10" width="15" height="11" rx="3" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" />
+    </svg>
+  );
+}
+
+function IconoVisibilidad({ visible }: { visible: boolean }) {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M2.5 12s3.2-6 9.5-6 9.5 6 9.5 6-3.2 6-9.5 6-9.5-6-9.5-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+      {!visible && <path d="m4 20 16-16" />}
+    </svg>
+  );
+}
+
+function IconoFlecha() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M4 12h15m-6-6 6 6-6 6" />
+    </svg>
+  );
+}
+
 export function LoginForm({
   passwordUpdated = false,
   destino = '/panel',
@@ -104,10 +148,12 @@ export function LoginForm({
   }
 
   return (
-    <main className={styles.loginPage}>
+    <main className={`${styles.loginPage} ${styles.loginPrincipal}`}>
       <section className={styles.brandPanel} aria-label="Stockly">
         <Link className={styles.brand} href="/" aria-label="Stockly, inicio">
-          <span className={styles.brandMark}>S</span>
+          <span className={styles.brandMark}>
+            <IconoMarca />
+          </span>
           <span>stockly</span>
         </Link>
 
@@ -115,6 +161,34 @@ export function LoginForm({
           <p className={styles.kicker}>CONTROL DE INVENTARIO</p>
           <h1>Todo en su lugar.</h1>
           <p>Una vista clara de cada producto, movimiento y alerta.</p>
+        </div>
+
+        <div className={styles.brandArtwork} aria-hidden="true">
+          <svg viewBox="0 0 420 230" role="presentation">
+            <defs>
+              <linearGradient id="login-area" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#8B7CF6" stopOpacity=".42" />
+                <stop offset="100%" stopColor="#8B7CF6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <rect x="1" y="1" width="418" height="228" rx="26" fill="#2A2B4A" />
+            <path
+              d="M32 177c38-16 51-65 91-50 37 14 49 23 84-12s55 18 88-9 49-46 93-31v124H32Z"
+              fill="url(#login-area)"
+            />
+            <path
+              d="M32 177c38-16 51-65 91-50 37 14 49 23 84-12s55 18 88-9 49-46 93-31"
+              fill="none"
+              stroke="#7EDDDD"
+              strokeLinecap="round"
+              strokeWidth="4"
+            />
+            <path d="M34 195h350" stroke="#A0A0C0" strokeOpacity=".35" />
+            <rect x="47" y="139" width="20" height="56" rx="10" fill="#8B7CF6" />
+            <rect x="83" y="119" width="20" height="76" rx="10" fill="#C4B5FD" />
+            <rect x="119" y="135" width="20" height="60" rx="10" fill="#7EDDDD" />
+            <circle cx="295" cy="105" r="6" fill="#FFFFFF" />
+          </svg>
         </div>
 
         <div className={styles.stockNote} aria-hidden="true">
@@ -129,7 +203,9 @@ export function LoginForm({
 
       <section className={styles.formPanel}>
         <div className={styles.mobileBrand} aria-hidden="true">
-          <span className={styles.brandMark}>S</span>
+          <span className={styles.brandMark}>
+            <IconoMarca />
+          </span>
           <span>stockly</span>
         </div>
 
@@ -154,22 +230,27 @@ export function LoginForm({
             <form className={styles.form} onSubmit={handleSubmit} noValidate>
               <div className={styles.field}>
                 <label htmlFor="email">Correo electrónico</label>
-                <input
-                  autoComplete="email"
-                  className={errors.email ? styles.inputError : ''}
-                  id="email"
-                  name="email"
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setErrors((current) => ({ ...current, email: undefined }));
-                    setAuthError('');
-                  }}
-                  aria-describedby={errors.email ? 'email-error' : undefined}
-                  aria-invalid={Boolean(errors.email)}
-                  placeholder="nombre@empresa.com"
-                  type="email"
-                  value={email}
-                />
+                <div className={styles.inputWithIcon}>
+                  <span className={styles.inputIcon}>
+                    <IconoCorreo />
+                  </span>
+                  <input
+                    autoComplete="email"
+                    className={errors.email ? styles.inputError : ''}
+                    id="email"
+                    name="email"
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setErrors((current) => ({ ...current, email: undefined }));
+                      setAuthError('');
+                    }}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
+                    aria-invalid={Boolean(errors.email)}
+                    placeholder="nombre@empresa.com"
+                    type="email"
+                    value={email}
+                  />
+                </div>
                 {errors.email && (
                   <span className={styles.fieldError} id="email-error">
                     {errors.email}
@@ -188,6 +269,9 @@ export function LoginForm({
                   </Link>
                 </div>
                 <div className={styles.passwordInput}>
+                  <span className={styles.inputIcon}>
+                    <IconoCandado />
+                  </span>
                   <input
                     autoComplete="current-password"
                     className={errors.password ? styles.inputError : ''}
@@ -211,7 +295,8 @@ export function LoginForm({
                     onClick={() => setMostrarContrasena((visible) => !visible)}
                     type="button"
                   >
-                    {mostrarContrasena ? 'Ocultar' : 'Mostrar'}
+                    <IconoVisibilidad visible={mostrarContrasena} />
+                    <span>{mostrarContrasena ? 'Ocultar' : 'Mostrar'}</span>
                   </button>
                 </div>
                 {errors.password && (
@@ -234,7 +319,7 @@ export function LoginForm({
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Entrando...' : 'Entrar'}
-                {!isSubmitting && <span aria-hidden="true">→</span>}
+                {!isSubmitting && <IconoFlecha />}
               </button>
             </form>
           ) : recoveryMessage ? (
@@ -258,22 +343,27 @@ export function LoginForm({
             <form className={styles.form} onSubmit={handleRecoverySubmit} noValidate>
               <div className={styles.field}>
                 <label htmlFor="recovery-email">Correo electrónico</label>
-                <input
-                  autoComplete="email"
-                  className={errors.email ? styles.inputError : ''}
-                  id="recovery-email"
-                  name="email"
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setErrors({});
-                    setAuthError('');
-                  }}
-                  aria-describedby={errors.email ? 'recovery-email-error' : undefined}
-                  aria-invalid={Boolean(errors.email)}
-                  placeholder="nombre@empresa.com"
-                  type="email"
-                  value={email}
-                />
+                <div className={styles.inputWithIcon}>
+                  <span className={styles.inputIcon}>
+                    <IconoCorreo />
+                  </span>
+                  <input
+                    autoComplete="email"
+                    className={errors.email ? styles.inputError : ''}
+                    id="recovery-email"
+                    name="email"
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setErrors({});
+                      setAuthError('');
+                    }}
+                    aria-describedby={errors.email ? 'recovery-email-error' : undefined}
+                    aria-invalid={Boolean(errors.email)}
+                    placeholder="nombre@empresa.com"
+                    type="email"
+                    value={email}
+                  />
+                </div>
                 {errors.email && (
                   <span className={styles.fieldError} id="recovery-email-error">
                     {errors.email}
