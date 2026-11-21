@@ -277,6 +277,9 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
           autoComplete="off"
           inputMode="numeric"
           autoFocus
+          onKeyDown={(evento) => {
+            if (evento.key === 'Enter') evento.preventDefault();
+          }}
         />
         <EscanerCamara
           alLeer={(codigo) => {

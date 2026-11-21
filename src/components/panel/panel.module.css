@@ -585,6 +585,49 @@
   gap: 14px;
 }
 
+.botonEscaner {
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 1px solid #C4B5FD;
+  border-radius: 16px;
+  color: #191A35;
+  background: #FFFFFF;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.botonEscaner:hover {
+  border-color: #8B7CF6;
+  background: #F8F7FF;
+}
+
+.botonEscaner:focus-visible {
+  outline: 3px solid #8B7CF6;
+  outline-offset: 3px;
+}
+
+.videoEscaner {
+  display: block;
+  width: min(100%, 480px);
+  max-height: 320px;
+  margin-top: 12px;
+  border-radius: 16px;
+  background: #191A35;
+  object-fit: cover;
+}
+
+.videoEscaner[hidden] {
+  display: none;
+}
+
+.errorEscaner {
+  margin: 8px 0 0;
+  color: #4F46E5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .formularioUsuario {
   display: grid;
   width: min(100%, 680px);

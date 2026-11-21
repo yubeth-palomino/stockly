@@ -312,3 +312,9 @@ DEMO-008    34     0         No
 - **Alcance:** solo presentación. Se conservan validaciones, estados, rutas, accesibilidad y flujos de inicio y recuperación; los estilos compartidos mantienen la coherencia visual en las pantallas de autenticación.
 - **Archivos modificados:** `src/components/auth/LoginForm.tsx`, `src/components/auth/LoginForm.module.css`.
 - **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (55 archivos/188 pruebas) y `git diff --check` correctos. No fue posible abrir el navegador de prueba porque falta Chromium de Playwright; no se instaló un navegador.
+
+### Corrección de escaneo y acceso local · 2026-11-21
+
+- **Escaneo:** la vista de video se comprobaba antes de montarse, por lo que la cámara nunca podía iniciar. Se mantiene el video montado, se usa ZXing cuando el navegador no ofrece `BarcodeDetector`, se liberan los controles al detener/desmontar y Enter del lector físico ya no envía el formulario antes de consultar el código.
+- **Inicio de sesión local:** `next start` ejecuta con `NODE_ENV=production`; fuera de Vercel ahora selecciona `STOCKLY_POSTGRES_URL_NON_POOLING` si está configurada. En Vercel se conserva `STOCKLY_POSTGRES_URL` (pool de transacciones).
+- **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (56 archivos/193 pruebas), `npm run db:verificar` (0 fallas), consulta PostgreSQL en modo producción local y `git diff --check` correctos. El escáner se probó con lector simulado; no se realizó una prueba física de cámara ni un inicio de sesión con credenciales reales.

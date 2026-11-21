@@ -10,11 +10,15 @@ declare global {
 
 let poolLocal: Pool | undefined;
 
+export function obtenerVariableConexion(): string {
+  if (process.env.VERCEL === '1') return 'STOCKLY_POSTGRES_URL';
+  return process.env.STOCKLY_POSTGRES_URL_NON_POOLING
+    ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
+    : 'STOCKLY_POSTGRES_URL';
+}
+
 function obtenerConfiguracionPool() {
-  const variableConexion =
-    process.env.NODE_ENV !== 'production' && process.env.STOCKLY_POSTGRES_URL_NON_POOLING
-      ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
-      : 'STOCKLY_POSTGRES_URL';
+  const variableConexion = obtenerVariableConexion();
   const cadenaConexion = process.env[variableConexion];
   if (!cadenaConexion) {
     throw new Error(`Falta la variable ${variableConexion}.`);

@@ -1,65 +1,67 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { type IScannerControls } from '@zxing/browser';
 import styles from './panel.module.css';
-
-type CodigoDetectado = { rawValue: string };
-type DetectorCodigo = {
-  detect: (video: HTMLVideoElement) => Promise<CodigoDetectado[]>;
-};
-type VentanaConDetector = Window & {
-  BarcodeDetector?: new (opciones: { formats: string[] }) => DetectorCodigo;
-};
 
 export function EscanerCamara({ alLeer }: { alLeer: (codigo: string) => void }) {
   const video = useRef<HTMLVideoElement>(null);
-  const flujo = useRef<MediaStream | null>(null);
+  const controles = useRef<IScannerControls | null>(null);
+  const intentoActual = useRef(0);
   const [activo, setActivo] = useState(false);
   const [error, setError] = useState('');
 
   function detener() {
-    flujo.current?.getTracks().forEach((pista) => pista.stop());
-    flujo.current = null;
+    intentoActual.current += 1;
+    controles.current?.stop();
+    controles.current = null;
     setActivo(false);
   }
 
-  useEffect(() => detener, []);
+  useEffect(
+    () => () => {
+      intentoActual.current += 1;
+      controles.current?.stop();
+    },
+    [],
+  );
 
   async function iniciar() {
     setError('');
-    const Constructor = (window as VentanaConDetector).BarcodeDetector;
-    if (!Constructor) {
-      setError('Este navegador no permite escaneo por cámara. Usa el lector o escribe el código.');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError('Este navegador no permite acceso a la cámara. Usa el lector o escribe el código.');
       return;
     }
 
-    try {
-      const camara = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: { ideal: 'environment' } },
-      });
-      flujo.current = camara;
-      if (!video.current) {
-        detener();
-        return;
-      }
-      video.current.srcObject = camara;
-      await video.current.play();
-      const detector = new Constructor({ formats: ['ean_13'] });
-      setActivo(true);
+    const intento = intentoActual.current + 1;
+    intentoActual.current = intento;
+    setActivo(true);
 
-      while (flujo.current === camara) {
-        const codigos = await detector.detect(video.current);
-        const codigo = codigos[0]?.rawValue;
-        if (codigo) {
-          alLeer(codigo);
+    try {
+      const elementoVideo = video.current;
+      if (!elementoVideo) throw new Error('No se pudo preparar la vista de la cámara.');
+
+      const { BarcodeFormat, BrowserMultiFormatReader } = await import('@zxing/browser');
+      if (intentoActual.current !== intento) return;
+
+      const lector = new BrowserMultiFormatReader();
+      lector.possibleFormats = [BarcodeFormat.EAN_13];
+      const nuevosControles = await lector.decodeFromVideoDevice(
+        undefined,
+        elementoVideo,
+        (resultado) => {
+          if (!resultado || intentoActual.current !== intento) return;
+          alLeer(resultado.getText());
           detener();
-          break;
-        }
-        await new Promise((resolver) => window.setTimeout(resolver, 160));
-      }
+        },
+      );
+
+      if (intentoActual.current !== intento) nuevosControles.stop();
+      else controles.current = nuevosControles;
     } catch {
-      detener();
+      if (intentoActual.current !== intento) return;
+      intentoActual.current += 1;
+      setActivo(false);
       setError('No se pudo acceder a la cámara. Verifica los permisos o usa el lector.');
     }
   }
@@ -73,16 +75,19 @@ export function EscanerCamara({ alLeer }: { alLeer: (codigo: string) => void }) 
       >
         {activo ? 'Detener cámara' : 'Escanear con cámara'}
       </button>
-      {activo && (
-        <video
-          className={styles.videoEscaner}
-          ref={video}
-          muted
-          playsInline
-          aria-label="Vista de la cámara para escanear"
-        />
+      <video
+        className={styles.videoEscaner}
+        ref={video}
+        muted
+        playsInline
+        aria-label="Vista de la cámara para escanear"
+        hidden={!activo}
+      />
+      {error && (
+        <p className={styles.errorEscaner} role="status">
+          {error}
+        </p>
       )}
-      {error && <p role="status">{error}</p>}
     </div>
   );
 }
