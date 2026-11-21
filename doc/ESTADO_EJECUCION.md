@@ -273,3 +273,12 @@ DEMO-008    34     0         No
 - **Archivos modificados:** `src/app/globals.css`, `src/app/layout.tsx`, `src/app/panel/inventario/page.tsx`, `src/app/panel/layout.tsx`, `src/app/panel/page.tsx`, `src/components/panel/FiltrosInventario.tsx`, `src/components/panel/InsigniaDisponibilidad.tsx`, `src/components/panel/NavegacionPanel.tsx`, `src/components/panel/TablaInventario.tsx`, `src/components/panel/panel.module.css`, `src/components/ui/Insignia.tsx`, `src/components/ui/ui.module.css`.
 - **Validación:** `npm run type-check`, `npm test` (52 archivos/172 pruebas), `npm run lint`, `npm run build` y `git diff --check` correctos. Vitest conserva su advertencia existente sobre `configLoader: 'native'`.
 - **Alcance visual:** no se modificaron rutas, operaciones ni autenticación; se mantienen los accesos por rol y el filtro existente.
+
+### Revisión integral · 2026-11-21
+
+- **Resultado:** no se encontraron fallos de compilación, tipos, lint, reglas, rutas ni integridad de base de datos que requirieran correcciones.
+- **Validación:** `npm run build`, `npm run lint`, `npm run type-check`, `npm test` y `npm run db:verificar` terminaron correctamente.
+- **Pruebas:** Vitest aprobó 52 archivos y 172 pruebas; la verificación remota informó 0 fallas.
+- **Ejecutación local:** Next.js inició en `http://localhost:3000`; `/login` respondió 200 y `/api/health` respondió 200 con estado `ok`; `/panel` conservó la protección y redirigió a `/login`.
+- **Navegador:** la página de inicio de sesión se renderizó con su formulario, enlace de recuperación y control de visibilidad de contraseña.
+- **Estado:** el repositorio no requirió cambios funcionales en esta revisión; se añadió únicamente la evidencia de la comprobación a esta bitácora.
