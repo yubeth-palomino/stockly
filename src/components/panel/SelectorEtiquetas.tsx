@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import type { FilaProducto } from '@/lib/datos/tipos';
 import { formatearPesos } from '@/lib/formato';
+import { validarCodigoBarras } from '@/lib/reglas/codigoBarras';
 import { CodigoBarrasEAN13 } from '@/components/panel/CodigoBarrasEAN13';
 import styles from './etiquetas.module.css';
 
@@ -16,7 +18,7 @@ export function SelectorEtiquetas({
   const [seleccionados, setSeleccionados] = useState<Record<string, number>>(
     productoInicial ? { [productoInicial]: 1 } : {},
   );
-  const [formato, setFormato] = useState<'etiqueta' | 'a4'>('a4');
+  const [formato, setFormato] = useState<'etiqueta' | 'a4'>('etiqueta');
   const etiquetas = useMemo(
     () => productos.flatMap((producto) =>
       Array.from({ length: Math.min(seleccionados[producto.id] ?? 0, 100) }, (_, indice) => ({
@@ -26,6 +28,10 @@ export function SelectorEtiquetas({
     ),
     [productos, seleccionados],
   );
+
+  function imprimirEtiquetas() {
+    window.requestAnimationFrame(() => window.print());
+  }
 
   return (
     <>
@@ -70,14 +76,14 @@ export function SelectorEtiquetas({
         </label>
         <button
           className={styles.botonImprimir}
-          disabled={etiquetas.length === 0 || etiquetas.some(({ producto }) => !producto.codigoBarras)}
-          onClick={() => window.print()}
+          disabled={etiquetas.length === 0}
+          onClick={imprimirEtiquetas}
           type="button"
         >
           Imprimir etiquetas
         </button>
         {productos.some(({ codigoBarras }) => !codigoBarras) && (
-          <p role="note">Los productos existentes sin código necesitan relleno manual antes de imprimir.</p>
+          <p role="note">Si el producto no tiene código de barras, el QR usará su referencia.</p>
         )}
       </section>
       {etiquetas.length === 0 ? (
@@ -85,15 +91,32 @@ export function SelectorEtiquetas({
       ) : (
         <section
           aria-label="Vista previa de etiquetas"
-          className={`${styles.etiquetas} ${formato === 'a4' ? styles.laminaA4 : styles.etiquetaIndividual}`}
-          data-etiquetas="impresion"
+          className={`${styles.etiquetas} ${styles.areaImpresion} ${formato === 'a4' ? styles.laminaA4 : styles.etiquetaIndividual}`}
+          data-print-area="etiquetas"
+          id="print-area"
         >
           {etiquetas.map(({ producto, clave }) => (
             <article className={styles.etiqueta} key={clave}>
-              <strong>{producto.referencia}</strong>
-              <span>{producto.marca} · Talla {producto.talla}</span>
-              {producto.codigoBarras && <CodigoBarrasEAN13 codigo={producto.codigoBarras} />}
-              <small>{producto.codigoBarras ?? 'Código pendiente'} · {formatearPesos(producto.precioVenta)}</small>
+              <div className={styles.datosEtiqueta}>
+                <strong>{producto.descripcion || producto.referencia}</strong>
+                <span>{producto.marca} · {producto.referencia} · Talla {producto.talla}</span>
+                <b>{formatearPesos(producto.precioVenta)}</b>
+              </div>
+              <QRCodeSVG
+                aria-label={`Código QR de ${producto.referencia}`}
+                className={styles.codigoQr}
+                level="M"
+                marginSize={2}
+                size={96}
+                title={`Código QR de ${producto.referencia}`}
+                value={producto.codigoBarras ?? producto.referencia}
+              />
+              <div className={styles.codigoEtiqueta}>
+                {producto.codigoBarras && validarCodigoBarras(producto.codigoBarras) && (
+                  <CodigoBarrasEAN13 codigo={producto.codigoBarras} />
+                )}
+                <small>{producto.codigoBarras ?? producto.referencia}</small>
+              </div>
             </article>
           ))}
         </section>

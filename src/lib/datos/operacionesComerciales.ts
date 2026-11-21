@@ -1008,6 +1008,7 @@ export async function obtenerDashboardComercial(
     inventario,
     ventasRecientes,
     vencidas,
+    serieSemana,
   ] = await Promise.all([
     consultar<{
       vendido: string;
@@ -1026,12 +1027,12 @@ export async function obtenerDashboardComercial(
            COALESCE(sum(precio_venta::numeric * cantidad), 0)::text AS vendido,
            count(*)::text AS transacciones,
            COALESCE(sum(cantidad), 0)::text AS unidades,
-           COALESCE(sum(precio_venta::numeric * cantidad)
-             FILTER (WHERE fecha_venta = $3::date), 0)::text AS hoy,
-           COALESCE(sum(precio_venta::numeric * cantidad)
-             FILTER (WHERE fecha_venta BETWEEN $4::date AND $3::date), 0)::text AS semana,
-           COALESCE(sum(precio_venta::numeric * cantidad)
-             FILTER (WHERE fecha_venta BETWEEN $5::date AND $3::date), 0)::text AS mes,
+           COALESCE((SELECT sum(precio_venta::numeric * cantidad)
+             FROM public.ventas WHERE fecha_venta = $3::date), 0)::text AS hoy,
+           COALESCE((SELECT sum(precio_venta::numeric * cantidad)
+             FROM public.ventas WHERE fecha_venta BETWEEN $4::date AND $3::date), 0)::text AS semana,
+           COALESCE((SELECT sum(precio_venta::numeric * cantidad)
+             FROM public.ventas WHERE fecha_venta BETWEEN $5::date AND $3::date), 0)::text AS mes,
            count(*) FILTER (WHERE v.pago_registrado AND cp.id IS NULL)::text AS "ventasPagadas",
            count(*) FILTER (WHERE v.pago_registrado AND cp.id IS NOT NULL)::text AS "ventasCredito",
            COALESCE(sum(v.precio_venta::numeric * v.cantidad)
@@ -1150,13 +1151,19 @@ export async function obtenerDashboardComercial(
       referencia: string;
       talla: string;
       cantidad: number;
+      precioUnitario: string;
       total: string;
       fechaVenta: string;
+      nombreUsuario: string;
     }>(
-      `SELECT id, referencia, talla, cantidad,
-                (precio_venta::numeric * cantidad)::text AS total,
-                fecha_venta::text AS "fechaVenta"
-         FROM public.ventas ORDER BY fecha_venta DESC, id DESC LIMIT 10`,
+      `SELECT v.id, v.referencia, v.talla, v.cantidad,
+                v.precio_venta::text AS "precioUnitario",
+                (v.precio_venta::numeric * v.cantidad)::text AS total,
+                v.fecha_venta::text AS "fechaVenta",
+                COALESCE(NULLIF(BTRIM(u.nombre), ''), u.usuario, 'Sin usuario') AS "nombreUsuario"
+         FROM public.ventas v
+         LEFT JOIN public.usuarios u ON u.id = v.usuario_id
+         ORDER BY v.fecha_venta DESC, v.id DESC LIMIT 10`,
     ),
     consultar<{
       id: string;
@@ -1182,6 +1189,27 @@ export async function obtenerDashboardComercial(
              - COALESCE(p.total, 0) - COALESCE(a.total, 0) > 0
          ORDER BY cp.fecha_vencimiento, cp.id LIMIT 10`,
       [hoy, hastaVencimiento],
+    ),
+    consultar<{ fecha: string; vendido: string; transacciones: string }>(
+      `WITH calendario AS (
+           SELECT (date_trunc('week', $1::date::timestamp)::date + dias.dia) AS fecha
+           FROM generate_series(0, 6) AS dias(dia)
+         ), ventas_periodo AS (
+           SELECT fecha_venta,
+                  sum(precio_venta::numeric * cantidad)::text AS vendido,
+                  count(*)::text AS transacciones
+           FROM public.ventas
+           WHERE fecha_venta BETWEEN date_trunc('week', $1::date::timestamp)::date
+             AND date_trunc('week', $1::date::timestamp)::date + 6
+           GROUP BY fecha_venta
+         )
+         SELECT calendario.fecha::text AS fecha,
+                COALESCE(ventas_periodo.vendido, '0') AS vendido,
+                COALESCE(ventas_periodo.transacciones, '0') AS transacciones
+         FROM calendario
+         LEFT JOIN ventas_periodo ON ventas_periodo.fecha_venta = calendario.fecha
+         ORDER BY calendario.fecha`,
+      [hoy],
     ),
   ]);
   const total = totales[0];
@@ -1220,6 +1248,11 @@ export async function obtenerDashboardComercial(
       fecha: fila.fecha,
       vendido: importe(fila.vendido, 'ventas por día'),
     })),
+    serieSemana: serieSemana.map((fila) => ({
+      fecha: fila.fecha,
+      vendido: importe(fila.vendido, 'ventas de la semana por día'),
+      transacciones: importe(fila.transacciones, 'ventas registradas por día de la semana'),
+    })),
     serieAbonos: serieAbonos.map((fila) => ({
       fecha: fila.fecha,
       monto: importe(fila.monto, 'abonos por día'),
@@ -1238,6 +1271,7 @@ export async function obtenerDashboardComercial(
     stockBajo: importe(existencia.stockBajo, 'productos con stock bajo'),
     ventasRecientes: ventasRecientes.map((venta) => ({
       ...venta,
+      precioUnitario: importe(venta.precioUnitario, 'precio unitario de venta reciente'),
       total: importe(venta.total, 'venta reciente'),
     })),
     cuentasPorVencer: vencidas.map((fila) => ({

@@ -283,7 +283,15 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
         />
         <EscanerCamara
           alLeer={(codigo) => {
-            setCodigoBarras(codigo);
+            const valor = codigo.trim();
+            if (validarCodigoBarras(valor)) {
+              setCodigoBarras(valor);
+            } else {
+              setCodigoBarras('');
+              setReferencia(valor.slice(0, 60));
+              setTalla('');
+              setProductoExistente(null);
+            }
             setErrorExistencia('');
           }}
         />

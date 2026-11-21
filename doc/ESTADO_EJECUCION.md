@@ -335,3 +335,11 @@ DEMO-008    34     0         No
 - **Límites de producción:** no se verificaron en vivo las cuentas dueño/trabajador, una invitación y correo real, configuración de Supabase/Resend, ni el despliegue actual de Vercel. Tampoco se validaron cámara/lector físico e impresora física.
 - **Conclusión:** las comprobaciones automatizadas y de esquema están verdes, pero no equivalen a aceptación manual completa. No se certifica que todas las mejoras estén verificadas en producción ni se marca el proyecto como listo para producción.
 - **Cambios de esta revisión:** solo se actualizó esta bitácora; no se modificó código funcional.
+
+### Etiquetas, escaneo y dashboard comercial · 2026-11-21
+
+- **Etiquetas:** se agregó el QR en SVG y se aisló `#print-area` al imprimir. La opción predeterminada es etiqueta térmica individual de 50 × 30 mm; se conserva el formato A4 y la impresión de varias etiquetas.
+- **Escaneo:** se reutilizó `@zxing/browser` para QR, Code 128, EAN-13, EAN-8, UPC-A y UPC-E, con solicitud de cámara trasera, cierre de pistas y aviso de permiso. El inventario busca por código/referencia y permite abrir el producto coincidente. Se agregó `qrcode.react` para generar los QR de las etiquetas; no se instaló `html5-qrcode`.
+- **Dashboard:** se agregaron los cuatro resúmenes requeridos, series semanales de ventas reales y una tabla de últimas ventas con precio unitario y usuario registrador. Los totales de hoy, semana y mes son independientes del rango seleccionado; las consultas son de lectura y no alteran el registro ni la lógica de ventas.
+- **Verificación:** `npm run build`, `npm test` (61 archivos, 205 pruebas), `npm run lint`, `npm run type-check` y `git diff --check` pasaron. La instalación de `qrcode.react` informó 50 vulnerabilidades en el árbol de dependencias (23 moderadas, 25 altas y 2 críticas); no se ejecutó una actualización masiva de dependencias.
+- **Límite de aceptación:** no se validó una cámara física en HTTPS/Safari ni una impresora térmica física; esas pruebas requieren el dispositivo y la selección del tamaño de papel correspondiente.

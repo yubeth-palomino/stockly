@@ -4,21 +4,32 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  decodeFromVideoDevice: vi.fn(),
+  decodeFromStream: vi.fn(),
+  formatos: [] as string[],
+  getUserMedia: vi.fn(),
   stop: vi.fn(),
+  detenerPista: vi.fn(),
 }));
 
 vi.mock('@zxing/browser', () => ({
-  BarcodeFormat: { EAN_13: 'EAN_13' },
+  BarcodeFormat: {
+    QR_CODE: 'QR_CODE',
+    CODE_128: 'CODE_128',
+    EAN_13: 'EAN_13',
+    EAN_8: 'EAN_8',
+    UPC_A: 'UPC_A',
+    UPC_E: 'UPC_E',
+  },
   BrowserMultiFormatReader: class {
     possibleFormats: unknown[] = [];
 
-    decodeFromVideoDevice(
-      deviceId: string | undefined,
+    decodeFromStream(
+      stream: MediaStream,
       video: HTMLVideoElement,
       alDecodificar: (resultado: { getText: () => string } | undefined) => void,
     ) {
-      return mocks.decodeFromVideoDevice(deviceId, video, alDecodificar);
+      mocks.formatos = this.possibleFormats.map(String);
+      return mocks.decodeFromStream(stream, video, alDecodificar);
     }
   },
 }));
@@ -30,22 +41,25 @@ describe('EscanerCamara', () => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, 'mediaDevices', {
       configurable: true,
-      value: { getUserMedia: vi.fn() },
+      value: { getUserMedia: mocks.getUserMedia },
     });
+    mocks.getUserMedia.mockResolvedValue({
+      getTracks: () => [{ stop: mocks.detenerPista }],
+    } as unknown as MediaStream);
   });
 
   afterEach(() => cleanup());
 
-  it('monta el video, entrega el código detectado y detiene el lector', async () => {
+  it('abre la cámara trasera y lee QR y códigos de barras compatibles', async () => {
     const alLeer = vi.fn();
-    const codigo = '2000000000015';
-    mocks.decodeFromVideoDevice.mockImplementation(
+    const codigo = 'CAM001';
+    mocks.decodeFromStream.mockImplementation(
       (
-        dispositivo: string | undefined,
+        flujo: MediaStream,
         video: HTMLVideoElement,
         alDecodificar: (resultado: { getText: () => string } | undefined) => void,
       ) => {
-        expect(dispositivo).toBeUndefined();
+        expect(flujo).toBeDefined();
         expect(video).toBeInstanceOf(HTMLVideoElement);
         alDecodificar({ getText: () => codigo });
         return Promise.resolve({ stop: mocks.stop });
@@ -56,7 +70,20 @@ describe('EscanerCamara', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Escanear con cámara' }));
 
     await waitFor(() => expect(alLeer).toHaveBeenCalledWith(codigo));
+    expect(mocks.getUserMedia).toHaveBeenCalledWith({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' } },
+    });
+    expect(mocks.formatos).toEqual([
+      'QR_CODE',
+      'CODE_128',
+      'EAN_13',
+      'EAN_8',
+      'UPC_A',
+      'UPC_E',
+    ]);
     expect(mocks.stop).toHaveBeenCalledOnce();
+    expect(mocks.detenerPista).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'Escanear con cámara' })).not.toBeNull();
   });
 
@@ -71,6 +98,29 @@ describe('EscanerCamara', () => {
 
     const estado = await screen.findByRole('status');
     expect(estado.textContent).toContain('Este navegador no permite acceso a la cámara.');
-    expect(mocks.decodeFromVideoDevice).not.toHaveBeenCalled();
+    expect(mocks.decodeFromStream).not.toHaveBeenCalled();
+  });
+
+  it('muestra el permiso requerido cuando el usuario rechaza la cámara', async () => {
+    mocks.getUserMedia.mockRejectedValue(new DOMException('Permiso denegado', 'NotAllowedError'));
+    render(<EscanerCamara alLeer={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Escanear con cámara' }));
+
+    expect((await screen.findByRole('status')).textContent).toContain(
+      'Permite el acceso a la cámara para escanear.',
+    );
+  });
+
+  it('detiene las pistas al cerrar la cámara manualmente', async () => {
+    mocks.decodeFromStream.mockResolvedValue({ stop: mocks.stop });
+    render(<EscanerCamara alLeer={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Escanear con cámara' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Cerrar cámara' }));
+
+    expect(mocks.stop).toHaveBeenCalledOnce();
+    expect(mocks.detenerPista).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Escanear con cámara' })).not.toBeNull();
   });
 });

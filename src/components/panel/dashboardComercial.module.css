@@ -1,0 +1,230 @@
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.tarjetaResumen,
+.tarjetaGrafico,
+.tarjetaVentas {
+  min-width: 0;
+  border: 1px solid var(--color-borde);
+  border-radius: 18px;
+  background: #FFFFFF;
+  box-shadow: 0 8px 26px rgb(25 26 53 / 5%);
+}
+
+.tarjetaResumen {
+  display: grid;
+  min-height: 132px;
+  align-content: space-between;
+  gap: 10px;
+  padding: 18px;
+}
+
+.tarjetaResumen > span,
+.tarjetaResumen small {
+  color: #8A8AA3;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tarjetaResumen strong {
+  overflow-wrap: anywhere;
+  color: #1A1A35;
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-variant-numeric: tabular-nums;
+}
+
+.graficosPrincipales {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.tarjetaGrafico,
+.tarjetaVentas {
+  padding: clamp(16px, 2.5vw, 24px);
+}
+
+.encabezado {
+  display: flex;
+  min-width: 0;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.encabezado h2 {
+  margin: 0;
+  color: #1A1A35;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.encabezado p,
+.encabezado > span {
+  margin: 5px 0 0;
+  color: #8A8AA3;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.encabezado > strong {
+  color: #1A1A35;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.graficoIngreso {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 16px;
+  overflow: visible;
+}
+
+.graficoIngreso text {
+  fill: #8A8AA3;
+  font: 11px Inter, Arial, sans-serif;
+}
+
+.graficoGrowth {
+  display: grid;
+  min-height: 158px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 8px;
+  padding: 12px 0 8px;
+}
+
+.columnaGrowth {
+  display: grid;
+  height: 140px;
+  grid-template-rows: 18px minmax(0, 1fr) 18px;
+  justify-items: center;
+  gap: 5px;
+  color: #8A8AA3;
+  font-size: 10px;
+}
+
+.columnaGrowth strong {
+  color: #1A1A35;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fondoBarra {
+  display: flex;
+  width: min(100%, 30px);
+  height: 100%;
+  align-items: end;
+  overflow: hidden;
+  border-radius: 9px 9px 3px 3px;
+  background: #F8F7FF;
+}
+
+.barraMorada,
+.barraClara {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 9px 9px 2px 2px;
+  background: #8B7CF6;
+}
+
+.barraClara {
+  background: #C4B5FD;
+}
+
+.totalTurquesa {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  color: #191A35;
+  background: #8FE3E3;
+}
+
+.totalTurquesa span {
+  font-size: 12px;
+}
+
+.totalTurquesa strong {
+  font-size: clamp(20px, 2vw, 26px);
+  font-variant-numeric: tabular-nums;
+}
+
+.tarjetaVentas {
+  margin: 16px 0;
+}
+
+.tablaDesbordable {
+  width: 100%;
+  margin-top: 14px;
+  overflow-x: auto;
+}
+
+.tablaDesbordable table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #1A1A35;
+  font-size: 13px;
+  text-align: left;
+}
+
+.tablaDesbordable th,
+.tablaDesbordable td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #EDEDF2;
+  white-space: nowrap;
+}
+
+.tablaDesbordable thead th {
+  color: #8A8AA3;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tablaDesbordable tbody th {
+  font-weight: 600;
+}
+
+.tablaDesbordable tbody th small {
+  display: block;
+  margin-top: 4px;
+  color: #8A8AA3;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  .resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .graficosPrincipales {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .resumen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tarjetaResumen {
+    min-height: 110px;
+  }
+
+  .encabezado {
+    flex-direction: column;
+  }
+
+  .encabezado > strong {
+    text-align: left;
+  }
+}

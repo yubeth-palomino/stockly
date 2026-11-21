@@ -229,6 +229,21 @@ export async function listarInventario(
   );
 }
 
+export async function buscarProductoEscaneado(codigo: string, rol: Rol): Promise<FilaProducto[]> {
+  const codigoLimpio = codigo.trim();
+  const referenciaNormalizada = normalizarReferencia(codigoLimpio);
+  const referenciaSinEspacios = referenciaNormalizada.replace(/\s+/g, '');
+  return consultar<FilaProducto>(
+    `SELECT ${columnasProducto(rol)}
+     FROM v_productos
+     WHERE activo = true
+       AND (codigo_barras = $1 OR clave_referencia = $2 OR clave_referencia = $3)
+     ORDER BY CASE WHEN codigo_barras = $1 THEN 0 ELSE 1 END, clave_talla
+     LIMIT $4`,
+    [codigoLimpio, referenciaNormalizada, referenciaSinEspacios, LIMITE_LISTADO],
+  );
+}
+
 export async function exportarInventario(
   filtros: {
     referencia?: string;

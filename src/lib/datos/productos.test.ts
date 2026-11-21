@@ -10,7 +10,7 @@ vi.mock('@/lib/db/conexion', () => ({
   conTransaccion: mocks.conTransaccion,
 }));
 
-import { obtenerProducto } from './productos';
+import { buscarProductoEscaneado, obtenerProducto } from './productos';
 
 describe('obtenerProducto', () => {
   beforeEach(() => vi.resetAllMocks());
@@ -39,5 +39,21 @@ describe('obtenerProducto', () => {
       expect.stringContaining('AND usuario_id = $2'),
       ['producto-id', 'usuario-trabajador'],
     );
+  });
+});
+
+describe('buscarProductoEscaneado', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('busca por código o referencia normalizada y serializa por rol', async () => {
+    mocks.consultar.mockResolvedValue([]);
+
+    await buscarProductoEscaneado('cam 001', 'trabajador');
+
+    expect(mocks.consultar).toHaveBeenCalledWith(
+      expect.stringContaining('codigo_barras = $1 OR clave_referencia = $2'),
+      ['cam 001', 'CAM 001', 'CAM001', expect.any(Number)],
+    );
+    expect(mocks.consultar.mock.calls[0]?.[0]).not.toContain('precio_compra');
   });
 });

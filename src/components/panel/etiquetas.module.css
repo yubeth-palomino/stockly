@@ -60,39 +60,74 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, 50mm);
   justify-content: center;
-  gap: 3mm;
+  gap: 2mm;
 }
 
 .etiqueta {
   display: grid;
   width: 50mm;
   height: 30mm;
-  align-content: space-between;
+  grid-template-columns: minmax(0, 1fr) 13mm;
+  grid-template-rows: minmax(0, 1fr) 7mm;
+  align-items: center;
+  gap: 1mm;
   overflow: hidden;
-  padding: 2mm;
+  padding: 1.5mm;
   border: 1px dashed #d1d1d1;
   color: #171717;
   font: 7pt Arial, sans-serif;
 }
 
-.etiqueta strong {
-  overflow: hidden;
-  font-size: 8pt;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.datosEtiqueta {
+  display: grid;
+  min-width: 0;
+  align-content: center;
+  gap: 1mm;
 }
 
-.etiqueta span,
-.etiqueta small {
+.datosEtiqueta strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 7pt;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.datosEtiqueta span {
   overflow: hidden;
   font-size: 6pt;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.etiqueta svg {
-  width: 100%;
-  height: 12mm;
+.datosEtiqueta b {
+  font-size: 11pt;
+  font-variant-numeric: tabular-nums;
+}
+
+.codigoQr {
+  width: 13mm;
+  height: 13mm;
+}
+
+.codigoEtiqueta {
+  display: flex;
+  min-width: 0;
+  grid-column: 1 / -1;
+  align-items: end;
+  gap: 2mm;
+}
+
+.codigoEtiqueta svg {
+  width: 28mm;
+  height: 6mm;
+}
+
+.codigoEtiqueta small {
+  overflow: hidden;
+  font-size: 5pt;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .etiquetaIndividual {
@@ -113,7 +148,7 @@
   margin: 5mm;
 }
 
-@page etiqueta {
+@page termica {
   size: 50mm 30mm;
   margin: 0;
 }
@@ -129,37 +164,23 @@
 }
 
 @media print {
-  :global(body:has([data-etiquetas])) {
-    margin: 0;
-    background: #FFFFFF;
-  }
-
-  :global(body:has([data-etiquetas])) [data-panel-aplicacion] {
-    display: block !important;
-    width: 100% !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    overflow: visible !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: #FFFFFF !important;
-    box-shadow: none !important;
-  }
-
-  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > aside,
-  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > main > header {
-    display: none !important;
-  }
-
-  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > main {
-    display: block !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
+  :global(body:has([data-print-area])) {
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
     background: #FFFFFF !important;
+  }
+
+  :global(body:has([data-print-area]) *) {
+    visibility: hidden !important;
+  }
+
+  :global(body:has([data-print-area]) *:has([data-print-area])) {
+    display: contents !important;
+    visibility: visible !important;
+  }
+
+  :global(body:has([data-print-area]) *:not(:has([data-print-area])):not([data-print-area]):not([data-print-area] *)) {
+    display: none !important;
   }
 
   .ocultoImpresion {
@@ -174,7 +195,7 @@
   }
 
   .etiquetaIndividual {
-    page: etiqueta;
+    page: termica;
     grid-template-columns: 50mm;
     gap: 0;
   }
@@ -190,10 +211,23 @@
     padding: 0;
   }
 
+  .areaImpresion {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    display: grid !important;
+    visibility: visible !important;
+    background: #FFFFFF !important;
+  }
+
+  .areaImpresion * {
+    visibility: visible !important;
+  }
+
   .etiqueta {
     width: 50mm;
     height: 30mm;
-    padding: 2mm;
+    padding: 1.5mm;
     break-inside: avoid;
     border: 0;
     page-break-inside: avoid;

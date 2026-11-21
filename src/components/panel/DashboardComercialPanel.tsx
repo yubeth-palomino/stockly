@@ -8,6 +8,7 @@ import { Campo } from '@/components/ui/Campo';
 import { Selector } from '@/components/ui/Selector';
 import { leerRespuestaApi } from '@/lib/http/cliente';
 import { formatearPesos, formatearCantidad } from '@/lib/formato';
+import dashboardStyles from './dashboardComercial.module.css';
 import styles from './comercial.module.css';
 
 const esquemaDashboard = z.object({
@@ -30,6 +31,13 @@ const esquemaDashboard = z.object({
   clientesConSaldo: z.number().int(),
   pagosPorMetodo: z.array(z.object({ metodo: z.string(), monto: z.number().int() })),
   serie: z.array(z.object({ fecha: z.string(), vendido: z.number().int() })),
+  serieSemana: z.array(
+    z.object({
+      fecha: z.string(),
+      vendido: z.number().int(),
+      transacciones: z.number().int(),
+    }),
+  ),
   serieAbonos: z.array(z.object({ fecha: z.string(), monto: z.number().int() })),
   seriesAgrupadas: z.array(
     z.object({
@@ -54,8 +62,10 @@ const esquemaDashboard = z.object({
       referencia: z.string(),
       talla: z.string(),
       cantidad: z.number().int(),
+      precioUnitario: z.number().int(),
       total: z.number().int(),
       fechaVenta: z.string(),
+      nombreUsuario: z.string(),
     }),
   ),
   cuentasPorVencer: z.array(
@@ -67,6 +77,163 @@ const esquemaDashboard = z.object({
     }),
   ),
 });
+
+function nombreDia(fecha: string): string {
+  return new Intl.DateTimeFormat('es-CO', {
+    weekday: 'short',
+    timeZone: 'UTC',
+  })
+    .format(new Date(`${fecha}T12:00:00.000Z`))
+    .replace('.', '');
+}
+
+function GraficoIngresoSemanal({
+  filas,
+}: {
+  filas: Array<{ fecha: string; vendido: number }>;
+}) {
+  const ancho = 720;
+  const alto = 240;
+  const base = 190;
+  const maximo = Math.max(1, ...filas.map((fila) => fila.vendido));
+  const puntos = filas.map((fila, indice) => ({
+    ...fila,
+    x: filas.length < 2 ? ancho / 2 : 24 + (indice * (ancho - 48)) / (filas.length - 1),
+    y: base - (fila.vendido / maximo) * 145,
+  }));
+  const linea = puntos
+    .map((punto, indice) => {
+      if (indice === 0) return `M ${punto.x} ${punto.y}`;
+      const anterior = puntos[indice - 1];
+      if (!anterior) return '';
+      const medio = (anterior.x + punto.x) / 2;
+      return `C ${medio} ${anterior.y}, ${medio} ${punto.y}, ${punto.x} ${punto.y}`;
+    })
+    .join(' ');
+  const area = `${linea} L ${puntos.at(-1)?.x ?? ancho} ${base} L ${puntos[0]?.x ?? 0} ${base} Z`;
+
+  return (
+    <svg
+      aria-label={`Income por día: ${filas.map((fila) => `${nombreDia(fila.fecha)} ${formatearPesos(fila.vendido)}`).join(', ')}`}
+      className={dashboardStyles.graficoIngreso}
+      role="img"
+      viewBox={`0 0 ${ancho} ${alto}`}
+    >
+      <defs>
+        <linearGradient id="relleno-ingreso-semanal" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#C4B5FD" stopOpacity=".75" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity=".04" />
+        </linearGradient>
+      </defs>
+      {[45, 93, 141, 190].map((y) => (
+        <line
+          key={y}
+          x1="24"
+          x2={ancho - 24}
+          y1={y}
+          y2={y}
+          stroke="#EDEDF2"
+          strokeDasharray="4 5"
+        />
+      ))}
+      <path d={area} fill="url(#relleno-ingreso-semanal)" />
+      <path d={linea} fill="none" stroke="#8B7CF6" strokeWidth="3" />
+      {puntos.map((punto) => (
+        <g key={punto.fecha}>
+          <circle cx={punto.x} cy={punto.y} r="4" fill="#8B7CF6">
+            <title>{`${punto.fecha}: ${formatearPesos(punto.vendido)}`}</title>
+          </circle>
+          <text x={punto.x} y="222" textAnchor="middle">
+            {nombreDia(punto.fecha)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function GraficoGrowth({
+  filas,
+}: {
+  filas: Array<{ fecha: string; transacciones: number }>;
+}) {
+  const maximo = Math.max(1, ...filas.map((fila) => fila.transacciones));
+  return (
+    <div
+      aria-label={`Growth, ventas por día: ${filas.map((fila) => `${nombreDia(fila.fecha)} ${fila.transacciones}`).join(', ')}`}
+      className={dashboardStyles.graficoGrowth}
+      role="img"
+    >
+      {filas.map((fila, indice) => (
+        <div className={dashboardStyles.columnaGrowth} key={fila.fecha}>
+          <strong>{formatearCantidad(fila.transacciones)}</strong>
+          <div className={dashboardStyles.fondoBarra}>
+            <span
+              className={indice % 2 === 0 ? dashboardStyles.barraMorada : dashboardStyles.barraClara}
+              style={{ height: `${Math.max(3, (fila.transacciones / maximo) * 100)}%` }}
+              title={`${fila.fecha}: ${formatearCantidad(fila.transacciones)} ventas`}
+            />
+          </div>
+          <span>{nombreDia(fila.fecha)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TablaVentasRecientes({
+  ventas,
+}: {
+  ventas: Array<{
+    id: number;
+    referencia: string;
+    talla: string;
+    cantidad: number;
+    precioUnitario: number;
+    total: number;
+    fechaVenta: string;
+    nombreUsuario: string;
+  }>;
+}) {
+  const recientes = ventas.slice(0, 5);
+  return (
+    <section className={dashboardStyles.tarjetaVentas}>
+      <div className={dashboardStyles.encabezado}>
+        <h2>Últimas 5 ventas</h2>
+        <span>Datos registrados en Stockly</span>
+      </div>
+      {recientes.length === 0 ? (
+        <p>No hay ventas registradas. Total: 0.</p>
+      ) : (
+        <div className={dashboardStyles.tablaDesbordable}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Producto</th>
+                <th scope="col">Precio unitario</th>
+                <th scope="col">Quién registró</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recientes.map((venta) => (
+                <tr key={venta.id}>
+                  <td>{venta.fechaVenta}</td>
+                  <th scope="row">
+                    {venta.referencia} · Talla {venta.talla}
+                    <small>{formatearCantidad(venta.cantidad)} unidades</small>
+                  </th>
+                  <td>{formatearPesos(venta.precioUnitario)}</td>
+                  <td>{venta.nombreUsuario}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function GraficoSerie({
   titulo,
@@ -190,6 +357,55 @@ export function DashboardComercialPanel() {
       ) : (
         datos && (
           <>
+            <section className={dashboardStyles.resumen} aria-label="Resumen principal">
+              <article className={dashboardStyles.tarjetaResumen}>
+                <span>Total ventas hoy</span>
+                <strong>{formatearPesos(datos.vendidoHoy)}</strong>
+              </article>
+              <article className={dashboardStyles.tarjetaResumen}>
+                <span>Total ventas del mes</span>
+                <strong>{formatearPesos(datos.vendidoMes)}</strong>
+              </article>
+              <article className={dashboardStyles.tarjetaResumen}>
+                <span>Número de ventas · período seleccionado</span>
+                <strong>{formatearCantidad(datos.transacciones)}</strong>
+              </article>
+              <article className={dashboardStyles.tarjetaResumen}>
+                <span>Producto más vendido · período seleccionado</span>
+                <strong>{datos.productosMasVendidos[0]?.referencia ?? '0'}</strong>
+                <small>
+                  {datos.productosMasVendidos[0]
+                    ? `${datos.productosMasVendidos[0].talla} · ${formatearCantidad(datos.productosMasVendidos[0].unidades)} unidades`
+                    : 'Sin ventas'}
+                </small>
+              </article>
+            </section>
+            <div className={dashboardStyles.graficosPrincipales}>
+              <section className={dashboardStyles.tarjetaGrafico}>
+                <div className={dashboardStyles.encabezado}>
+                  <div>
+                    <h2>Income</h2>
+                    <p>Ventas reales por día de esta semana</p>
+                  </div>
+                  <strong>{formatearPesos(datos.vendidoSemana)}</strong>
+                </div>
+                <GraficoIngresoSemanal filas={datos.serieSemana} />
+              </section>
+              <section className={dashboardStyles.tarjetaGrafico}>
+                <div className={dashboardStyles.encabezado}>
+                  <div>
+                    <h2>Growth</h2>
+                    <p>Número de ventas registradas por día</p>
+                  </div>
+                </div>
+                <GraficoGrowth filas={datos.serieSemana} />
+                <div className={dashboardStyles.totalTurquesa}>
+                  <span>Total vendido esta semana</span>
+                  <strong>{formatearPesos(datos.vendidoSemana)}</strong>
+                </div>
+              </section>
+            </div>
+            <TablaVentasRecientes ventas={datos.ventasRecientes} />
             <section className={styles.metricas} aria-label="Indicadores del período">
               <div className={styles.metrica}>
                 <span>Valor vendido hoy</span>

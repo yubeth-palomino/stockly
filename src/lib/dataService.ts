@@ -82,6 +82,7 @@ export async function actualizarContrasenaUsuario(
 }
 
 export {
+  buscarProductoEscaneado,
   actualizarProducto,
   desactivarProducto,
   exportarInventario,

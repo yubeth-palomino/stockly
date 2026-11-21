@@ -310,6 +310,10 @@ export const esquemaFiltrosInventario = z.object({
   ),
 });
 
+export const esquemaCodigoEscaneado = z.object({
+  codigo: texto(1, 120),
+});
+
 export const esquemaFiltrosInventarioComercial = z.object({
   empresaId: uuidComercial('Seleccione una empresa válida.'),
   sucursalId: uuidComercial('Seleccione una sucursal válida.'),
