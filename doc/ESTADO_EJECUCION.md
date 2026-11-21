@@ -21,6 +21,7 @@
 | P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                              | correcto                      | 171/171                       | 2026-11-14      |
 | P16 Proveedores, clientes y créditos     | páginas, API, saldos y abonos concurrentes; aceptación manual pendiente                           | correcto                      | 171/171                       | 2026-11-14      |
 | P17 Dashboard y aceptación               | dashboard con series y filtros reales; aceptación A-24–A-44 sin diligenciar                       | correcto                      | 171/171                       | 2026-11-14      |
+| Revisión funcional global                | implementación validada; aceptación manual y producción pendientes                                | correcto                      | 193/193 (56 archivos)         | 2026-11-21      |
 
 ## Bitácora
 
@@ -324,3 +325,13 @@ DEMO-008    34     0         No
 - **Impresión:** el formato impreso ahora oculta la navegación y el encabezado del panel, elimina márgenes del contenedor y conserva solo las etiquetas seleccionadas. La hoja A4 usa tres columnas y las etiquetas individuales se separan por página de 50 × 30 mm.
 - **Alcance:** solo impresión; se mantienen la selección de productos, cantidades, códigos de barras y precios.
 - **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (56 archivos/193 pruebas) y `git diff --check` correctos. No se probó con una impresora física.
+
+### Revisión funcional global y revalidación · 2026-11-21
+
+- **Revalidación automatizada:** `npm run build`, `npm test` (56 archivos, 193 pruebas), `npm run lint`, `npm run type-check` y `npm run db:verificar` terminaron correctamente. La verificación de base de datos reportó 0 fallas. Vitest mostró su advertencia conocida sobre `configLoader: 'native'`, sin fallas.
+- **Funciones comprobadas en código/pruebas:** autenticación Stockly y control de roles; recuperación y configuración de correo; inventario, ventas e información económica filtrada por rol; escaneo con ZXing como alternativa; impresión de etiquetas; caja, clientes, proveedores, crédito/abonos y dashboard.
+- **Integraciones no reejecutadas:** `npm run probar:flujo` y `npm run probar:comercial` crean y eliminan registros temporales. No se ejecutaron en esta revisión porque antes debe confirmarse una base aislada de pruebas.
+- **Aceptación manual pendiente:** en `doc/ACEPTACION.md` siguen pendientes A-01, A-07, A-13, A-14, A-17, A-19 y A-21; A-17 está parcial. En `doc/ACEPTACION_MEJORAS.md`, A-24–A-44 siguen sin resultado ni evidencia.
+- **Límites de producción:** no se verificaron en vivo las cuentas dueño/trabajador, una invitación y correo real, configuración de Supabase/Resend, ni el despliegue actual de Vercel. Tampoco se validaron cámara/lector físico e impresora física.
+- **Conclusión:** las comprobaciones automatizadas y de esquema están verdes, pero no equivalen a aceptación manual completa. No se certifica que todas las mejoras estén verificadas en producción ni se marca el proyecto como listo para producción.
+- **Cambios de esta revisión:** solo se actualizó esta bitácora; no se modificó código funcional.
