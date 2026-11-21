@@ -73,14 +73,15 @@ export function columnasProducto(rol: Rol): string {
 }
 
 function filtrosInventario(filtros: {
+  empresaId: string;
   referencia?: string;
   codigoBarras?: string;
   marca?: string;
   talla?: string;
   soloDisponibles?: boolean;
 }): { condiciones: string[]; valores: Array<string | boolean | number> } {
-  const condiciones = ['activo = true'];
-  const valores: Array<string | boolean | number> = [];
+  const condiciones = ['empresa_id = $1', 'activo = true'];
+  const valores: Array<string | boolean | number> = [filtros.empresaId];
 
   if (filtros.referencia?.trim()) {
     valores.push(`%${normalizarReferencia(filtros.referencia)}%`);
@@ -107,6 +108,7 @@ export async function registrarEntrada(
   datos: DatosEntrada,
   usuarioId: string,
   rol: Rol = 'trabajador',
+  empresaId: string,
 ): Promise<{ productoId: string; sumado: boolean; cantidadResultante: number }> {
   validarEntrada({ ...datos, hoy: hoyBogota() });
   const precioCompra = rol === 'dueno' ? datos.precioCompra : undefined;
@@ -116,15 +118,15 @@ export async function registrarEntrada(
       const referenciaNormalizada = normalizarReferencia(datos.referencia);
       const tallaNormalizada = normalizarTalla(datos.talla);
       await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
-        referenciaNormalizada,
+        `${empresaId}:${referenciaNormalizada}`,
         tallaNormalizada,
       ]);
 
       const existentes = await tx.query<FilaCantidad>(
         `SELECT id, cantidad, precio_venta AS "precioVenta" FROM productos
-         WHERE clave_referencia = $1 AND clave_talla = $2 AND activo = true
+         WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
          FOR UPDATE`,
-        [referenciaNormalizada, tallaNormalizada],
+        [empresaId, referenciaNormalizada, tallaNormalizada],
       );
       const existente = existentes.rows[0];
 
@@ -139,14 +141,15 @@ export async function registrarEntrada(
           `UPDATE productos
            SET cantidad = cantidad + $1,
                precio_compra = COALESCE($2, precio_compra)
-           WHERE id = $3
+           WHERE id = $3 AND empresa_id = $4
            RETURNING id, cantidad`,
-          [datos.cantidad, precioCompra ?? null, existente.id],
+          [datos.cantidad, precioCompra ?? null, existente.id, empresaId],
         );
         const actualizado = filas.rows[0];
         if (!actualizado) throw new Error('No se pudo actualizar la cantidad del producto.');
         await registrarEvento(tx, {
           tipo: 'ENTRADA_REGISTRADA',
+          empresaId,
           productoId: actualizado.id,
           usuarioId,
           detalle: {
@@ -172,10 +175,11 @@ export async function registrarEntrada(
       const codigoBarras = generarCodigoBarras(secuencia);
       const filas = await tx.query<FilaId & { cantidad: number }>(
         `INSERT INTO productos
-           (referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING id, cantidad`,
         [
+          empresaId,
           datos.referencia.trim(),
           datos.marca.trim(),
           datos.descripcion.trim(),
@@ -191,6 +195,7 @@ export async function registrarEntrada(
       if (!creado) throw new Error('La base de datos no devolvió el producto recién creado.');
       await registrarEvento(tx, {
         tipo: 'ENTRADA_REGISTRADA',
+        empresaId,
         productoId: creado.id,
         usuarioId,
         detalle: {
@@ -216,8 +221,9 @@ export async function listarInventario(
     soloDisponibles?: boolean;
   },
   rol: Rol,
+  empresaId: string,
 ): Promise<FilaProducto[]> {
-  const { condiciones, valores } = filtrosInventario(filtros);
+  const { condiciones, valores } = filtrosInventario({ ...filtros, empresaId });
   valores.push(LIMITE_LISTADO);
   return consultar<FilaProducto>(
     `SELECT ${columnasProducto(rol)}
@@ -229,18 +235,22 @@ export async function listarInventario(
   );
 }
 
-export async function buscarProductoEscaneado(codigo: string, rol: Rol): Promise<FilaProducto[]> {
+export async function buscarProductoEscaneado(
+  codigo: string,
+  rol: Rol,
+  empresaId: string,
+): Promise<FilaProducto[]> {
   const codigoLimpio = codigo.trim();
   const referenciaNormalizada = normalizarReferencia(codigoLimpio);
   const referenciaSinEspacios = referenciaNormalizada.replace(/\s+/g, '');
   return consultar<FilaProducto>(
     `SELECT ${columnasProducto(rol)}
      FROM v_productos
-     WHERE activo = true
-       AND (codigo_barras = $1 OR clave_referencia = $2 OR clave_referencia = $3)
-     ORDER BY CASE WHEN codigo_barras = $1 THEN 0 ELSE 1 END, clave_talla
-     LIMIT $4`,
-    [codigoLimpio, referenciaNormalizada, referenciaSinEspacios, LIMITE_LISTADO],
+     WHERE empresa_id = $1 AND activo = true
+       AND (codigo_barras = $2 OR clave_referencia = $3 OR clave_referencia = $4)
+     ORDER BY CASE WHEN codigo_barras = $2 THEN 0 ELSE 1 END, clave_talla
+     LIMIT $5`,
+    [empresaId, codigoLimpio, referenciaNormalizada, referenciaSinEspacios, LIMITE_LISTADO],
   );
 }
 
@@ -253,8 +263,9 @@ export async function exportarInventario(
     soloDisponibles?: boolean;
   },
   rol: Rol,
+  empresaId: string,
 ): Promise<FilaProducto[]> {
-  const { condiciones, valores } = filtrosInventario(filtros);
+  const { condiciones, valores } = filtrosInventario({ ...filtros, empresaId });
   return consultar<FilaProducto>(
     `SELECT ${columnasProducto(rol)}
      FROM v_productos
@@ -268,30 +279,31 @@ export async function obtenerProducto(
   id: string,
   rol: Rol,
   usuarioId: string,
+  empresaId: string,
   filtros: FiltrosKardex = {},
 ): Promise<DetalleProducto> {
   const productos = await consultar<DetalleProducto>(
     `SELECT ${columnasProducto(rol)}
      FROM v_productos
-     WHERE id = $1
+     WHERE id = $1 AND empresa_id = $2
      LIMIT 1`,
-    [id],
+    [id, empresaId],
   );
   const producto = productos[0];
   if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
 
   const [eventos, tiposEventos, ventas] = await Promise.all([
-    listarEventosProducto(id, rol, usuarioId, filtros),
-    listarTiposEventosProducto(id, rol, usuarioId),
+    listarEventosProducto(id, rol, usuarioId, empresaId, filtros),
+    listarTiposEventosProducto(id, rol, usuarioId, empresaId),
     consultar<FilaVenta>(
       `SELECT v.id, v.producto_id AS "productoId", v.usuario_id AS "usuarioId",
               u.nombre AS "nombreUsuario", v.referencia, v.talla, v.cantidad,
               v.precio_venta AS "precioVenta", v.fecha_venta AS "fechaVenta"
        FROM ventas v
-       LEFT JOIN usuarios u ON u.id = v.usuario_id
-       WHERE v.producto_id = $1
+       LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.empresa_id = v.empresa_id
+       WHERE v.producto_id = $1 AND v.empresa_id = $2
        ORDER BY v.fecha_venta DESC, v.id DESC`,
-      [id],
+      [id, empresaId],
     ),
   ]);
 
@@ -315,9 +327,10 @@ function condicionesVisibilidadEventos(
   id: string,
   rol: Rol,
   usuarioId: string,
+  empresaId: string,
 ): { condiciones: string[]; valores: Array<string | number> } {
-  const valores: Array<string | number> = [id];
-  const condiciones = ['producto_id = $1'];
+  const valores: Array<string | number> = [id, empresaId];
+  const condiciones = ['producto_id = $1', 'empresa_id = $2'];
   if (rol !== 'dueno') {
     valores.push(usuarioId);
     condiciones.push(`usuario_id = $${valores.length}`);
@@ -329,9 +342,10 @@ export async function listarEventosProducto(
   id: string,
   rol: Rol,
   usuarioId: string,
+  empresaId: string,
   filtros: FiltrosKardex = {},
 ): Promise<FilaEvento[]> {
-  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId);
+  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId, empresaId);
   if (filtros.desde) {
     valores.push(filtros.desde);
     condiciones.push(`(created_at AT TIME ZONE 'America/Bogota')::date >= $${valores.length}::date`);
@@ -357,8 +371,9 @@ async function listarTiposEventosProducto(
   id: string,
   rol: Rol,
   usuarioId: string,
+  empresaId: string,
 ): Promise<string[]> {
-  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId);
+  const { condiciones, valores } = condicionesVisibilidadEventos(id, rol, usuarioId, empresaId);
   const filas = await consultar<{ tipo: string }>(
     `SELECT DISTINCT tipo
      FROM eventos_inventario
@@ -374,6 +389,7 @@ export async function actualizarProducto(
   cambios: CambiosProducto,
   usuarioId: string,
   rol: Rol = 'trabajador',
+  empresaId: string,
 ): Promise<void> {
   try {
     await conTransaccion(async (tx) => {
@@ -384,9 +400,9 @@ export async function actualizarProducto(
       }>(
         `SELECT id, precio_venta AS "precioVenta", precio_compra AS "precioCompra"
          FROM productos
-         WHERE id = $1 AND activo = true
+         WHERE id = $1 AND empresa_id = $2 AND activo = true
          FOR UPDATE`,
-        [id],
+        [id, empresaId],
       );
       const actual = actuales.rows[0];
       if (!actual) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
@@ -423,9 +439,9 @@ export async function actualizarProducto(
       valores.push(id);
       const actualizado = await tx.query<FilaId>(
         `UPDATE productos SET ${asignaciones.join(', ')}
-         WHERE id = $${valores.length} AND activo = true
+         WHERE id = $${valores.length} AND activo = true AND empresa_id = $${valores.length + 1}
          RETURNING id`,
-        valores,
+        [...valores, empresaId],
       );
       if (!actualizado.rows[0]) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
       const detalle = {
@@ -438,6 +454,7 @@ export async function actualizarProducto(
       };
       await registrarEvento(tx, {
         tipo: 'PRODUCTO_ACTUALIZADO',
+        empresaId,
         productoId: actual.id,
         usuarioId,
         detalle,
@@ -448,22 +465,30 @@ export async function actualizarProducto(
   }
 }
 
-export async function desactivarProducto(id: string, usuarioId: string): Promise<void> {
+export async function desactivarProducto(
+  id: string,
+  usuarioId: string,
+  empresaId: string,
+): Promise<void> {
   await conTransaccion(async (tx) => {
     const resultado = await tx.query<FilaCantidad>(
       `SELECT id, cantidad, referencia
        FROM productos
-       WHERE id = $1 AND activo = true
+       WHERE id = $1 AND empresa_id = $2 AND activo = true
        FOR UPDATE`,
-      [id],
+      [id, empresaId],
     );
     const producto = resultado.rows[0];
     if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
     if (producto.cantidad > 0) throw new ErrorDeNegocio('PRODUCTO_CON_EXISTENCIAS');
 
-    await tx.query(`UPDATE productos SET activo = false WHERE id = $1`, [id]);
+    await tx.query(`UPDATE productos SET activo = false WHERE id = $1 AND empresa_id = $2`, [
+      id,
+      empresaId,
+    ]);
     await registrarEvento(tx, {
       tipo: 'PRODUCTO_DESACTIVADO',
+      empresaId,
       productoId: id,
       usuarioId,
       detalle: { referencia: producto.referencia },

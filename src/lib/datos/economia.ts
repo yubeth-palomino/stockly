@@ -27,16 +27,19 @@ function sumarSeguro(actual: number, siguiente: number, nombre: string): number 
   return enteroSeguro(actual + siguiente, nombre);
 }
 
-export async function obtenerEconomia(filtros: { marca?: string } = {}): Promise<ResumenEconomico> {
+export async function obtenerEconomia(
+  filtros: { marca?: string },
+  empresaId: string,
+): Promise<ResumenEconomico> {
   const marca = filtros.marca?.trim();
   const filtroMarca = marca ? `%${marca.toLowerCase()}%` : undefined;
-  const parametros = filtroMarca === undefined ? [] : [filtroMarca];
-  const condicionMarcaProductos = marca ? 'AND lower(marca) LIKE $1' : '';
+  const parametros = filtroMarca === undefined ? [empresaId] : [empresaId, filtroMarca];
+  const condicionMarcaProductos = marca ? 'AND lower(marca) LIKE $2' : '';
   const productos = await consultar<FilaProductoEconomico>(
     `SELECT id, referencia, marca, talla, cantidad,
             precio_venta AS "precioVenta", precio_compra AS "precioCompra"
      FROM productos
-     WHERE activo = true ${condicionMarcaProductos}
+     WHERE empresa_id = $1 AND activo = true ${condicionMarcaProductos}
      ORDER BY clave_referencia ASC, clave_talla ASC`,
     parametros,
   );

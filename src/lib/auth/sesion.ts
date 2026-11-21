@@ -7,12 +7,14 @@ export type UsuarioSesion = {
   id: string;
   nombre: string;
   rol: Rol;
+  empresaId: string;
 };
 
 type FilaUsuarioSesion = {
   id: string;
   nombre: string;
   rol: string;
+  empresaId: string;
 };
 
 export async function obtenerUsuario(): Promise<UsuarioSesion | null> {
@@ -23,7 +25,7 @@ export async function obtenerUsuario(): Promise<UsuarioSesion | null> {
   if (error || !data.user) return null;
 
   const usuarios = await consultar<FilaUsuarioSesion>(
-    `SELECT id, nombre, rol
+    `SELECT id, nombre, rol, empresa_id AS "empresaId"
      FROM usuarios
      WHERE auth_ref = $1 AND activo = true
      LIMIT 1`,
@@ -40,7 +42,12 @@ export async function obtenerUsuario(): Promise<UsuarioSesion | null> {
     throw new Error('La fila del usuario contiene un rol Stockly no válido.');
   }
 
-  return { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol };
+  return {
+    id: usuario.id,
+    nombre: usuario.nombre,
+    rol: usuario.rol,
+    empresaId: usuario.empresaId,
+  };
 }
 
 export async function exigirUsuario(): Promise<UsuarioSesion> {

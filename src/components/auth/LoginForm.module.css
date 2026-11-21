@@ -315,6 +315,7 @@
 .submitButton:focus-visible,
 .forgotPassword:focus-visible,
 .backToLogin:focus-visible,
+.registerLink:focus-visible,
 .passwordToggle:focus-visible {
   outline: 3px solid var(--auth-camel);
   outline-offset: 3px;
@@ -443,6 +444,50 @@
   opacity: 0.75;
 }
 
+.registerPrompt {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.registerDivider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--auth-texto-secundario);
+  font-size: 13px;
+}
+
+.registerDivider::before,
+.registerDivider::after {
+  height: 1px;
+  flex: 1;
+  background: var(--auth-superficie);
+  content: "";
+}
+
+.registerLink {
+  display: flex;
+  min-height: 52px;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--auth-camel);
+  border-radius: 16px;
+  color: var(--auth-camel-oscuro);
+  background: var(--auth-blanco);
+  font: 14px Inter, "Segoe UI", sans-serif;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.registerLink:hover {
+  border-color: var(--auth-camel);
+  background: #F8F7FF;
+}
+
 .formFooter {
   margin: 32px 0 0;
   color: var(--auth-texto-secundario);
@@ -536,7 +581,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .field input,
-  .submitButton {
+  .submitButton,
+  .registerLink {
     transition: none;
   }
 }

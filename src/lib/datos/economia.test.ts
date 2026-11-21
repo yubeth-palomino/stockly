@@ -39,7 +39,7 @@ describe('obtenerEconomia', () => {
         },
       ]);
 
-    const economia = await obtenerEconomia();
+    const economia = await obtenerEconomia({}, 'empresa-1');
 
     expect(economia).toEqual({
       inversionTotal: 100_000,
@@ -74,16 +74,16 @@ describe('obtenerEconomia', () => {
   it('aplica el filtro de marca al detalle de inventario', async () => {
     mocks.consultar.mockResolvedValueOnce([]);
 
-    await obtenerEconomia({ marca: ' Nike ' });
+    await obtenerEconomia({ marca: ' Nike ' }, 'empresa-1');
 
-    expect(mocks.consultar.mock.calls[0]?.[0]).toContain('lower(marca) LIKE $1');
-    expect(mocks.consultar.mock.calls[0]?.[1]).toEqual(['%nike%']);
+    expect(mocks.consultar.mock.calls[0]?.[0]).toContain('lower(marca) LIKE $2');
+    expect(mocks.consultar.mock.calls[0]?.[1]).toEqual(['empresa-1', '%nike%']);
   });
 
   it('no consulta ganancias comerciales sin una empresa autorizada en el contexto', async () => {
     mocks.consultar.mockResolvedValueOnce([]);
 
-    const economia = await obtenerEconomia();
+    const economia = await obtenerEconomia({}, 'empresa-1');
 
     expect(economia.gananciaRealizadaTotal).toBeNull();
     expect(mocks.consultar).toHaveBeenCalledTimes(1);

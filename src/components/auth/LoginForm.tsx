@@ -227,6 +227,7 @@ export function LoginForm({
           )}
 
           {mode === 'login' ? (
+            <>
             <form className={styles.form} onSubmit={handleSubmit} noValidate>
               <div className={styles.field}>
                 <label htmlFor="email">Correo electrónico</label>
@@ -322,6 +323,13 @@ export function LoginForm({
                 {!isSubmitting && <IconoFlecha />}
               </button>
             </form>
+            <div className={styles.registerPrompt}>
+              <span className={styles.registerDivider}>o</span>
+              <Link className={styles.registerLink} href="/register">
+                ¿No tienes cuenta? Crear cuenta gratis
+              </Link>
+            </div>
+            </>
           ) : recoveryMessage ? (
             <div className={styles.form}>
               <p className={styles.recoveryMessage} role="status">

@@ -116,6 +116,7 @@ export async function obtenerEvolucionVentas(
   filtros: FiltrosEvolucionVentas,
   rol: Rol,
   hoy: string,
+  empresaId: string,
 ): Promise<EvolucionVentas> {
   const rango = obtenerRangoEvolucion(
     filtros.rango,
@@ -171,9 +172,10 @@ export async function obtenerEvolucionVentas(
            AND ${disponibles.has('costo_unitario') ? 'v.costo_unitario IS NULL' : 'true'}
        ), 0)::text AS "unidadesSinCosto"
      FROM public.ventas AS v
-     WHERE (v.fecha_venta BETWEEN $1::date AND $2::date)
-        OR (v.fecha_venta BETWEEN $3::date AND $4::date)`,
-    [rango.desde, rango.hasta, anterior.desde, anterior.hasta, hoy, semanaDesde, mes.desde],
+     WHERE v.empresa_id = $8
+       AND ((v.fecha_venta BETWEEN $1::date AND $2::date)
+        OR (v.fecha_venta BETWEEN $3::date AND $4::date))`,
+    [rango.desde, rango.hasta, anterior.desde, anterior.hasta, hoy, semanaDesde, mes.desde, empresaId],
   );
 
   const consultaSerie = consultar<FilaSerie>(
@@ -193,7 +195,8 @@ export async function obtenerEvolucionVentas(
               sum(v.precio_venta::numeric * ${unidades})::text AS ingresos,
               sum(${unidades})::text AS unidades
        FROM public.ventas AS v
-       WHERE v.fecha_venta BETWEEN $1::date AND $2::date
+       WHERE v.empresa_id = $4
+         AND v.fecha_venta BETWEEN $1::date AND $2::date
        GROUP BY 1
      )
      SELECT calendario.fecha::text AS fecha,
@@ -202,7 +205,7 @@ export async function obtenerEvolucionVentas(
      FROM calendario
      LEFT JOIN agregados USING (fecha)
      ORDER BY calendario.fecha`,
-    [rango.desde, rango.hasta, unidadSqlPeriodo(filtros.agrupacion)],
+    [rango.desde, rango.hasta, unidadSqlPeriodo(filtros.agrupacion), empresaId],
   );
 
   const consultaInventario = consultar<FilaInventario>(
@@ -211,7 +214,8 @@ export async function obtenerEvolucionVentas(
        ${stockBajoExpr}::text AS "stockBajo",
        COALESCE(sum(cantidad::numeric * precio_venta), 0)::text AS "valorVentaInventario"
      FROM public.productos
-     WHERE activo = true`,
+     WHERE empresa_id = $1 AND activo = true`,
+    [empresaId],
   );
 
   const consultaProductos = consultar<FilaProducto>(
@@ -221,12 +225,13 @@ export async function obtenerEvolucionVentas(
      FROM public.productos AS p
      LEFT JOIN public.ventas AS v
        ON v.producto_id = p.id
+      AND v.empresa_id = p.empresa_id
       AND v.fecha_venta BETWEEN $1::date AND $2::date
-     WHERE p.activo = true
+     WHERE p.empresa_id = $3 AND p.activo = true
      GROUP BY p.id, p.referencia, p.marca, p.talla
      ORDER BY sum(${unidades}) DESC NULLS LAST, ingresos DESC
      LIMIT 10`,
-    [rango.desde, rango.hasta],
+    [rango.desde, rango.hasta, empresaId],
   );
   const consultaMenorRotacion = consultar<FilaProducto>(
     `SELECT p.referencia, p.marca, p.talla,
@@ -235,35 +240,37 @@ export async function obtenerEvolucionVentas(
      FROM public.productos AS p
      LEFT JOIN public.ventas AS v
        ON v.producto_id = p.id
+      AND v.empresa_id = p.empresa_id
       AND v.fecha_venta BETWEEN $1::date AND $2::date
-     WHERE p.activo = true
+     WHERE p.empresa_id = $3 AND p.activo = true
      GROUP BY p.id, p.referencia, p.marca, p.talla
      ORDER BY sum(${unidades}) ASC NULLS FIRST, p.referencia, p.talla
      LIMIT 10`,
-    [rango.desde, rango.hasta],
+    [rango.desde, rango.hasta, empresaId],
   );
   const consultaMarca = consultar<FilaCategoria>(
     `SELECT COALESCE(NULLIF(btrim(p.marca), ''), 'Sin marca') AS nombre,
             sum(${unidades})::text AS unidades,
             sum(v.precio_venta::numeric * ${unidades})::text AS ingresos
      FROM public.ventas AS v
-     JOIN public.productos AS p ON p.id = v.producto_id
-     WHERE v.fecha_venta BETWEEN $1::date AND $2::date
+     JOIN public.productos AS p
+       ON p.id = v.producto_id AND p.empresa_id = v.empresa_id
+     WHERE v.empresa_id = $3 AND v.fecha_venta BETWEEN $1::date AND $2::date
      GROUP BY 1
      ORDER BY sum(v.precio_venta::numeric * ${unidades}) DESC
      LIMIT 10`,
-    [rango.desde, rango.hasta],
+    [rango.desde, rango.hasta, empresaId],
   );
   const consultaTalla = consultar<FilaCategoria>(
     `SELECT COALESCE(NULLIF(btrim(v.talla), ''), 'Sin talla') AS nombre,
             sum(${unidades})::text AS unidades,
             sum(v.precio_venta::numeric * ${unidades})::text AS ingresos
      FROM public.ventas AS v
-     WHERE v.fecha_venta BETWEEN $1::date AND $2::date
+     WHERE v.empresa_id = $3 AND v.fecha_venta BETWEEN $1::date AND $2::date
      GROUP BY 1
      ORDER BY sum(${unidades}) DESC
      LIMIT 10`,
-    [rango.desde, rango.hasta],
+    [rango.desde, rango.hasta, empresaId],
   );
   const consultaEconomia =
     rol === 'dueno' && disponibles.has('costo_unitario')
@@ -278,8 +285,8 @@ export async function obtenerEvolucionVentas(
              COALESCE(sum(${unidades})
                FILTER (WHERE v.costo_unitario IS NULL), 0)::text AS "unidadesSinCosto"
            FROM public.ventas AS v
-           WHERE v.fecha_venta BETWEEN $1::date AND $2::date`,
-          [rango.desde, rango.hasta],
+           WHERE v.empresa_id = $3 AND v.fecha_venta BETWEEN $1::date AND $2::date`,
+          [rango.desde, rango.hasta, empresaId],
         )
       : Promise.resolve([]);
   const consultaTrabajadores =
@@ -289,12 +296,12 @@ export async function obtenerEvolucionVentas(
                   sum(${unidades})::text AS unidades,
                   sum(v.precio_venta::numeric * ${unidades})::text AS ingresos
            FROM public.ventas AS v
-           LEFT JOIN public.usuarios AS u ON u.id = v.usuario_id
-           WHERE v.fecha_venta BETWEEN $1::date AND $2::date
+           LEFT JOIN public.usuarios AS u ON u.id = v.usuario_id AND u.empresa_id = v.empresa_id
+           WHERE v.empresa_id = $3 AND v.fecha_venta BETWEEN $1::date AND $2::date
            GROUP BY 1
            ORDER BY sum(v.precio_venta::numeric * ${unidades}) DESC
            LIMIT 10`,
-          [rango.desde, rango.hasta],
+          [rango.desde, rango.hasta, empresaId],
         )
       : Promise.resolve([]);
 

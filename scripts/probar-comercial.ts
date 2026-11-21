@@ -22,6 +22,7 @@ const referencia = `PRUEBA-COM-${Date.now()}`;
 const nombreCliente = `Prueba comercial ${randomUUID()}`;
 const clavesCaja = [randomUUID(), randomUUID()];
 let clienteId: string | null = null;
+let empresaId: string | null = null;
 let totalFallos = 0;
 
 function comprobar(nombre: string, correcto: boolean, detalle = '') {
@@ -30,82 +31,114 @@ function comprobar(nombre: string, correcto: boolean, detalle = '') {
 }
 
 async function limpiarDatosDePrueba() {
+  if (!empresaId) return;
   await conTransaccion(async (tx) => {
     await tx.query(
       `DELETE FROM public.caja_movimientos
        WHERE caja_id IN (
-         SELECT id FROM public.cajas WHERE clave_apertura = ANY($1::uuid[])
+         SELECT id FROM public.cajas
+         WHERE empresa_id = $2 AND clave_apertura = ANY($1::uuid[])
        )`,
-      [clavesCaja],
+      [clavesCaja, empresaId],
     );
     await tx.query(
       `DELETE FROM public.abonos
        WHERE cuenta_id IN (
          SELECT cp.id FROM public.cuentas_por_cobrar cp
          JOIN public.ventas v ON v.id = cp.venta_id
-         WHERE v.referencia = $1
+         WHERE v.empresa_id = $2 AND v.referencia = $1
        )`,
-      [referencia],
+      [referencia, empresaId],
     );
     await tx.query(
       `DELETE FROM public.cuentas_por_cobrar
-       WHERE venta_id IN (SELECT id FROM public.ventas WHERE referencia = $1)`,
-      [referencia],
+       WHERE venta_id IN (
+         SELECT id FROM public.ventas WHERE empresa_id = $2 AND referencia = $1
+       )`,
+      [referencia, empresaId],
     );
     await tx.query(
       `DELETE FROM public.pagos_venta
-       WHERE venta_id IN (SELECT id FROM public.ventas WHERE referencia = $1)`,
-      [referencia],
+       WHERE venta_id IN (
+         SELECT id FROM public.ventas WHERE empresa_id = $2 AND referencia = $1
+       )`,
+      [referencia, empresaId],
     );
-    await tx.query('DELETE FROM public.ventas WHERE referencia = $1', [referencia]);
+    await tx.query(
+      'DELETE FROM public.ventas WHERE empresa_id = $2 AND referencia = $1',
+      [referencia, empresaId],
+    );
     await tx.query(
       `DELETE FROM public.eventos_inventario
-       WHERE producto_id IN (SELECT id FROM public.productos WHERE referencia = $1)`,
-      [referencia],
+       WHERE producto_id IN (
+         SELECT id FROM public.productos WHERE empresa_id = $2 AND referencia = $1
+       )`,
+      [referencia, empresaId],
     );
-    await tx.query('DELETE FROM public.cajas WHERE clave_apertura = ANY($1::uuid[])', [clavesCaja]);
+    await tx.query(
+      'DELETE FROM public.cajas WHERE empresa_id = $2 AND clave_apertura = ANY($1::uuid[])',
+      [clavesCaja, empresaId],
+    );
     if (clienteId) {
-      await tx.query('DELETE FROM public.clientes WHERE id = $1', [clienteId]);
+      await tx.query(
+        'DELETE FROM public.clientes WHERE id = $1 AND empresa_id = $2',
+        [clienteId, empresaId],
+      );
     } else {
-      await tx.query('DELETE FROM public.clientes WHERE nombre = $1', [nombreCliente]);
+      await tx.query(
+        'DELETE FROM public.clientes WHERE nombre = $1 AND empresa_id = $2',
+        [nombreCliente, empresaId],
+      );
     }
-    await tx.query('DELETE FROM public.productos WHERE referencia = $1', [referencia]);
+    await tx.query(
+      'DELETE FROM public.productos WHERE referencia = $1 AND empresa_id = $2',
+      [referencia, empresaId],
+    );
   });
 }
 
 async function main() {
-  const propietarios = await consultar<{ id: string }>(
-    `SELECT id FROM public.usuarios WHERE rol = 'dueno' AND activo = true
+  const propietarios = await consultar<{ id: string; empresa_id: string }>(
+    `SELECT id, empresa_id FROM public.usuarios WHERE rol = 'dueno' AND activo = true
      ORDER BY created_at, id LIMIT 1`,
   );
   const propietario = propietarios[0];
   if (!propietario) throw new Error('No hay un dueño activo para la prueba comercial.');
+  empresaId = propietario.empresa_id;
+  const empresa = propietario.empresa_id;
   const cajasAbiertas = await consultar<{ id: string }>(
-    `SELECT id FROM public.cajas WHERE estado = 'ABIERTA' LIMIT 1`,
+    `SELECT id FROM public.cajas
+     WHERE empresa_id = $1 AND estado = 'ABIERTA' LIMIT 1`,
+    [empresa],
   );
   if (cajasAbiertas.length) {
     throw new Error('La prueba se detiene porque ya existe una caja abierta.');
   }
   const hoy = hoyBogota();
-  const dashboardAntes = await obtenerDashboardComercial({ desde: hoy, hasta: hoy }, hoy, 'dueno');
+  const dashboardAntes = await obtenerDashboardComercial(
+    { desde: hoy, hasta: hoy },
+    hoy,
+    'dueno',
+    empresa,
+  );
 
   await consultar(
     `INSERT INTO public.productos
-       (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-     VALUES ($1, 'PRUEBA', 'Producto temporal', 'M', 5, 50000, $2)`,
-    [referencia, hoy],
+       (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada, empresa_id)
+     VALUES ($1, 'PRUEBA', 'Producto temporal', 'M', 5, 50000, $2, $3)`,
+    [referencia, hoy, empresa],
   );
   const clientes = await consultar<{ id: string }>(
-    `INSERT INTO public.clientes (nombre, creado_por)
-     VALUES ($1, $2) RETURNING id`,
-    [nombreCliente, propietario.id],
+    `INSERT INTO public.clientes (nombre, creado_por, empresa_id)
+     VALUES ($1, $2, $3) RETURNING id`,
+    [nombreCliente, propietario.id, empresa],
   );
   clienteId = clientes[0]?.id ?? null;
   if (!clienteId) throw new Error('No se pudo crear el cliente temporal.');
 
   const aperturas = await Promise.allSettled(
     clavesCaja.map((claveApertura) =>
-      abrirCaja({ montoApertura: 100_000, claveApertura }, propietario.id, 'dueno'),
+      abrirCaja({ montoApertura: 100_000, claveApertura }, propietario.id, 'dueno', empresa),
     ),
   );
   const cajaAbierta = aperturas.find(
@@ -133,8 +166,18 @@ async function main() {
     pagos: [{ metodo: 'EFECTIVO', monto: 50_000 }],
     claveIdempotencia: claveVentaPagada,
   };
-  const ventaRegistrada = await registrarVentaConPago(ventaPagada, propietario.id, 'dueno');
-  const reintentoVenta = await registrarVentaConPago(ventaPagada, propietario.id, 'dueno');
+  const ventaRegistrada = await registrarVentaConPago(
+    ventaPagada,
+    propietario.id,
+    'dueno',
+    empresa,
+  );
+  const reintentoVenta = await registrarVentaConPago(
+    ventaPagada,
+    propietario.id,
+    'dueno',
+    empresa,
+  );
   comprobar('reintento de venta idempotente', !ventaRegistrada.repetida && reintentoVenta.repetida);
 
   const ventaCredito: DatosVentaComercial = {
@@ -146,15 +189,21 @@ async function main() {
     clienteId,
     claveIdempotencia: randomUUID(),
   };
-  const creditoRegistrado = await registrarVentaConPago(ventaCredito, propietario.id, 'dueno');
+  const creditoRegistrado = await registrarVentaConPago(
+    ventaCredito,
+    propietario.id,
+    'dueno',
+    empresa,
+  );
   comprobar(
     'venta a crédito no cuenta saldo como pago',
     creditoRegistrado.saldoPendiente === 40_000,
   );
 
   const cuenta = await consultar<{ id: string }>(
-    `SELECT id FROM public.cuentas_por_cobrar WHERE venta_id = $1`,
-    [creditoRegistrado.venta.id],
+    `SELECT id FROM public.cuentas_por_cobrar
+     WHERE venta_id = $1 AND empresa_id = $2`,
+    [creditoRegistrado.venta.id, empresa],
   );
   const cuentaId = cuenta[0]?.id;
   if (!cuentaId) throw new Error('No se creó la cuenta temporal por cobrar.');
@@ -166,6 +215,7 @@ async function main() {
         { cuentaId, monto: 25_000, metodo: 'EFECTIVO', claveIdempotencia },
         propietario.id,
         'dueno',
+        empresa,
       ),
     ),
   );
@@ -187,10 +237,11 @@ async function main() {
     { cuentaId, monto: 25_000, metodo: 'EFECTIVO', claveIdempotencia: clavesAbono[indiceAbono]! },
     propietario.id,
     'dueno',
+    empresa,
   );
   comprobar('reintento de abono idempotente', reintentoAbono.repetido);
 
-  const detalle = await obtenerDetalleCliente(clienteId, 'dueno', hoy);
+  const detalle = await obtenerDetalleCliente(clienteId, 'dueno', hoy, empresa);
   comprobar(
     'detalle del cliente conserva ventas y saldo',
     detalle.ventas.length === 1 && detalle.ventas[0]?.saldo === 15_000,
@@ -208,6 +259,7 @@ async function main() {
       },
       propietario.id,
       'dueno',
+      empresa,
     );
   } catch (error) {
     egresoRechazado =
@@ -222,8 +274,9 @@ async function main() {
     { cuentaId, monto: 15_000, metodo: 'TRANSFERENCIA', claveIdempotencia: randomUUID() },
     propietario.id,
     'dueno',
+    empresa,
   );
-  const cajaActual = await obtenerCajaActual('dueno');
+  const cajaActual = await obtenerCajaActual('dueno', empresa);
   comprobar(
     'efectivo esperado separa pagos por transferencia',
     cajaActual?.montoEsperado === 175_000,
@@ -241,11 +294,13 @@ async function main() {
     { montoContado: 175_000, claveCierre: cierreClave },
     propietario.id,
     'dueno',
+    empresa,
   );
   const reintentoCierre = await cerrarCaja(
     { montoContado: 175_000, claveCierre: cierreClave },
     propietario.id,
     'dueno',
+    empresa,
   );
   comprobar(
     'cierre e idempotencia conservan diferencia cero',
@@ -258,19 +313,22 @@ async function main() {
      FROM public.cuentas_por_cobrar cp
      JOIN public.ventas v ON v.id = cp.venta_id
      LEFT JOIN LATERAL (
-       SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+       SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+       WHERE venta_id = v.id AND empresa_id = $2
      ) pagos ON true
      LEFT JOIN LATERAL (
-       SELECT sum(monto)::numeric AS total FROM public.abonos WHERE cuenta_id = cp.id
+       SELECT sum(monto)::numeric AS total FROM public.abonos
+       WHERE cuenta_id = cp.id AND empresa_id = $2
      ) abonos ON true
-     WHERE cp.id = $1`,
-    [cuentaId],
+     WHERE cp.id = $1 AND cp.empresa_id = $2`,
+    [cuentaId, empresa],
   );
   comprobar('abono final deja saldo cero', Number(cuentas[0]?.saldo) === 0);
   const dashboardDespues = await obtenerDashboardComercial(
     { desde: hoy, hasta: hoy },
     hoy,
     'dueno',
+    empresa,
   );
   comprobar(
     'dashboard suma ventas sin duplicar abonos',

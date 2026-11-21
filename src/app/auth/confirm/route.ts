@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rutaInternaSegura } from '@/lib/reglas/redireccion';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
@@ -6,7 +7,10 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const tokenHash = requestUrl.searchParams.get('token_hash');
   const type = requestUrl.searchParams.get('type');
-  const redirectUrl = new URL('/reset-password', request.url);
+  const destino = type === 'signup'
+    ? rutaInternaSegura(requestUrl.searchParams.get('next') ?? undefined)
+    : '/reset-password';
+  const redirectUrl = new URL(destino, request.url);
 
   if (code) {
     const supabase = await createClient();
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (!tokenHash || (type !== 'invite' && type !== 'recovery')) {
+  if (!tokenHash || (type !== 'invite' && type !== 'recovery' && type !== 'signup')) {
     redirectUrl.searchParams.set('error', 'link');
     return NextResponse.redirect(redirectUrl);
   }

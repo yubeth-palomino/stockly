@@ -45,31 +45,64 @@ export async function obtenerUsuarioActual() {
   return obtenerUsuario();
 }
 
-export async function listarUsuarios(): Promise<FilaUsuario[]> {
+export async function listarUsuarios(empresaId: string): Promise<FilaUsuario[]> {
   return consultar<FilaUsuario>(
     `SELECT id, nombre, usuario, rol, activo, created_at::text AS "createdAt"
      FROM usuarios
+     WHERE empresa_id = $1
      ORDER BY nombre ASC, id ASC`,
+    [empresaId],
   );
 }
 
-export async function crearUsuarioVinculado(datos: DatosUsuarioVinculado): Promise<{ id: string }> {
+export async function crearUsuarioVinculado(
+  datos: DatosUsuarioVinculado,
+  empresaId: string,
+): Promise<{ id: string }> {
   try {
-    const filas = await consultar<FilaId>(
-      `INSERT INTO usuarios (nombre, usuario, rol, auth_ref)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [datos.nombre.trim(), datos.usuario.trim().toLowerCase(), datos.rol, datos.authRef],
-    );
-    const fila = filas[0];
-    if (!fila) throw new Error('La base de datos no devolvió el usuario recién creado.');
-    return { id: fila.id };
+    return await conTransaccion(async (tx) => {
+      const sucursales = await tx.query<FilaId>(
+        `SELECT id FROM public.sucursales
+         WHERE empresa_id = $1 AND activa = true
+         ORDER BY created_at ASC, id ASC
+         LIMIT 1`,
+        [empresaId],
+      );
+      const sucursalId = sucursales.rows[0]?.id;
+      if (!sucursalId) throw new Error('El negocio no tiene una sucursal activa.');
+
+      const filas = await tx.query<FilaId>(
+        `INSERT INTO usuarios (nombre, usuario, rol, auth_ref, empresa_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [datos.nombre.trim(), datos.usuario.trim().toLowerCase(), datos.rol, datos.authRef, empresaId],
+      );
+      const fila = filas.rows[0];
+      if (!fila) throw new Error('La base de datos no devolvió el usuario recién creado.');
+
+      await tx.query(
+        `INSERT INTO public.empresas_usuarios
+           (empresa_id, usuario_id, rol, alcance_sucursales, activo)
+         VALUES ($1, $2, $3, $4, true)`,
+        [empresaId, fila.id, datos.rol, datos.rol === 'dueno' ? 'todas' : 'asignadas'],
+      );
+      await tx.query(
+        `INSERT INTO public.usuarios_sucursales (empresa_id, usuario_id, sucursal_id)
+         VALUES ($1, $2, $3)`,
+        [empresaId, fila.id, sucursalId],
+      );
+
+      return { id: fila.id };
+    });
   } catch (error) {
     return traducirErrorUsuario(error);
   }
 }
 
-export async function crearUsuario(datos: DatosUsuario): Promise<{ id: string }> {
+export async function crearUsuario(
+  datos: DatosUsuario,
+  empresaId: string,
+): Promise<{ id: string }> {
   const supabase = createAdminClient();
   const { data: invitacion, error: errorInvitacion } = await supabase.auth.admin.generateLink({
     type: 'invite',
@@ -94,14 +127,39 @@ export async function crearUsuario(datos: DatosUsuario): Promise<{ id: string }>
   const enlace = invitacion.properties.action_link;
 
   try {
-    const filas = await consultar<FilaId>(
-      `INSERT INTO usuarios (nombre, usuario, rol, auth_ref)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [datos.nombre.trim(), datos.usuario.trim().toLowerCase(), datos.rol, authId],
-    );
-    const fila = filas[0];
-    if (!fila) throw new Error('La base de datos no devolvió el usuario recién creado.');
+    const fila = await conTransaccion(async (tx) => {
+      const sucursales = await tx.query<FilaId>(
+        `SELECT id FROM public.sucursales
+         WHERE empresa_id = $1 AND activa = true
+         ORDER BY created_at ASC, id ASC
+         LIMIT 1`,
+        [empresaId],
+      );
+      const sucursalId = sucursales.rows[0]?.id;
+      if (!sucursalId) throw new Error('El negocio no tiene una sucursal activa.');
+
+      const usuarios = await tx.query<FilaId>(
+        `INSERT INTO usuarios (nombre, usuario, rol, auth_ref, empresa_id)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [datos.nombre.trim(), datos.usuario.trim().toLowerCase(), datos.rol, authId, empresaId],
+      );
+      const usuario = usuarios.rows[0];
+      if (!usuario) throw new Error('La base de datos no devolvió el usuario recién creado.');
+
+      await tx.query(
+        `INSERT INTO public.empresas_usuarios
+           (empresa_id, usuario_id, rol, alcance_sucursales, activo)
+         VALUES ($1, $2, $3, $4, true)`,
+        [empresaId, usuario.id, datos.rol, datos.rol === 'dueno' ? 'todas' : 'asignadas'],
+      );
+      await tx.query(
+        `INSERT INTO public.usuarios_sucursales (empresa_id, usuario_id, sucursal_id)
+         VALUES ($1, $2, $3)`,
+        [empresaId, usuario.id, sucursalId],
+      );
+      return usuario;
+    });
 
     const resultadoCorreo = await enviarCorreo({
       para: datos.correo,
@@ -115,7 +173,28 @@ export async function crearUsuario(datos: DatosUsuario): Promise<{ id: string }>
     return { id: fila.id };
   } catch (error) {
     try {
-      await consultar('DELETE FROM usuarios WHERE auth_ref = $1', [authId]);
+      await conTransaccion(async (tx) => {
+        await tx.query(
+          `DELETE FROM public.usuarios_sucursales
+           WHERE usuario_id IN (
+             SELECT id FROM public.usuarios WHERE auth_ref = $1 AND empresa_id = $2
+           )
+           AND empresa_id = $2`,
+          [authId, empresaId],
+        );
+        await tx.query(
+          `DELETE FROM public.empresas_usuarios
+           WHERE usuario_id IN (
+             SELECT id FROM public.usuarios WHERE auth_ref = $1 AND empresa_id = $2
+           )
+           AND empresa_id = $2`,
+          [authId, empresaId],
+        );
+        await tx.query('DELETE FROM usuarios WHERE auth_ref = $1 AND empresa_id = $2', [
+          authId,
+          empresaId,
+        ]);
+      });
     } catch (errorLimpieza) {
       console.error('No se pudo revertir el perfil Stockly de una invitación fallida.', errorLimpieza);
     }
@@ -133,6 +212,7 @@ export async function actualizarUsuario(
   id: string,
   cambios: CambiosUsuario,
   duenoActualId: string,
+  empresaId: string,
 ): Promise<void> {
   const campos: Array<{ columna: string; valor: string | boolean }> = [];
   if (cambios.nombre !== undefined)
@@ -143,12 +223,15 @@ export async function actualizarUsuario(
 
   try {
     await conTransaccion(async (tx) => {
-      await tx.query(`SELECT pg_advisory_xact_lock(hashtext('stockly_owner_update'), 0)`);
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext($1), 0)`, [
+        `stockly_owner_update:${empresaId}`,
+      ]);
       const duenosActivos = await tx.query<FilaDuenoActivo>(
         `SELECT id FROM usuarios
-         WHERE rol = 'dueno' AND activo = true
+         WHERE empresa_id = $1 AND rol = 'dueno' AND activo = true
          ORDER BY id
          FOR UPDATE`,
+        [empresaId],
       );
       if (!duenosActivos.rows.some((dueno) => dueno.id === duenoActualId)) {
         throw new ErrorDeNegocio('SIN_PERMISO');
@@ -165,14 +248,21 @@ export async function actualizarUsuario(
         valores.push(valor);
         return `${columna} = $${valores.length}`;
       });
-      valores.push(id);
+      valores.push(id, empresaId);
       const resultado = await tx.query(
         `UPDATE usuarios SET ${asignaciones.join(', ')}
-         WHERE id = $${valores.length}`,
+         WHERE id = $${valores.length - 1} AND empresa_id = $${valores.length}`,
         valores,
       );
 
       if (resultado.rowCount === 0) throw new ErrorDeNegocio('USUARIO_NO_ENCONTRADO');
+      const membership = await tx.query(
+        `UPDATE public.empresas_usuarios
+         SET rol = COALESCE($1, rol), activo = COALESCE($2, activo)
+         WHERE usuario_id = $3 AND empresa_id = $4`,
+        [cambios.rol ?? null, cambios.activo ?? null, id, empresaId],
+      );
+      if (membership.rowCount === 0) throw new ErrorDeNegocio('USUARIO_NO_ENCONTRADO');
     });
   } catch (error) {
     traducirErrorUsuario(error);

@@ -34,10 +34,10 @@ describe('permisos de venta comercial', () => {
     };
 
     await expect(
-      registrarVentaConPago(ventaPagadaConCliente, clienteId, 'trabajador'),
+      registrarVentaConPago(ventaPagadaConCliente, clienteId, 'trabajador', 'empresa-1'),
     ).rejects.toMatchObject({ codigo: 'SIN_PERMISO' });
     await expect(
-      registrarVentaConPago(ventaCredito, clienteId, 'trabajador'),
+      registrarVentaConPago(ventaCredito, clienteId, 'trabajador', 'empresa-1'),
     ).rejects.toMatchObject({ codigo: 'SIN_PERMISO' });
     expect(mocks.conTransaccion).not.toHaveBeenCalled();
   });

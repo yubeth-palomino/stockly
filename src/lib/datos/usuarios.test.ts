@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   consultar: vi.fn(),
+  conTransaccion: vi.fn(),
+  query: vi.fn(),
   createAdminClient: vi.fn(),
   generateLink: vi.fn(),
   deleteUser: vi.fn(),
@@ -11,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/db/conexion', () => ({
-  conTransaccion: vi.fn(),
+  conTransaccion: mocks.conTransaccion,
   consultar: mocks.consultar,
 }));
 vi.mock('@/lib/auth/sesion', () => ({ obtenerUsuario: vi.fn() }));
@@ -32,6 +34,19 @@ describe('crear invitación de usuario Stockly', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('SELECT id FROM public.sucursales')) {
+        return { rows: [{ id: 'sucursal-1' }], rowCount: 1 };
+      }
+      if (sql.includes('INSERT INTO usuarios')) {
+        return { rows: [{ id: 'stockly-1' }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 1 };
+    });
+    mocks.conTransaccion.mockImplementation(
+      async (trabajo: (tx: { query: typeof mocks.query }) => Promise<unknown>) =>
+        trabajo({ query: mocks.query }),
+    );
     mocks.generateLink.mockResolvedValue({
       data: {
         user: { id: 'auth-1' },
@@ -50,7 +65,7 @@ describe('crear invitación de usuario Stockly', () => {
   });
 
   it('crea la identidad y el perfil Stockly, luego envía el enlace de activación', async () => {
-    await expect(crearUsuario(datos)).resolves.toEqual({ id: 'stockly-1' });
+    await expect(crearUsuario(datos, 'empresa-1')).resolves.toEqual({ id: 'stockly-1' });
 
     expect(mocks.generateLink).toHaveBeenCalledWith({
       type: 'invite',
@@ -60,9 +75,13 @@ describe('crear invitación de usuario Stockly', () => {
         redirectTo: 'https://stockly.example/auth/confirm',
       },
     });
-    expect(mocks.consultar).toHaveBeenCalledWith(
+    expect(mocks.query).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO usuarios'),
-      ['Ana Pérez', 'ana_perez', 'trabajador', 'auth-1'],
+      ['Ana Pérez', 'ana_perez', 'trabajador', 'auth-1', 'empresa-1'],
+    );
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO public.empresas_usuarios'),
+      ['empresa-1', 'stockly-1', 'trabajador', 'asignadas'],
     );
     expect(mocks.enviarCorreo).toHaveBeenCalledWith({
       para: 'ana@example.com',
@@ -75,14 +94,14 @@ describe('crear invitación de usuario Stockly', () => {
   it('revierte ambas cuentas si no se puede enviar la invitación', async () => {
     mocks.enviarCorreo.mockResolvedValue({ ok: false, error: 'Remitente no verificado.' });
 
-    await expect(crearUsuario(datos)).rejects.toMatchObject({
+    await expect(crearUsuario(datos, 'empresa-1')).rejects.toMatchObject({
       codigo: 'ERROR_INTERNO',
       message: 'Remitente no verificado.',
     });
 
-    expect(mocks.consultar).toHaveBeenLastCalledWith(
-      'DELETE FROM usuarios WHERE auth_ref = $1',
-      ['auth-1'],
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE FROM usuarios WHERE auth_ref = $1 AND empresa_id = $2'),
+      ['auth-1', 'empresa-1'],
     );
     expect(mocks.deleteUser).toHaveBeenCalledWith('auth-1');
   });
@@ -93,7 +112,7 @@ describe('crear invitación de usuario Stockly', () => {
       error: { code: 'email_exists' },
     });
 
-    await expect(crearUsuario(datos)).rejects.toMatchObject({
+    await expect(crearUsuario(datos, 'empresa-1')).rejects.toMatchObject({
       codigo: 'USUARIO_DUPLICADO',
       message: 'Ya existe una cuenta de acceso con ese correo.',
     });

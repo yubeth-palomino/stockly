@@ -27,35 +27,36 @@ async function stockMinimoDisponible(): Promise<boolean> {
   return columnas[0]?.existe === true;
 }
 
-export async function contarProductosPorReponer(): Promise<number> {
+export async function contarProductosPorReponer(empresaId: string): Promise<number> {
   if (!(await stockMinimoDisponible())) return 0;
   const filas = await consultar<{ cantidad: number }>(
     `SELECT count(*)::integer AS cantidad
      FROM productos
-     WHERE activo = true
+     WHERE empresa_id = $1 AND activo = true
        AND stock_minimo IS NOT NULL
        AND cantidad <= stock_minimo`,
+    [empresaId],
   );
   return filas[0]?.cantidad ?? 0;
 }
 
-export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
+export async function obtenerResumen(rol: Rol, empresaId: string): Promise<ResumenPanel> {
   const [conteos, listaAgotados] = await Promise.all([
     consultar<ConteosPanel>(
       `SELECT
-         (SELECT count(*)::integer FROM productos WHERE activo = true) AS "productosActivos",
-         (SELECT coalesce(sum(cantidad), 0)::integer FROM productos WHERE activo = true) AS "unidadesDisponibles",
-         (SELECT count(*)::integer FROM productos WHERE activo = true AND cantidad = 0) AS "productosAgotados",
-         (SELECT count(*)::integer FROM ventas WHERE fecha_venta = $1) AS "ventasHoy"`,
-      [hoyBogota()],
+         (SELECT count(*)::integer FROM productos WHERE empresa_id = $1 AND activo = true) AS "productosActivos",
+         (SELECT coalesce(sum(cantidad), 0)::integer FROM productos WHERE empresa_id = $1 AND activo = true) AS "unidadesDisponibles",
+         (SELECT count(*)::integer FROM productos WHERE empresa_id = $1 AND activo = true AND cantidad = 0) AS "productosAgotados",
+         (SELECT count(*)::integer FROM ventas WHERE empresa_id = $1 AND fecha_venta = $2) AS "ventasHoy"`,
+      [empresaId, hoyBogota()],
     ),
     consultar<FilaProducto>(
       `SELECT ${columnasProducto(rol)}
        FROM v_productos
-       WHERE activo = true AND cantidad = 0
+       WHERE empresa_id = $1 AND activo = true AND cantidad = 0
        ORDER BY clave_referencia ASC, clave_talla ASC
-       LIMIT $1`,
-      [LIMITE_LISTADO],
+       LIMIT $2`,
+      [empresaId, LIMITE_LISTADO],
     ),
   ]);
 
@@ -77,19 +78,20 @@ export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
       consultar<{ cantidad: number }>(
         `SELECT count(*)::integer AS cantidad
          FROM productos
-         WHERE activo = true
+         WHERE empresa_id = $1 AND activo = true
            AND stock_minimo IS NOT NULL
            AND cantidad <= stock_minimo`,
+        [empresaId],
       ),
       consultar<FilaProducto>(
         `SELECT ${columnasProducto(rol)}
          FROM v_productos
-         WHERE activo = true
+         WHERE empresa_id = $1 AND activo = true
            AND stock_minimo IS NOT NULL
            AND cantidad <= stock_minimo
          ORDER BY cantidad ASC, clave_referencia ASC, clave_talla ASC
-         LIMIT $1`,
-        [LIMITE_LISTADO],
+         LIMIT $2`,
+        [empresaId, LIMITE_LISTADO],
       ),
     ]);
     resumen.productosPorReponer = conteosReposicion[0]?.cantidad ?? 0;
@@ -98,7 +100,7 @@ export async function obtenerResumen(rol: Rol): Promise<ResumenPanel> {
   }
 
   if (rol === 'dueno' && MODULO_ECONOMICO_ACTIVO) {
-    const economia = await obtenerEconomia();
+    const economia = await obtenerEconomia({}, empresaId);
     resumen.inversionTotal = economia.inversionTotal;
     resumen.gananciaPotencialTotal = economia.gananciaPotencialTotal;
     resumen.gananciaRealizadaTotal = economia.gananciaRealizadaTotal;

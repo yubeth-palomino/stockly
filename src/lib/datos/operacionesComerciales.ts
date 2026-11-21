@@ -74,16 +74,21 @@ function trasladarDuplicadoContacto(error: unknown, tipo: 'cliente' | 'proveedor
   throw error;
 }
 
-async function cajaAbierta(tx: Transaccion, bloquear = true): Promise<Identificador | null> {
+async function cajaAbierta(
+  tx: Transaccion,
+  empresaId: string,
+  bloquear = true,
+): Promise<Identificador | null> {
   const resultado = await tx.query<Identificador>(
     `SELECT id FROM public.cajas
-     WHERE estado = 'ABIERTA'
+     WHERE empresa_id = $1 AND estado = 'ABIERTA'
      LIMIT 1 ${bloquear ? 'FOR UPDATE' : ''}`,
+    [empresaId],
   );
   return resultado.rows[0] ?? null;
 }
 
-async function consultarMovimientosCaja(cajaId: string): Promise<
+async function consultarMovimientosCaja(cajaId: string, empresaId: string): Promise<
   Array<{
     id: string;
     tipo: 'INGRESO' | 'EGRESO';
@@ -115,15 +120,15 @@ async function consultarMovimientosCaja(cajaId: string): Promise<
             m.created_at::text AS "createdAt"
      FROM public.caja_movimientos m
      LEFT JOIN public.usuarios u ON u.id = m.creado_por
-     WHERE m.caja_id = $1
+     WHERE m.caja_id = $1 AND m.empresa_id = $2
      ORDER BY m.created_at DESC, m.id DESC
      LIMIT 300`,
-    [cajaId],
+    [cajaId, empresaId],
   );
   return filas.map((fila) => ({ ...fila, monto: importe(fila.monto, 'movimiento de caja') }));
 }
 
-async function consultarResumenMovimientosCaja(cajaId: string) {
+async function consultarResumenMovimientosCaja(cajaId: string, empresaId: string) {
   const filas = await consultar<{
     tipo: 'INGRESO' | 'EGRESO';
     metodo: MetodoPago;
@@ -136,18 +141,18 @@ async function consultarResumenMovimientosCaja(cajaId: string) {
                  ELSE 'MANUAL' END AS origen,
             sum(monto)::text AS monto
      FROM public.caja_movimientos
-     WHERE caja_id = $1
+     WHERE caja_id = $1 AND empresa_id = $2
      GROUP BY tipo, metodo, origen`,
-    [cajaId],
+    [cajaId, empresaId],
   );
   return filas.map((fila) => ({ ...fila, monto: importe(fila.monto, 'resumen de caja') }));
 }
 
-async function mapearCaja(fila: FilaCaja, conMovimientos = true) {
+async function mapearCaja(fila: FilaCaja, empresaId: string, conMovimientos = true) {
   const [movimientos, resumen] = conMovimientos
     ? await Promise.all([
-        consultarMovimientosCaja(fila.id),
-        consultarResumenMovimientosCaja(fila.id),
+        consultarMovimientosCaja(fila.id, empresaId),
+        consultarResumenMovimientosCaja(fila.id, empresaId),
       ])
     : [[], []];
   const saldoEsperado =
@@ -205,40 +210,44 @@ const columnasCaja = `id, estado, monto_apertura::text AS "montoApertura",
   monto_esperado::text AS "montoEsperado", monto_contado::text AS "montoContado",
   diferencia::text AS diferencia, abierta_por AS "abiertaPor",
   cerrada_por AS "cerradaPor", abierta_en::text AS "abiertaEn",
-  (SELECT nombre FROM public.usuarios WHERE id = abierta_por) AS "abiertaPorNombre",
-  (SELECT nombre FROM public.usuarios WHERE id = cerrada_por) AS "cerradaPorNombre",
+  (SELECT nombre FROM public.usuarios
+   WHERE id = abierta_por AND empresa_id = public.cajas.empresa_id) AS "abiertaPorNombre",
+  (SELECT nombre FROM public.usuarios
+   WHERE id = cerrada_por AND empresa_id = public.cajas.empresa_id) AS "cerradaPorNombre",
   cerrada_en::text AS "cerradaEn", observacion_apertura AS "observacionApertura",
   observacion_cierre AS "observacionCierre"`;
 
-export async function obtenerCajaActual(rol: Rol) {
+export async function obtenerCajaActual(rol: Rol, empresaId: string) {
   validarRolDueno(rol);
   const filas = await consultar<FilaCaja>(
     `SELECT ${columnasCaja} FROM public.cajas
-     WHERE estado = 'ABIERTA' LIMIT 1`,
+     WHERE empresa_id = $1 AND estado = 'ABIERTA' LIMIT 1`,
+    [empresaId],
   );
-  return filas[0] ? mapearCaja(filas[0]) : null;
+  return filas[0] ? mapearCaja(filas[0], empresaId) : null;
 }
 
-export async function listarHistorialCajas(rol: Rol) {
+export async function listarHistorialCajas(rol: Rol, empresaId: string) {
   validarRolDueno(rol);
   const filas = await consultar<FilaCaja>(
     `SELECT ${columnasCaja} FROM public.cajas
-     WHERE estado = 'CERRADA'
+     WHERE empresa_id = $1 AND estado = 'CERRADA'
      ORDER BY cerrada_en DESC, id DESC
      LIMIT 100`,
+    [empresaId],
   );
-  return Promise.all(filas.map((fila) => mapearCaja(fila, false)));
+  return Promise.all(filas.map((fila) => mapearCaja(fila, empresaId, false)));
 }
 
-export async function obtenerDetalleCaja(id: string, rol: Rol) {
+export async function obtenerDetalleCaja(id: string, rol: Rol, empresaId: string) {
   validarRolDueno(rol);
   const filas = await consultar<FilaCaja>(
     `SELECT ${columnasCaja} FROM public.cajas
-     WHERE id = $1 AND estado = 'CERRADA'`,
-    [id],
+     WHERE id = $1 AND empresa_id = $2 AND estado = 'CERRADA'`,
+    [id, empresaId],
   );
   if (!filas[0]) throw new ErrorDeNegocio('CAJA_NO_ENCONTRADA');
-  return mapearCaja(filas[0]);
+  return mapearCaja(filas[0], empresaId);
 }
 
 export async function abrirCaja(
@@ -249,12 +258,13 @@ export async function abrirCaja(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   try {
     const cajaId = await conTransaccion(async (tx) => {
       await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-        `apertura-caja:${datos.claveApertura}`,
+        `apertura-caja:${empresaId}:${datos.claveApertura}`,
       ]);
       const repetida = await tx.query<{
         id: string;
@@ -265,8 +275,8 @@ export async function abrirCaja(
         `SELECT id, monto_apertura::text AS "montoApertura",
                 observacion_apertura AS "observacionApertura",
                 abierta_por AS "abiertaPor"
-         FROM public.cajas WHERE clave_apertura = $1`,
-        [datos.claveApertura],
+         FROM public.cajas WHERE empresa_id = $1 AND clave_apertura = $2`,
+        [empresaId, datos.claveApertura],
       );
       const anterior = repetida.rows[0];
       if (anterior) {
@@ -280,25 +290,25 @@ export async function abrirCaja(
         return anterior.id;
       }
 
-      const abierta = await cajaAbierta(tx);
+      const abierta = await cajaAbierta(tx, empresaId);
       if (abierta) throw new ErrorDeNegocio('CAJA_YA_ABIERTA');
       const insertada = await tx.query<Identificador>(
         `INSERT INTO public.cajas
-           (estado, monto_apertura, abierta_por, observacion_apertura, clave_apertura)
-         VALUES ('ABIERTA', $1, $2, $3, $4)
+           (empresa_id, estado, monto_apertura, abierta_por, observacion_apertura, clave_apertura)
+         VALUES ($1, 'ABIERTA', $2, $3, $4, $5)
          RETURNING id`,
-        [datos.montoApertura, usuarioId, datos.observacion ?? null, datos.claveApertura],
+        [empresaId, datos.montoApertura, usuarioId, datos.observacion ?? null, datos.claveApertura],
       );
       const id = insertada.rows[0]?.id;
       if (!id) throw new Error('La base de datos no devolvió la caja recién abierta.');
       return id;
     });
     const fila = await consultar<FilaCaja>(
-      `SELECT ${columnasCaja} FROM public.cajas WHERE id = $1`,
-      [cajaId],
+      `SELECT ${columnasCaja} FROM public.cajas WHERE id = $1 AND empresa_id = $2`,
+      [cajaId, empresaId],
     );
     if (!fila[0]) throw new Error('No se pudo consultar la caja recién abierta.');
-    return mapearCaja(fila[0]);
+    return mapearCaja(fila[0], empresaId);
   } catch (error) {
     if (
       typeof error === 'object' &&
@@ -324,6 +334,7 @@ export async function registrarMovimientoCaja(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const huellaMovimiento = huella({
@@ -335,12 +346,13 @@ export async function registrarMovimientoCaja(
   });
   const movimientoId = await conTransaccion(async (tx) => {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-      `movimiento-caja:${datos.claveIdempotencia}`,
+      `movimiento-caja:${empresaId}:${datos.claveIdempotencia}`,
     ]);
     const repetido = await tx.query<{ id: string; huella: string | null }>(
       `SELECT id, huella_idempotencia AS huella
-       FROM public.caja_movimientos WHERE clave_idempotencia = $1`,
-      [datos.claveIdempotencia],
+       FROM public.caja_movimientos
+       WHERE empresa_id = $1 AND clave_idempotencia = $2`,
+      [empresaId, datos.claveIdempotencia],
     );
     if (repetido.rows[0]) {
       if (repetido.rows[0].huella !== huellaMovimiento) {
@@ -349,18 +361,19 @@ export async function registrarMovimientoCaja(
       return repetido.rows[0].id;
     }
 
-    const caja = await cajaAbierta(tx);
+    const caja = await cajaAbierta(tx, empresaId);
     if (!caja) throw new ErrorDeNegocio('CAJA_NO_ABIERTA');
     if (datos.tipo === 'EGRESO' && datos.metodo === 'EFECTIVO') {
       const [apertura, movimientos] = await Promise.all([
         tx.query<{ monto: string }>(
-          'SELECT monto_apertura::text AS monto FROM public.cajas WHERE id = $1',
-          [caja.id],
+          `SELECT monto_apertura::text AS monto FROM public.cajas
+           WHERE id = $1 AND empresa_id = $2`,
+          [caja.id, empresaId],
         ),
         tx.query<FilaMovimiento>(
           `SELECT tipo, metodo, monto::text AS monto
-           FROM public.caja_movimientos WHERE caja_id = $1`,
-          [caja.id],
+           FROM public.caja_movimientos WHERE caja_id = $1 AND empresa_id = $2`,
+          [caja.id, empresaId],
         ),
       ]);
       const efectivoDisponible = calcularEfectivoEsperado(
@@ -376,11 +389,12 @@ export async function registrarMovimientoCaja(
     }
     const insertado = await tx.query<Identificador>(
       `INSERT INTO public.caja_movimientos
-         (caja_id, tipo, metodo, monto, concepto, clave_idempotencia,
+         (empresa_id, caja_id, tipo, metodo, monto, concepto, clave_idempotencia,
           huella_idempotencia, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id`,
       [
+        empresaId,
         caja.id,
         datos.tipo,
         datos.metodo,
@@ -406,6 +420,7 @@ export async function cerrarCaja(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const huellaCierre = huella({
@@ -415,12 +430,12 @@ export async function cerrarCaja(
   });
   const cajaId = await conTransaccion(async (tx) => {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-      `cierre-caja:${datos.claveCierre}`,
+      `cierre-caja:${empresaId}:${datos.claveCierre}`,
     ]);
     const repetida = await tx.query<{ id: string; huella: string | null }>(
       `SELECT id, huella_cierre AS huella
-       FROM public.cajas WHERE clave_cierre = $1`,
-      [datos.claveCierre],
+       FROM public.cajas WHERE empresa_id = $1 AND clave_cierre = $2`,
+      [empresaId, datos.claveCierre],
     );
     if (repetida.rows[0]) {
       if (repetida.rows[0].huella !== huellaCierre) {
@@ -429,18 +444,19 @@ export async function cerrarCaja(
       return repetida.rows[0].id;
     }
 
-    const caja = await cajaAbierta(tx);
+    const caja = await cajaAbierta(tx, empresaId);
     if (!caja) throw new ErrorDeNegocio('CAJA_NO_ABIERTA');
     const movimientos = await tx.query<FilaMovimiento>(
       `SELECT tipo, metodo, monto::text AS monto
        FROM public.caja_movimientos
-       WHERE caja_id = $1
+       WHERE caja_id = $1 AND empresa_id = $2
        ORDER BY created_at, id`,
-      [caja.id],
+      [caja.id, empresaId],
     );
     const apertura = await tx.query<{ monto: string }>(
-      'SELECT monto_apertura::text AS monto FROM public.cajas WHERE id = $1',
-      [caja.id],
+      `SELECT monto_apertura::text AS monto FROM public.cajas
+       WHERE id = $1 AND empresa_id = $2`,
+      [caja.id, empresaId],
     );
     const montoEsperado = calcularEfectivoEsperado(
       importe(apertura.rows[0]?.monto ?? null, 'apertura'),
@@ -454,7 +470,7 @@ export async function cerrarCaja(
        SET estado = 'CERRADA', monto_esperado = $1, monto_contado = $2,
           diferencia = $2::bigint - $1::bigint, cerrada_por = $3, cerrada_en = NOW(),
            observacion_cierre = $4, clave_cierre = $5, huella_cierre = $6
-       WHERE id = $7 AND estado = 'ABIERTA'
+       WHERE id = $7 AND empresa_id = $8 AND estado = 'ABIERTA'
        RETURNING id`,
       [
         montoEsperado,
@@ -464,6 +480,7 @@ export async function cerrarCaja(
         datos.claveCierre,
         huellaCierre,
         caja.id,
+        empresaId,
       ],
     );
     const id = actualizada.rows[0]?.id;
@@ -471,22 +488,28 @@ export async function cerrarCaja(
     return id;
   });
   const filas = await consultar<FilaCaja>(
-    `SELECT ${columnasCaja} FROM public.cajas WHERE id = $1`,
-    [cajaId],
+    `SELECT ${columnasCaja} FROM public.cajas WHERE id = $1 AND empresa_id = $2`,
+    [cajaId, empresaId],
   );
   if (!filas[0]) throw new Error('No se pudo consultar la caja cerrada.');
-  return mapearCaja(filas[0]);
+  return mapearCaja(filas[0], empresaId);
 }
 
-export async function listarProveedores(consulta: string | undefined, rol: Rol) {
+export async function listarProveedores(
+  consulta: string | undefined,
+  rol: Rol,
+  empresaId: string,
+) {
   validarRolDueno(rol);
-  const valores = consulta?.trim() ? [`%${consulta.trim()}%`] : [];
+  const valores: string[] = [empresaId];
+  if (consulta?.trim()) valores.push(`%${consulta.trim()}%`);
   const filas = await consultar<FilaContacto>(
     `SELECT id, nombre, identificacion, contacto, telefono, correo, direccion,
             observaciones, activo, created_at::text AS "createdAt",
             updated_at::text AS "updatedAt"
      FROM public.proveedores
-     ${valores.length ? 'WHERE nombre ILIKE $1 OR identificacion ILIKE $1' : ''}
+     WHERE empresa_id = $1
+     ${valores.length > 1 ? 'AND (nombre ILIKE $2 OR identificacion ILIKE $2)' : ''}
      ORDER BY activo DESC, nombre
      LIMIT 200`,
     valores,
@@ -494,14 +517,14 @@ export async function listarProveedores(consulta: string | undefined, rol: Rol) 
   return filas;
 }
 
-export async function obtenerProveedor(id: string, rol: Rol) {
+export async function obtenerProveedor(id: string, rol: Rol, empresaId: string) {
   validarRolDueno(rol);
   const filas = await consultar<FilaContacto>(
     `SELECT id, nombre, identificacion, contacto, telefono, correo, direccion,
             observaciones, activo, created_at::text AS "createdAt",
             updated_at::text AS "updatedAt"
-     FROM public.proveedores WHERE id = $1`,
-    [id],
+     FROM public.proveedores WHERE id = $1 AND empresa_id = $2`,
+    [id, empresaId],
   );
   if (!filas[0]) throw new ErrorDeNegocio('PROVEEDOR_NO_ENCONTRADO');
   return filas[0];
@@ -519,17 +542,19 @@ export async function guardarProveedor(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   try {
     const resultado = await consultar<FilaContacto>(
       `INSERT INTO public.proveedores
-         (nombre, identificacion, contacto, telefono, correo, direccion, observaciones, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         (empresa_id, nombre, identificacion, contacto, telefono, correo, direccion, observaciones, creado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, nombre, identificacion, contacto, telefono, correo, direccion,
                  observaciones, activo, created_at::text AS "createdAt",
                  updated_at::text AS "updatedAt"`,
       [
+        empresaId,
         datos.nombre.trim(),
         datos.identificacion?.trim() || null,
         datos.contacto?.trim() || null,
@@ -551,6 +576,7 @@ export async function actualizarProveedor(
   id: string,
   cambios: Record<string, string | boolean | undefined>,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const columnas: Record<string, string> = {
@@ -572,11 +598,11 @@ export async function actualizarProveedor(
     asignaciones.push(`${columna} = $${valores.length}`);
   }
   if (!asignaciones.length) throw new ErrorDeNegocio('DATOS_INVALIDOS');
-  valores.push(id);
+  valores.push(id, empresaId);
   try {
     const filas = await consultar<FilaContacto>(
       `UPDATE public.proveedores SET ${asignaciones.join(', ')}
-       WHERE id = $${valores.length}
+       WHERE id = $${valores.length - 1} AND empresa_id = $${valores.length}
        RETURNING id, nombre, identificacion, contacto, telefono, correo, direccion,
                  observaciones, activo, created_at::text AS "createdAt",
                  updated_at::text AS "updatedAt"`,
@@ -589,9 +615,10 @@ export async function actualizarProveedor(
   }
 }
 
-export async function listarClientes(consulta: string | undefined, rol: Rol) {
+export async function listarClientes(consulta: string | undefined, rol: Rol, empresaId: string) {
   validarRolDueno(rol);
-  const valores = consulta?.trim() ? [`%${consulta.trim()}%`] : [];
+  const valores: string[] = [empresaId];
+  if (consulta?.trim()) valores.push(`%${consulta.trim()}%`);
   return consultar<FilaContacto & { saldoPendiente: string }>(
     `SELECT c.id, c.nombre, c.identificacion, NULL::text AS contacto, c.telefono,
             c.correo, c.direccion, c.observaciones, c.activo,
@@ -600,16 +627,20 @@ export async function listarClientes(consulta: string | undefined, rol: Rol) {
               - COALESCE(pagos.total, 0) - COALESCE(abonos.total, 0), 0)), 0)::text
               AS "saldoPendiente"
      FROM public.clientes c
-     LEFT JOIN public.cuentas_por_cobrar cp ON cp.cliente_id = c.id
-     LEFT JOIN public.ventas v ON v.id = cp.venta_id
+     LEFT JOIN public.cuentas_por_cobrar cp
+       ON cp.cliente_id = c.id AND cp.empresa_id = c.empresa_id
+     LEFT JOIN public.ventas v
+       ON v.id = cp.venta_id AND v.empresa_id = c.empresa_id
      LEFT JOIN LATERAL (
-       SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+       SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+       WHERE venta_id = v.id AND empresa_id = c.empresa_id
      ) pagos ON true
      LEFT JOIN LATERAL (
        SELECT sum(a.monto)::numeric AS total
-       FROM public.abonos a WHERE a.cuenta_id = cp.id
+       FROM public.abonos a WHERE a.cuenta_id = cp.id AND a.empresa_id = c.empresa_id
      ) abonos ON true
-     ${valores.length ? 'WHERE c.nombre ILIKE $1 OR c.identificacion ILIKE $1' : ''}
+     WHERE c.empresa_id = $1
+     ${valores.length > 1 ? 'AND (c.nombre ILIKE $2 OR c.identificacion ILIKE $2)' : ''}
      GROUP BY c.id
      ORDER BY c.activo DESC, c.nombre
      LIMIT 200`,
@@ -622,15 +653,20 @@ export async function listarClientes(consulta: string | undefined, rol: Rol) {
   );
 }
 
-export async function obtenerDetalleCliente(id: string, rol: Rol, hoy: string) {
+export async function obtenerDetalleCliente(
+  id: string,
+  rol: Rol,
+  hoy: string,
+  empresaId: string,
+) {
   validarRolDueno(rol);
   const [clientes, ventas] = await Promise.all([
     consultar<FilaContacto>(
       `SELECT id, nombre, identificacion, NULL::text AS contacto, telefono, correo,
               direccion, observaciones, activo, created_at::text AS "createdAt",
               updated_at::text AS "updatedAt"
-       FROM public.clientes WHERE id = $1`,
-      [id],
+       FROM public.clientes WHERE id = $1 AND empresa_id = $2`,
+      [id, empresaId],
     ),
     consultar<{
       id: number;
@@ -653,16 +689,19 @@ export async function obtenerDetalleCliente(id: string, rol: Rol, hoy: string) {
                 - COALESCE(pagos.total, 0) - COALESCE(abonos.total, 0), 0)::text AS saldo,
               cp.fecha_vencimiento::text AS "fechaVencimiento"
        FROM public.ventas v
-       LEFT JOIN public.cuentas_por_cobrar cp ON cp.venta_id = v.id
+       LEFT JOIN public.cuentas_por_cobrar cp
+         ON cp.venta_id = v.id AND cp.empresa_id = v.empresa_id
        LEFT JOIN LATERAL (
-         SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+         SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+         WHERE venta_id = v.id AND empresa_id = v.empresa_id
        ) pagos ON true
        LEFT JOIN LATERAL (
-         SELECT sum(a.monto)::numeric AS total FROM public.abonos a WHERE a.cuenta_id = cp.id
+         SELECT sum(a.monto)::numeric AS total FROM public.abonos a
+         WHERE a.cuenta_id = cp.id AND a.empresa_id = v.empresa_id
        ) abonos ON true
-       WHERE v.cliente_id = $1
+       WHERE v.cliente_id = $1 AND v.empresa_id = $2
        ORDER BY v.fecha_venta DESC, v.id DESC`,
-      [id],
+      [id, empresaId],
     ),
   ]);
   const cliente = clientes[0];
@@ -708,17 +747,19 @@ export async function guardarCliente(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   try {
     const filas = await consultar<FilaContacto>(
       `INSERT INTO public.clientes
-         (nombre, identificacion, telefono, correo, direccion, observaciones, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (empresa_id, nombre, identificacion, telefono, correo, direccion, observaciones, creado_por)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, nombre, identificacion, NULL::text AS contacto, telefono, correo,
                  direccion, observaciones, activo, created_at::text AS "createdAt",
                  updated_at::text AS "updatedAt"`,
       [
+        empresaId,
         datos.nombre.trim(),
         datos.identificacion?.trim() || null,
         datos.telefono?.trim() || null,
@@ -739,6 +780,7 @@ export async function actualizarCliente(
   id: string,
   cambios: Record<string, string | boolean | undefined>,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const columnas: Record<string, string> = {
@@ -759,11 +801,11 @@ export async function actualizarCliente(
     asignaciones.push(`${columna} = $${valores.length}`);
   }
   if (!asignaciones.length) throw new ErrorDeNegocio('DATOS_INVALIDOS');
-  valores.push(id);
+  valores.push(id, empresaId);
   try {
     const filas = await consultar<FilaContacto>(
       `UPDATE public.clientes SET ${asignaciones.join(', ')}
-       WHERE id = $${valores.length}
+       WHERE id = $${valores.length - 1} AND empresa_id = $${valores.length}
        RETURNING id, nombre, identificacion, NULL::text AS contacto, telefono, correo,
                  direccion, observaciones, activo, created_at::text AS "createdAt",
                  updated_at::text AS "updatedAt"`,
@@ -785,13 +827,14 @@ export async function listarCuentasPorCobrar(
   },
   hoy: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
-  const valores: unknown[] = [hoy];
-  const condiciones: string[] = [];
+  const valores: unknown[] = [hoy, empresaId];
+  const condiciones: string[] = ['saldo.empresa_id = $2'];
   if (filtros.clienteId) {
     valores.push(filtros.clienteId);
-    condiciones.push(`cp.cliente_id = $${valores.length}`);
+    condiciones.push(`saldo.cliente_id = $${valores.length}`);
   }
   if (filtros.desde) {
     valores.push(filtros.desde);
@@ -802,7 +845,7 @@ export async function listarCuentasPorCobrar(
     condiciones.push(`saldo.fecha_venta <= $${valores.length}::date`);
   }
   if (filtros.estado === 'VENCIDA') {
-    condiciones.push(`cp.fecha_vencimiento < $1::date AND saldo.saldo > 0`);
+    condiciones.push(`saldo.fecha_vencimiento < $1::date AND saldo.saldo > 0`);
   } else if (filtros.estado === 'PENDIENTE') {
     condiciones.push(`saldo.abonado = 0 AND saldo.saldo > 0`);
   } else if (filtros.estado === 'ABONO_PARCIAL') {
@@ -823,20 +866,23 @@ export async function listarCuentasPorCobrar(
     estado: 'PENDIENTE' | 'ABONO_PARCIAL' | 'VENCIDA' | 'PAGADA';
   }>(
     `WITH saldos AS (
-       SELECT cp.id, cp.venta_id, cp.cliente_id, cp.fecha_vencimiento,
+       SELECT cp.id, cp.empresa_id, cp.venta_id, cp.cliente_id, cp.fecha_vencimiento,
               v.referencia, v.talla, v.fecha_venta,
               (v.precio_venta::numeric * v.cantidad)::numeric AS total,
               COALESCE(pagos.total, 0) + COALESCE(abonos.total, 0) AS abonado,
               GREATEST((v.precio_venta::numeric * v.cantidad)
                 - COALESCE(pagos.total, 0) - COALESCE(abonos.total, 0), 0) AS saldo
        FROM public.cuentas_por_cobrar cp
-       JOIN public.ventas v ON v.id = cp.venta_id
+       JOIN public.ventas v ON v.id = cp.venta_id AND v.empresa_id = cp.empresa_id
        LEFT JOIN LATERAL (
-         SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+         SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+         WHERE venta_id = v.id AND empresa_id = cp.empresa_id
        ) pagos ON true
        LEFT JOIN LATERAL (
-         SELECT sum(monto)::numeric AS total FROM public.abonos WHERE cuenta_id = cp.id
+         SELECT sum(monto)::numeric AS total FROM public.abonos
+         WHERE cuenta_id = cp.id AND empresa_id = cp.empresa_id
        ) abonos ON true
+       WHERE cp.empresa_id = $2
      )
      SELECT saldo.id, saldo.venta_id AS "ventaId", saldo.cliente_id AS "clienteId",
             c.nombre AS cliente, saldo.referencia, saldo.talla,
@@ -849,7 +895,7 @@ export async function listarCuentasPorCobrar(
                  WHEN saldo.abonado > 0 THEN 'ABONO_PARCIAL'
                  ELSE 'PENDIENTE' END AS estado
      FROM saldos saldo
-     JOIN public.clientes c ON c.id = saldo.cliente_id
+     JOIN public.clientes c ON c.id = saldo.cliente_id AND c.empresa_id = saldo.empresa_id
      ${condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : ''}
      ORDER BY saldo.fecha_vencimiento NULLS LAST, saldo.fecha_venta, saldo.id`,
     valores,
@@ -872,6 +918,7 @@ export async function registrarAbono(
   },
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const huellaAbono = huella({
@@ -883,12 +930,13 @@ export async function registrarAbono(
   });
   return conTransaccion(async (tx) => {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-      `abono:${datos.claveIdempotencia}`,
+      `abono:${empresaId}:${datos.claveIdempotencia}`,
     ]);
     const repetido = await tx.query<{ id: string; huella: string }>(
       `SELECT id, huella_idempotencia AS huella
-       FROM public.abonos WHERE clave_idempotencia = $1`,
-      [datos.claveIdempotencia],
+       FROM public.abonos
+       WHERE empresa_id = $1 AND clave_idempotencia = $2`,
+      [empresaId, datos.claveIdempotencia],
     );
     if (repetido.rows[0]) {
       if (repetido.rows[0].huella !== huellaAbono) {
@@ -905,18 +953,20 @@ export async function registrarAbono(
     }>(
       `SELECT cp.id, v.id AS "ventaId", v.precio_venta AS precio, v.cantidad
        FROM public.cuentas_por_cobrar cp
-       JOIN public.ventas v ON v.id = cp.venta_id
-       WHERE cp.id = $1
+       JOIN public.ventas v ON v.id = cp.venta_id AND v.empresa_id = cp.empresa_id
+       WHERE cp.id = $1 AND cp.empresa_id = $2
        FOR UPDATE OF cp, v`,
-      [datos.cuentaId],
+      [datos.cuentaId, empresaId],
     );
     const filaCuenta = cuenta.rows[0];
     if (!filaCuenta) throw new ErrorDeNegocio('CUENTA_NO_ENCONTRADA');
     const totales = await tx.query<{ pagado: string; abonado: string }>(
       `SELECT
-         COALESCE((SELECT sum(monto) FROM public.pagos_venta WHERE venta_id = $1), 0)::text AS pagado,
-         COALESCE((SELECT sum(monto) FROM public.abonos WHERE cuenta_id = $2), 0)::text AS abonado`,
-      [filaCuenta.ventaId, datos.cuentaId],
+         COALESCE((SELECT sum(monto) FROM public.pagos_venta
+           WHERE empresa_id = $1 AND venta_id = $2), 0)::text AS pagado,
+         COALESCE((SELECT sum(monto) FROM public.abonos
+           WHERE empresa_id = $1 AND cuenta_id = $3), 0)::text AS abonado`,
+      [empresaId, filaCuenta.ventaId, datos.cuentaId],
     );
     const montoPagado = importe(totales.rows[0]?.pagado ?? 0, 'pagos de venta');
     const montoAbonado = importe(totales.rows[0]?.abonado ?? 0, 'abonos');
@@ -929,15 +979,16 @@ export async function registrarAbono(
     const saldo = total - montoPagado - montoAbonado;
     if (datos.monto > saldo) throw new ErrorDeNegocio('ABONO_SUPERA_SALDO');
 
-    const caja = await cajaAbierta(tx);
+    const caja = await cajaAbierta(tx, empresaId);
     if (!caja) throw new ErrorDeNegocio('CAJA_NO_ABIERTA');
     const abono = await tx.query<Identificador>(
       `INSERT INTO public.abonos
-         (cuenta_id, monto, metodo, clave_idempotencia, huella_idempotencia,
+         (empresa_id, cuenta_id, monto, metodo, clave_idempotencia, huella_idempotencia,
           observacion, creado_por)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [
+        empresaId,
         datos.cuentaId,
         datos.monto,
         datos.metodo,
@@ -951,15 +1002,15 @@ export async function registrarAbono(
     if (!abonoId) throw new Error('La base de datos no devolvió el abono recién registrado.');
     await tx.query(
       `INSERT INTO public.caja_movimientos
-         (caja_id, tipo, metodo, monto, concepto, abono_id, creado_por)
-       VALUES ($1, 'INGRESO', $2, $3, $4, $5, $6)`,
-      [caja.id, datos.metodo, datos.monto, `Abono a cuenta ${datos.cuentaId}`, abonoId, usuarioId],
+         (empresa_id, caja_id, tipo, metodo, monto, concepto, abono_id, creado_por)
+       VALUES ($1, $2, 'INGRESO', $3, $4, $5, $6, $7)`,
+      [empresaId, caja.id, datos.metodo, datos.monto, `Abono a cuenta ${datos.cuentaId}`, abonoId, usuarioId],
     );
     return { abonoId, repetido: false, saldoResultante: saldo - datos.monto };
   });
 }
 
-export async function listarAbonos(cuentaId: string, rol: Rol) {
+export async function listarAbonos(cuentaId: string, rol: Rol, empresaId: string) {
   validarRolDueno(rol);
   const filas = await consultar<{
     id: string;
@@ -974,10 +1025,10 @@ export async function listarAbonos(cuentaId: string, rol: Rol) {
             a.creado_por AS "creadoPor", u.nombre AS "nombreUsuario",
             a.created_at::text AS "createdAt"
      FROM public.abonos a
-     LEFT JOIN public.usuarios u ON u.id = a.creado_por
-     WHERE a.cuenta_id = $1
+     LEFT JOIN public.usuarios u ON u.id = a.creado_por AND u.empresa_id = a.empresa_id
+     WHERE a.cuenta_id = $1 AND a.empresa_id = $2
      ORDER BY a.created_at, a.id`,
-    [cuentaId],
+    [cuentaId, empresaId],
   );
   return filas.map((fila) => ({ ...fila, monto: importe(fila.monto, 'abono') }));
 }
@@ -986,6 +1037,7 @@ export async function obtenerDashboardComercial(
   filtros: { desde: string; hasta: string },
   hoy: string,
   rol: Rol,
+  empresaId: string,
 ) {
   validarRolDueno(rol);
   const semanaDesde = new Date(`${hoy}T12:00:00-05:00`);
@@ -1028,11 +1080,11 @@ export async function obtenerDashboardComercial(
            count(*)::text AS transacciones,
            COALESCE(sum(cantidad), 0)::text AS unidades,
            COALESCE((SELECT sum(precio_venta::numeric * cantidad)
-             FROM public.ventas WHERE fecha_venta = $3::date), 0)::text AS hoy,
+             FROM public.ventas WHERE empresa_id = $6 AND fecha_venta = $3::date), 0)::text AS hoy,
            COALESCE((SELECT sum(precio_venta::numeric * cantidad)
-             FROM public.ventas WHERE fecha_venta BETWEEN $4::date AND $3::date), 0)::text AS semana,
+             FROM public.ventas WHERE empresa_id = $6 AND fecha_venta BETWEEN $4::date AND $3::date), 0)::text AS semana,
            COALESCE((SELECT sum(precio_venta::numeric * cantidad)
-             FROM public.ventas WHERE fecha_venta BETWEEN $5::date AND $3::date), 0)::text AS mes,
+             FROM public.ventas WHERE empresa_id = $6 AND fecha_venta BETWEEN $5::date AND $3::date), 0)::text AS mes,
            count(*) FILTER (WHERE v.pago_registrado AND cp.id IS NULL)::text AS "ventasPagadas",
            count(*) FILTER (WHERE v.pago_registrado AND cp.id IS NOT NULL)::text AS "ventasCredito",
            COALESCE(sum(v.precio_venta::numeric * v.cantidad)
@@ -1041,23 +1093,26 @@ export async function obtenerDashboardComercial(
              FILTER (WHERE v.pago_registrado AND cp.id IS NOT NULL), 0)::text AS "valorVentasCredito",
            count(*) FILTER (WHERE NOT v.pago_registrado)::text AS "sinClasificar"
          FROM public.ventas v
-         LEFT JOIN public.cuentas_por_cobrar cp ON cp.venta_id = v.id
-         WHERE v.fecha_venta BETWEEN $1::date AND $2::date`,
-      [filtros.desde, filtros.hasta, hoy, inicioSemana, mesDesde],
+         LEFT JOIN public.cuentas_por_cobrar cp
+           ON cp.venta_id = v.id AND cp.empresa_id = v.empresa_id
+         WHERE v.empresa_id = $6 AND v.fecha_venta BETWEEN $1::date AND $2::date`,
+      [filtros.desde, filtros.hasta, hoy, inicioSemana, mesDesde, empresaId],
     ),
     consultar<{ total: string }>(
       `SELECT COALESCE(sum(monto), 0)::text AS total
          FROM public.pagos_venta
-         WHERE (created_at AT TIME ZONE 'America/Bogota')::date
-           BETWEEN $1::date AND $2::date`,
-      [filtros.desde, filtros.hasta],
+         WHERE empresa_id = $3
+           AND (created_at AT TIME ZONE 'America/Bogota')::date
+             BETWEEN $1::date AND $2::date`,
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ total: string }>(
       `SELECT COALESCE(sum(monto), 0)::text AS total
          FROM public.abonos
-         WHERE (created_at AT TIME ZONE 'America/Bogota')::date
-           BETWEEN $1::date AND $2::date`,
-      [filtros.desde, filtros.hasta],
+         WHERE empresa_id = $3
+           AND (created_at AT TIME ZONE 'America/Bogota')::date
+             BETWEEN $1::date AND $2::date`,
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ saldo: string; clientes: string }>(
       `WITH saldo AS (
@@ -1065,86 +1120,93 @@ export async function obtenerDashboardComercial(
              GREATEST(v.precio_venta::numeric * v.cantidad
                - COALESCE(p.total, 0) - COALESCE(a.total, 0), 0) AS saldo
            FROM public.cuentas_por_cobrar cp
-           JOIN public.ventas v ON v.id = cp.venta_id
+           JOIN public.ventas v ON v.id = cp.venta_id AND v.empresa_id = cp.empresa_id
            LEFT JOIN LATERAL (
-             SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+             SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+             WHERE empresa_id = cp.empresa_id AND venta_id = v.id
            ) p ON true
            LEFT JOIN LATERAL (
-             SELECT sum(monto)::numeric AS total FROM public.abonos WHERE cuenta_id = cp.id
+             SELECT sum(monto)::numeric AS total FROM public.abonos
+             WHERE empresa_id = cp.empresa_id AND cuenta_id = cp.id
            ) a ON true
+           WHERE cp.empresa_id = $1
          )
          SELECT COALESCE(sum(saldo), 0)::text AS saldo,
                 count(DISTINCT cliente_id) FILTER (WHERE saldo > 0)::text AS clientes
          FROM saldo`,
+      [empresaId],
     ),
     consultar<{ metodo: MetodoPago; total: string }>(
       `SELECT metodo, sum(monto)::text AS total
          FROM (
            SELECT metodo, monto FROM public.pagos_venta
-           WHERE (created_at AT TIME ZONE 'America/Bogota')::date
+           WHERE empresa_id = $3 AND (created_at AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
            UNION ALL
            SELECT metodo, monto FROM public.abonos
-           WHERE (created_at AT TIME ZONE 'America/Bogota')::date
+           WHERE empresa_id = $3 AND (created_at AT TIME ZONE 'America/Bogota')::date
              BETWEEN $1::date AND $2::date
          ) pagos
          GROUP BY metodo ORDER BY metodo`,
-      [filtros.desde, filtros.hasta],
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ fecha: string; vendido: string }>(
       `WITH calendario AS (
            SELECT generate_series($1::date, $2::date, interval '1 day')::date AS fecha
          ), ventas_periodo AS (
            SELECT fecha_venta, sum(precio_venta::numeric * cantidad) AS total
-           FROM public.ventas WHERE fecha_venta BETWEEN $1::date AND $2::date
+           FROM public.ventas
+           WHERE empresa_id = $3 AND fecha_venta BETWEEN $1::date AND $2::date
            GROUP BY fecha_venta
          )
          SELECT calendario.fecha::text AS fecha, COALESCE(ventas_periodo.total, 0)::text AS vendido
          FROM calendario LEFT JOIN ventas_periodo ON ventas_periodo.fecha_venta = calendario.fecha
          ORDER BY calendario.fecha`,
-      [filtros.desde, filtros.hasta],
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ fecha: string; monto: string }>(
       `SELECT (created_at AT TIME ZONE 'America/Bogota')::date::text AS fecha,
                 sum(monto)::text AS monto
          FROM public.abonos
-         WHERE (created_at AT TIME ZONE 'America/Bogota')::date
-           BETWEEN $1::date AND $2::date
+         WHERE empresa_id = $3
+           AND (created_at AT TIME ZONE 'America/Bogota')::date
+             BETWEEN $1::date AND $2::date
          GROUP BY (created_at AT TIME ZONE 'America/Bogota')::date
          ORDER BY fecha`,
-      [filtros.desde, filtros.hasta],
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ periodo: 'SEMANA' | 'MES'; fecha: string; vendido: string }>(
       `SELECT 'SEMANA' AS periodo,
                 date_trunc('week', fecha_venta::timestamp)::date::text AS fecha,
                 sum(precio_venta::numeric * cantidad)::text AS vendido
          FROM public.ventas
-         WHERE fecha_venta BETWEEN $1::date AND $2::date
+         WHERE empresa_id = $3 AND fecha_venta BETWEEN $1::date AND $2::date
          GROUP BY date_trunc('week', fecha_venta::timestamp)::date
          UNION ALL
          SELECT 'MES' AS periodo,
                 date_trunc('month', fecha_venta::timestamp)::date::text AS fecha,
                 sum(precio_venta::numeric * cantidad)::text AS vendido
          FROM public.ventas
-         WHERE fecha_venta BETWEEN $1::date AND $2::date
+         WHERE empresa_id = $3 AND fecha_venta BETWEEN $1::date AND $2::date
          GROUP BY date_trunc('month', fecha_venta::timestamp)::date
          ORDER BY periodo, fecha`,
-      [filtros.desde, filtros.hasta],
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ referencia: string; talla: string; unidades: string; vendido: string }>(
       `SELECT referencia, talla, sum(cantidad)::text AS unidades,
                 sum(precio_venta::numeric * cantidad)::text AS vendido
          FROM public.ventas
-         WHERE fecha_venta BETWEEN $1::date AND $2::date
+         WHERE empresa_id = $3 AND fecha_venta BETWEEN $1::date AND $2::date
          GROUP BY referencia, talla
          ORDER BY sum(cantidad) DESC, referencia, talla
          LIMIT 10`,
-      [filtros.desde, filtros.hasta],
+      [filtros.desde, filtros.hasta, empresaId],
     ),
     consultar<{ agotados: string; stockBajo: string }>(
       `SELECT count(*) FILTER (WHERE cantidad = 0)::text AS agotados,
                 count(*) FILTER (WHERE cantidad > 0 AND cantidad <= stock_minimo)::text AS "stockBajo"
-         FROM public.productos WHERE activo = true`,
+         FROM public.productos WHERE empresa_id = $1 AND activo = true`,
+      [empresaId],
     ),
     consultar<{
       id: number;
@@ -1162,8 +1224,10 @@ export async function obtenerDashboardComercial(
                 v.fecha_venta::text AS "fechaVenta",
                 COALESCE(NULLIF(BTRIM(u.nombre), ''), u.usuario, 'Sin usuario') AS "nombreUsuario"
          FROM public.ventas v
-         LEFT JOIN public.usuarios u ON u.id = v.usuario_id
+         LEFT JOIN public.usuarios u ON u.id = v.usuario_id AND u.empresa_id = v.empresa_id
+         WHERE v.empresa_id = $1
          ORDER BY v.fecha_venta DESC, v.id DESC LIMIT 10`,
+      [empresaId],
     ),
     consultar<{
       id: string;
@@ -1176,19 +1240,22 @@ export async function obtenerDashboardComercial(
                   - COALESCE(p.total, 0) - COALESCE(a.total, 0), 0)::text AS saldo,
                 cp.fecha_vencimiento::text AS vencimiento
          FROM public.cuentas_por_cobrar cp
-         JOIN public.clientes c ON c.id = cp.cliente_id
-         JOIN public.ventas v ON v.id = cp.venta_id
+         JOIN public.clientes c ON c.id = cp.cliente_id AND c.empresa_id = cp.empresa_id
+         JOIN public.ventas v ON v.id = cp.venta_id AND v.empresa_id = cp.empresa_id
          LEFT JOIN LATERAL (
-           SELECT sum(monto)::numeric AS total FROM public.pagos_venta WHERE venta_id = v.id
+           SELECT sum(monto)::numeric AS total FROM public.pagos_venta
+           WHERE empresa_id = cp.empresa_id AND venta_id = v.id
          ) p ON true
          LEFT JOIN LATERAL (
-           SELECT sum(monto)::numeric AS total FROM public.abonos WHERE cuenta_id = cp.id
+           SELECT sum(monto)::numeric AS total FROM public.abonos
+           WHERE empresa_id = cp.empresa_id AND cuenta_id = cp.id
          ) a ON true
-         WHERE cp.fecha_vencimiento BETWEEN $1::date AND $2::date
+         WHERE cp.empresa_id = $3
+           AND cp.fecha_vencimiento BETWEEN $1::date AND $2::date
            AND v.precio_venta::numeric * v.cantidad
              - COALESCE(p.total, 0) - COALESCE(a.total, 0) > 0
          ORDER BY cp.fecha_vencimiento, cp.id LIMIT 10`,
-      [hoy, hastaVencimiento],
+      [hoy, hastaVencimiento, empresaId],
     ),
     consultar<{ fecha: string; vendido: string; transacciones: string }>(
       `WITH calendario AS (
@@ -1199,7 +1266,8 @@ export async function obtenerDashboardComercial(
                   sum(precio_venta::numeric * cantidad)::text AS vendido,
                   count(*)::text AS transacciones
            FROM public.ventas
-           WHERE fecha_venta BETWEEN date_trunc('week', $1::date::timestamp)::date
+           WHERE empresa_id = $2
+             AND fecha_venta BETWEEN date_trunc('week', $1::date::timestamp)::date
              AND date_trunc('week', $1::date::timestamp)::date + 6
            GROUP BY fecha_venta
          )
@@ -1209,7 +1277,7 @@ export async function obtenerDashboardComercial(
          FROM calendario
          LEFT JOIN ventas_periodo ON ventas_periodo.fecha_venta = calendario.fecha
          ORDER BY calendario.fecha`,
-      [hoy],
+      [hoy, empresaId],
     ),
   ]);
   const total = totales[0];

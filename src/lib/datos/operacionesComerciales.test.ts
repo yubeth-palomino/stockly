@@ -40,6 +40,7 @@ describe('dashboard comercial', () => {
       { desde: '2020-01-01', hasta: '2020-01-02' },
       '2026-11-21',
       'dueno',
+      'empresa-1',
     );
 
     expect(resultado.vendidoHoy).toBe(90);
@@ -49,13 +50,21 @@ describe('dashboard comercial', () => {
       sql.includes('AS "ventasPagadas"'),
     );
     expect(consultaTotales?.[0]).toContain(
-      'FROM public.ventas WHERE fecha_venta = $3::date',
+      'FROM public.ventas WHERE empresa_id = $6 AND fecha_venta = $3::date',
     );
     expect(consultaTotales?.[0]).toContain(
-      'FROM public.ventas WHERE fecha_venta BETWEEN $4::date AND $3::date',
+      'FROM public.ventas WHERE empresa_id = $6 AND fecha_venta BETWEEN $4::date AND $3::date',
     );
     expect(consultaTotales?.[0]).toContain(
-      'FROM public.ventas WHERE fecha_venta BETWEEN $5::date AND $3::date',
+      'FROM public.ventas WHERE empresa_id = $6 AND fecha_venta BETWEEN $5::date AND $3::date',
     );
+    expect(consultaTotales?.[1]).toEqual([
+      '2020-01-01',
+      '2020-01-02',
+      '2026-11-21',
+      expect.any(String),
+      '2026-11-01',
+      'empresa-1',
+    ]);
   });
 });

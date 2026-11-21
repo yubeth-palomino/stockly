@@ -333,6 +333,20 @@ export const esquemaUsuario = z.object({
   correo: z.string().trim().email({ error: 'Ingrese un correo válido.' }).toLowerCase(),
 });
 
+export const esquemaRegistroDueno = z.object({
+  nombre: texto(2, 120),
+  correo: z
+    .string({ error: 'Ingrese un correo válido.' })
+    .trim()
+    .email({ error: 'Ingrese un correo válido.' })
+    .max(254, { error: 'El correo es demasiado largo.' })
+    .toLowerCase(),
+  contrasena: z
+    .string({ error: 'La contraseña debe ser texto.' })
+    .min(8, { error: 'La contraseña debe tener al menos 8 caracteres.' })
+    .max(72, { error: 'La contraseña no puede superar 72 caracteres.' }),
+});
+
 export const esquemaCambiosUsuario = z
   .object({
     nombre: texto(2, 120).optional(),

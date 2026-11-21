@@ -6,6 +6,7 @@ type FilaAccesoStockly = {
   id: string;
   nombre: string;
   rol: string;
+  empresaId: string;
 };
 
 function respuesta(error: string, status: number) {
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
   let usuarios: FilaAccesoStockly[];
   try {
     usuarios = await consultar<FilaAccesoStockly>(
-      `SELECT id, nombre, rol
+      `SELECT id, nombre, rol, empresa_id AS "empresaId"
        FROM usuarios
        WHERE auth_ref = $1 AND activo = true
        LIMIT 1`,

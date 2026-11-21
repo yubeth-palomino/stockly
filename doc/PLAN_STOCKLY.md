@@ -396,7 +396,11 @@ REVOKE ALL ON usuarios, productos, ventas, eventos_inventario FROM anon, authent
 REVOKE ALL ON v_productos FROM anon, authenticated;
 ```
 
-Las tablas quedan sin políticas: la clave pública de Supabase no puede leerlas ni escribirlas. Todo el acceso ocurre en el servidor mediante la conexión directa a Postgres. Esto sostiene RN-04: el precio de compra solo se sirve cuando el servidor confirma que el usuario es dueño.
+En el esquema inicial, las tablas quedan sin políticas y el acceso ocurre en el servidor mediante la conexión directa a Postgres. La migración multiempresa añade políticas de lectura vinculadas a la empresa de la sesión, sin abrir escrituras directas a la clave pública. Esto sostiene RN-04: el precio de compra solo se sirve cuando el servidor confirma que el usuario es dueño.
+
+### 8.3 Registro público y aislamiento por negocio
+
+El registro público crea una identidad en Supabase Auth y, en una sola transacción Postgres, un negocio vacío, su sucursal principal, el perfil de dueño y las membresías correspondientes. Los datos legados se asignan al negocio inicial; cada consulta y escritura posterior se limita al `empresa_id` resuelto desde el perfil autenticado en el servidor, nunca desde un valor enviado por el navegador. Las restricciones compuestas protegen las relaciones y claves idempotentes entre negocios. La administración de sucursales múltiples no forma parte del alcance de esta versión.
 
 ### 8.4 Traducción de errores de la base de datos
 
@@ -826,7 +830,8 @@ Vercel ejecuta el servidor en UTC; Colombia está en UTC-5 sin horario de verano
 | Rotación de credenciales expuestas | Obligatoria y previa (sección 2) |
 | Acceso solo con sesión | Middleware o proxy existente y `exigirUsuario()` en cada ruta de `/api/panel` |
 | Separación por rol en el servidor | `exigirDueno()` en economía y usuarios; el precio de compra se serializa solo para el dueño (RN-04, sección 11.4) |
-| Base de datos cerrada al público | RLS activo sin políticas y permisos revocados a `anon` y `authenticated` |
+| Aislamiento por negocio | `empresa_id` deriva de la sesión del servidor; consultas, claves idempotentes, relaciones y políticas RLS se acotan al negocio |
+| Base de datos cerrada al público | RLS con lectura limitada por empresa y permisos directos de escritura revocados a `anon` y `authenticated` |
 | Contraseñas | Las gestiona el login; nunca se guardan en la tabla `usuarios` ni se devuelven en una respuesta |
 | Validación en tres puntos | Formulario (Zod y reglas puras), API (Zod y reglas puras) y base de datos (CHECK, UNIQUE, llaves foráneas) |
 | Integridad del inventario | La venta descuenta con el producto bloqueado (`FOR UPDATE`) dentro de una transacción; `cantidad >= 0` en la base impide cantidades negativas (RNF-03) |

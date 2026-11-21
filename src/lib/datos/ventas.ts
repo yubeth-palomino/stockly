@@ -22,6 +22,7 @@ type FilaProductoBloqueado = {
 export async function registrarVenta(
   datos: DatosVenta,
   usuarioId: string,
+  empresaId: string,
 ): Promise<ResultadoVenta> {
   validarVenta(datos);
 
@@ -30,9 +31,9 @@ export async function registrarVenta(
       `SELECT id, referencia, talla, cantidad,
               precio_venta AS "precioVenta"
        FROM productos
-       WHERE clave_referencia = $1 AND clave_talla = $2 AND activo = true
+       WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
        FOR UPDATE`,
-      [normalizarReferencia(datos.referencia), normalizarTalla(datos.talla)],
+      [empresaId, normalizarReferencia(datos.referencia), normalizarTalla(datos.talla)],
     );
     const producto = filasProducto.rows[0];
     if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
@@ -40,12 +41,13 @@ export async function registrarVenta(
     const cantidadResultante = cantidadTrasVenta(producto.cantidad, datos.cantidad);
     const ventas = await tx.query<FilaVenta>(
       `INSERT INTO ventas
-         (producto_id, usuario_id, referencia, talla, cantidad, precio_venta, fecha_venta)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (empresa_id, producto_id, usuario_id, referencia, talla, cantidad, precio_venta, fecha_venta)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, producto_id AS "productoId", usuario_id AS "usuarioId",
                  referencia, talla, cantidad, precio_venta AS "precioVenta",
                  fecha_venta AS "fechaVenta"`,
       [
+        empresaId,
         producto.id,
         usuarioId,
         producto.referencia,
@@ -58,12 +60,14 @@ export async function registrarVenta(
     const venta = ventas.rows[0];
     if (!venta) throw new Error('La base de datos no devolvió la venta recién registrada.');
 
-    await tx.query(`UPDATE productos SET cantidad = $1 WHERE id = $2`, [
+    await tx.query(`UPDATE productos SET cantidad = $1 WHERE id = $2 AND empresa_id = $3`, [
       cantidadResultante,
       producto.id,
+      empresaId,
     ]);
     await registrarEvento(tx, {
       tipo: 'VENTA_REGISTRADA',
+      empresaId,
       productoId: producto.id,
       usuarioId,
       detalle: {
@@ -98,6 +102,7 @@ export async function registrarVentaConPago(
   datos: DatosVentaComercial,
   usuarioId: string,
   rol: Rol,
+  empresaId: string,
 ): Promise<ResultadoVentaComercial> {
   validarVenta(datos);
   if (datos.tipoPago === 'CREDITO' && rol !== 'dueno') {
@@ -113,7 +118,7 @@ export async function registrarVentaConPago(
   const huella = huellaVenta(datos);
   return conTransaccion(async (tx) => {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
-      `venta:${datos.claveIdempotencia}`,
+      `venta:${empresaId}:${datos.claveIdempotencia}`,
     ]);
     const repetida = await tx.query<{
       id: number;
@@ -132,9 +137,10 @@ export async function registrarVentaConPago(
               v.fecha_venta AS "fechaVenta", v.huella_idempotencia AS huella,
               p.cantidad AS "cantidadActual"
        FROM public.ventas v
-       JOIN public.productos p ON p.id = v.producto_id
-       WHERE v.clave_idempotencia = $1`,
-      [datos.claveIdempotencia],
+       JOIN public.productos p
+         ON p.id = v.producto_id AND p.empresa_id = v.empresa_id
+       WHERE v.empresa_id = $1 AND v.clave_idempotencia = $2`,
+      [empresaId, datos.claveIdempotencia],
     );
     const ventaExistente = repetida.rows[0];
     if (ventaExistente) {
@@ -143,8 +149,9 @@ export async function registrarVentaConPago(
       }
       const total = Number(BigInt(ventaExistente.precioVenta) * BigInt(ventaExistente.cantidad));
       const totalPagado = await tx.query<{ total: string }>(
-        'SELECT COALESCE(sum(monto), 0)::text AS total FROM public.pagos_venta WHERE venta_id = $1',
-        [ventaExistente.id],
+        `SELECT COALESCE(sum(monto), 0)::text AS total
+         FROM public.pagos_venta WHERE empresa_id = $1 AND venta_id = $2`,
+        [empresaId, ventaExistente.id],
       );
       const pagado = Number(totalPagado.rows[0]?.total ?? 0);
       return {
@@ -172,9 +179,9 @@ export async function registrarVentaConPago(
       `SELECT id, referencia, talla, cantidad,
               precio_venta AS "precioVenta"
        FROM productos
-       WHERE clave_referencia = $1 AND clave_talla = $2 AND activo = true
+       WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
        FOR UPDATE`,
-      [normalizarReferencia(datos.referencia), normalizarTalla(datos.talla)],
+      [empresaId, normalizarReferencia(datos.referencia), normalizarTalla(datos.talla)],
     );
     const producto = filasProducto.rows[0];
     if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
@@ -197,8 +204,9 @@ export async function registrarVentaConPago(
     }
     if (datos.clienteId) {
       const cliente = await tx.query(
-        'SELECT id FROM public.clientes WHERE id = $1 AND activo = true FOR SHARE',
-        [datos.clienteId],
+        `SELECT id FROM public.clientes
+         WHERE id = $1 AND empresa_id = $2 AND activo = true FOR SHARE`,
+        [datos.clienteId, empresaId],
       );
       if (!cliente.rows[0]) throw new ErrorDeNegocio('CLIENTE_NO_ENCONTRADO');
     }
@@ -208,7 +216,9 @@ export async function registrarVentaConPago(
       const caja = await tx.query<{ id: string }>(
         `SELECT id FROM public.cajas
          WHERE estado = 'ABIERTA'
+           AND empresa_id = $1
          LIMIT 1 FOR UPDATE`,
+        [empresaId],
       );
       cajaId = caja.rows[0]?.id ?? null;
       if (!cajaId) throw new ErrorDeNegocio('CAJA_NO_ABIERTA');
@@ -217,13 +227,14 @@ export async function registrarVentaConPago(
     const cantidadResultante = cantidadTrasVenta(producto.cantidad, datos.cantidad);
     const insertadas = await tx.query<FilaVenta>(
       `INSERT INTO public.ventas
-         (producto_id, usuario_id, referencia, talla, cantidad, precio_venta,
+         (empresa_id, producto_id, usuario_id, referencia, talla, cantidad, precio_venta,
           fecha_venta, clave_idempotencia, huella_idempotencia, pago_registrado, cliente_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, $10)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11)
        RETURNING id, producto_id AS "productoId", usuario_id AS "usuarioId",
                  referencia, talla, cantidad, precio_venta AS "precioVenta",
                  fecha_venta AS "fechaVenta"`,
       [
+        empresaId,
         producto.id,
         usuarioId,
         producto.referencia,
@@ -241,36 +252,38 @@ export async function registrarVentaConPago(
 
     for (const pago of datos.pagos) {
       const pagoInsertado = await tx.query<{ id: number }>(
-        `INSERT INTO public.pagos_venta (venta_id, metodo, monto, creado_por)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO public.pagos_venta (empresa_id, venta_id, metodo, monto, creado_por)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [venta.id, pago.metodo, pago.monto, usuarioId],
+        [empresaId, venta.id, pago.metodo, pago.monto, usuarioId],
       );
       const pagoId = pagoInsertado.rows[0]?.id;
       if (!pagoId || !cajaId) throw new Error('No se pudo asociar el pago a la caja abierta.');
       await tx.query(
         `INSERT INTO public.caja_movimientos
-           (caja_id, tipo, metodo, monto, concepto, pago_venta_id, creado_por)
-         VALUES ($1, 'INGRESO', $2, $3, $4, $5, $6)`,
-        [cajaId, pago.metodo, pago.monto, `Venta #${venta.id}`, pagoId, usuarioId],
+           (empresa_id, caja_id, tipo, metodo, monto, concepto, pago_venta_id, creado_por)
+         VALUES ($1, $2, 'INGRESO', $3, $4, $5, $6, $7)`,
+        [empresaId, cajaId, pago.metodo, pago.monto, `Venta #${venta.id}`, pagoId, usuarioId],
       );
     }
 
     if (datos.tipoPago === 'CREDITO' && datos.clienteId) {
       await tx.query(
         `INSERT INTO public.cuentas_por_cobrar
-           (venta_id, cliente_id, fecha_vencimiento, creado_por)
-         VALUES ($1, $2, $3, $4)`,
-        [venta.id, datos.clienteId, datos.fechaVencimiento ?? null, usuarioId],
+           (empresa_id, venta_id, cliente_id, fecha_vencimiento, creado_por)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [empresaId, venta.id, datos.clienteId, datos.fechaVencimiento ?? null, usuarioId],
       );
     }
 
-    await tx.query('UPDATE productos SET cantidad = $1 WHERE id = $2', [
+    await tx.query('UPDATE productos SET cantidad = $1 WHERE id = $2 AND empresa_id = $3', [
       cantidadResultante,
       producto.id,
+      empresaId,
     ]);
     await registrarEvento(tx, {
       tipo: 'VENTA_REGISTRADA',
+      empresaId,
       productoId: producto.id,
       usuarioId,
       detalle: {
@@ -303,9 +316,10 @@ async function consultarVentas(
     hasta?: string;
   },
   limitar: boolean,
+  empresaId: string,
 ): Promise<FilaVenta[]> {
-  const condiciones: string[] = [];
-  const valores: Array<string | number> = [];
+  const condiciones: string[] = ['v.empresa_id = $1'];
+  const valores: Array<string | number> = [empresaId];
 
   if (filtros.referencia?.trim()) {
     valores.push(`%${normalizarReferencia(filtros.referencia)}%`);
@@ -326,7 +340,7 @@ async function consultarVentas(
             u.nombre AS "nombreUsuario", v.referencia, v.talla, v.cantidad,
             v.precio_venta AS "precioVenta", v.fecha_venta AS "fechaVenta"
      FROM ventas v
-     LEFT JOIN usuarios u ON u.id = v.usuario_id
+     LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.empresa_id = v.empresa_id
      ${condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : ''}
      ORDER BY v.fecha_venta DESC, v.id DESC
      ${limitar ? `LIMIT $${valores.length}` : ''}`,
@@ -338,14 +352,14 @@ export async function listarVentas(filtros: {
   referencia?: string;
   desde?: string;
   hasta?: string;
-}): Promise<FilaVenta[]> {
-  return consultarVentas(filtros, true);
+}, empresaId: string): Promise<FilaVenta[]> {
+  return consultarVentas(filtros, true, empresaId);
 }
 
 export async function exportarVentas(filtros: {
   referencia?: string;
   desde?: string;
   hasta?: string;
-}): Promise<FilaVenta[]> {
-  return consultarVentas(filtros, false);
+}, empresaId: string): Promise<FilaVenta[]> {
+  return consultarVentas(filtros, false, empresaId);
 }
