@@ -12,8 +12,20 @@ type DatosCorreo = {
 type ResultadoCorreo = { ok: true; id: string } | { ok: false; error: string };
 
 export async function obtenerClaveResend(): Promise<string> {
-  if (process.env.RESEND_API_KEY) return process.env.RESEND_API_KEY;
+  const claveConfigurada = process.env.RESEND_API_KEY?.trim();
+  if (claveConfigurada) return claveConfigurada;
   return getToken('stockly', { subject: { type: 'app' } });
+}
+
+function obtenerRemitente(): string {
+  const remitenteConfigurado = process.env.RESEND_FROM?.trim();
+  if (remitenteConfigurado) return remitenteConfigurado;
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Configura RESEND_FROM con un remitente de un dominio verificado en Resend.');
+  }
+
+  return 'onboarding@resend.dev';
 }
 
 export async function enviarCorreo({ para, asunto, html }: DatosCorreo): Promise<ResultadoCorreo> {
@@ -21,7 +33,7 @@ export async function enviarCorreo({ para, asunto, html }: DatosCorreo): Promise
     const clave = await obtenerClaveResend();
     const resend = new Resend(clave);
     const { data, error } = await resend.emails.send({
-      from: process.env.RESEND_FROM ?? 'onboarding@resend.dev',
+      from: obtenerRemitente(),
       to: para,
       subject: asunto,
       html,

@@ -282,3 +282,10 @@ DEMO-008    34     0         No
 - **Ejecutación local:** Next.js inició en `http://localhost:3000`; `/login` respondió 200 y `/api/health` respondió 200 con estado `ok`; `/panel` conservó la protección y redirigió a `/login`.
 - **Navegador:** la página de inicio de sesión se renderizó con su formulario, enlace de recuperación y control de visibilidad de contraseña.
 - **Estado:** el repositorio no requirió cambios funcionales en esta revisión; se añadió únicamente la evidencia de la comprobación a esta bitácora.
+
+### Corrección de recuperación y envío de correo · 2026-11-21
+
+- **Causa:** la API de recuperación ignoraba el resultado `{ ok: false }` de Resend y respondía con el mensaje neutral incluso cuando el correo no se había enviado. En producción, el remitente predeterminado `onboarding@resend.dev` tampoco está habilitado para destinatarios arbitrarios.
+- **Corrección:** producción ahora exige `RESEND_FROM` de un dominio verificado; el remitente de prueba queda solo para desarrollo. Los fallos del proveedor y de la solicitud se registran en el servidor sin incluir el correo del usuario; si el envío falla, se invalida el token recién creado. La respuesta pública sigue siendo neutral para no revelar si la cuenta existe.
+- **Configuración pendiente para envío real:** definir `RESEND_FROM` en Vercel con una dirección de dominio verificado en Resend. La clave puede venir del conector de Vercel o de `RESEND_API_KEY`; `APP_URL` es opcional si Vercel ya publica la URL de producción correcta.
+- **Verificación:** `npm test` pasó 53 archivos y 180 pruebas; `npm run build`, `npm run lint`, `npm run type-check` y `git diff --check` finalizaron correctamente. El primer type-check concurrente con el build encontró archivos `.next` mientras se regeneraban; la ejecución secuencial posterior pasó.

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   buscarUsuarioPorEmail: vi.fn(),
@@ -29,6 +29,10 @@ vi.mock('@/lib/plantillasCorreo', () => ({ plantillaRecuperacion: mocks.plantill
 import { POST } from './route';
 
 describe('POST /api/auth/recuperar', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.buscarUsuarioPorEmail.mockResolvedValue(null);
@@ -89,11 +93,36 @@ describe('POST /api/auth/recuperar', () => {
   });
 
   it('conserva la respuesta neutral si el proveedor de correo falla', async () => {
-    mocks.buscarUsuarioPorEmail.mockRejectedValue(new Error('fallo interno'));
+    mocks.buscarUsuarioPorEmail.mockResolvedValue({ id: 'user-1', email: 'ana@example.com' });
+    mocks.enviarCorreo.mockResolvedValue({
+      ok: false,
+      error: 'El remitente no puede enviar a ana@example.com',
+    });
+    const registrarError = vi.spyOn(console, 'error').mockImplementation(() => {});
     const response = await POST(request({ email: 'ana@example.com' }));
 
     expect(response.status).toBe(200);
     expect((await response.json()).message).toContain('Si el correo está registrado');
+    expect(registrarError).toHaveBeenCalledWith(
+      '[auth/recuperar] No se pudo completar la solicitud.',
+      'El remitente no puede enviar a [correo]',
+    );
+    expect(mocks.invalidarTokensPendientes).toHaveBeenCalledTimes(2);
+  });
+
+  it('registra errores internos sin revelar la cuenta ni confirmar el envío', async () => {
+    mocks.buscarUsuarioPorEmail.mockRejectedValue(new Error('fallo interno'));
+    const registrarError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await POST(request({ email: 'ana@example.com' }));
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).message).toBe(
+      'Si el correo está registrado, recibirás un enlace para restablecer la contraseña.',
+    );
+    expect(registrarError).toHaveBeenCalledWith(
+      '[auth/recuperar] No se pudo completar la solicitud.',
+      'fallo interno',
+    );
   });
 
   it('rechaza correos inválidos antes de consultar usuarios', async () => {

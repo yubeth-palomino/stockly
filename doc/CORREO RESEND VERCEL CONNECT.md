@@ -68,7 +68,7 @@ Tareas (los comandos los ejecutas tú en la terminal)
 6. Ejecuta `node scripts/tokenVercel.mjs` y confirma que `.env.local` conserva las variables de Supabase y ahora tiene `VERCEL_OIDC_TOKEN`.
 7. Crea `lib/correo.ts` con:
    - `obtenerClaveResend()`: devuelve `process.env.RESEND_API_KEY` si existe; si no, el resultado de `getToken` con el identificador y las opciones del código del conector.
-   - `enviarCorreo({ para, asunto, html })`: crea el cliente con `new Resend(clave)` y envía desde `process.env.RESEND_FROM` o, si no existe, desde `onboarding@resend.dev`. Devuelve `{ ok: true, id }` o `{ ok: false, error }` con un mensaje legible, sin lanzar excepciones.
+   - `enviarCorreo({ para, asunto, html })`: crea el cliente con `new Resend(clave)` y envía desde `RESEND_FROM`. En desarrollo puede usar `onboarding@resend.dev` si no se configuró el remitente; en producción exige un remitente de un dominio verificado en Resend. Devuelve `{ ok: true, id }` o `{ ok: false, error }` con un mensaje legible, sin lanzar excepciones.
 8. Crea `app/api/correo/prueba/route.ts` con POST que:
    - responda 404 si `process.env.NODE_ENV === 'production'`;
    - valide con Zod `para` (email);
@@ -99,7 +99,7 @@ Al terminar
 2. Escribir un correo y pulsar **Enviar prueba**.
 3. La página debe mostrar "Correo enviado" y el mensaje debe llegar a la bandeja.
 
-Mientras el remitente sea el de prueba de Resend (`onboarding@resend.dev`), el correo solo llega a la dirección dueña de la cuenta de Resend con la que se creó el conector. La prueba se hace con esa dirección.
+Mientras el remitente sea el de prueba de Resend (`onboarding@resend.dev`), el correo solo llega a la dirección dueña de la cuenta de Resend con la que se creó el conector. En producción, configura `RESEND_FROM` en Vercel con un remitente de un dominio verificado en Resend; no uses el remitente de pruebas para enviar a cuentas de otras personas.
 
 No se avanza al prompt 2 hasta que este paso funcione.
 

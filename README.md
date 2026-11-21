@@ -36,7 +36,7 @@ El UUID no es una contraseña ni sustituye la autenticación. Nunca guardes cont
   - Supabase Auth: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Se conservan alias de compatibilidad `NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_URL`, `NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_PUBLISHABLE_KEY`, `STOCKLY_SUPABASE_URL`, `STOCKLY_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_ANON_KEY` y `STOCKLY_SUPABASE_ANON_KEY`.
   - PostgreSQL: `STOCKLY_POSTGRES_URL` (aplicación) y `STOCKLY_POSTGRES_URL_NON_POOLING` (comandos locales cuando está disponible).
   - Administración segura de Auth: `STOCKLY_SUPABASE_SERVICE_ROLE_KEY`.
-  - Correo y enlaces de Auth, si se usan: `RESEND_API_KEY`, `RESEND_FROM` y `APP_URL`.
+  - Correo: Resend se autentica con `RESEND_API_KEY` o el conector de Vercel. En producción, `RESEND_FROM` debe ser una dirección de un dominio verificado en Resend; `onboarding@resend.dev` solo sirve para pruebas permitidas. `APP_URL` puede fijar el dominio público para los enlaces de recuperación.
 
 Configura los valores directamente en `.env.local` y en la plataforma de despliegue. No pegues ni compartas esos valores en documentación, chats o capturas. `.env.local` está excluido de Git.
 
