@@ -103,6 +103,11 @@
   border: 0;
 }
 
+@page {
+  size: A4 portrait;
+  margin: 5mm;
+}
+
 @page a4 {
   size: A4 portrait;
   margin: 5mm;
@@ -124,8 +129,37 @@
 }
 
 @media print {
-  :global(body) {
-    background: #fff;
+  :global(body:has([data-etiquetas])) {
+    margin: 0;
+    background: #FFFFFF;
+  }
+
+  :global(body:has([data-etiquetas])) [data-panel-aplicacion] {
+    display: block !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+  }
+
+  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > aside,
+  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > main > header {
+    display: none !important;
+  }
+
+  :global(body:has([data-etiquetas])) [data-panel-aplicacion] > main {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #FFFFFF !important;
   }
 
   .ocultoImpresion {
@@ -145,9 +179,24 @@
     gap: 0;
   }
 
+  .etiquetaIndividual .etiqueta:not(:last-child) {
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .etiquetas {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
   .etiqueta {
+    width: 50mm;
+    height: 30mm;
+    padding: 2mm;
     break-inside: avoid;
     border: 0;
+    page-break-inside: avoid;
   }
 }
 

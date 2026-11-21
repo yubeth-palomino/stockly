@@ -86,6 +86,7 @@ export function SelectorEtiquetas({
         <section
           aria-label="Vista previa de etiquetas"
           className={`${styles.etiquetas} ${formato === 'a4' ? styles.laminaA4 : styles.etiquetaIndividual}`}
+          data-etiquetas="impresion"
         >
           {etiquetas.map(({ producto, clave }) => (
             <article className={styles.etiqueta} key={clave}>

@@ -318,3 +318,9 @@ DEMO-008    34     0         No
 - **Escaneo:** la vista de video se comprobaba antes de montarse, por lo que la cámara nunca podía iniciar. Se mantiene el video montado, se usa ZXing cuando el navegador no ofrece `BarcodeDetector`, se liberan los controles al detener/desmontar y Enter del lector físico ya no envía el formulario antes de consultar el código.
 - **Inicio de sesión local:** `next start` ejecuta con `NODE_ENV=production`; fuera de Vercel ahora selecciona `STOCKLY_POSTGRES_URL_NON_POOLING` si está configurada. En Vercel se conserva `STOCKLY_POSTGRES_URL` (pool de transacciones).
 - **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (56 archivos/193 pruebas), `npm run db:verificar` (0 fallas), consulta PostgreSQL en modo producción local y `git diff --check` correctos. El escáner se probó con lector simulado; no se realizó una prueba física de cámara ni un inicio de sesión con credenciales reales.
+
+### Corrección de impresión de etiquetas · 2026-11-21
+
+- **Impresión:** el formato impreso ahora oculta la navegación y el encabezado del panel, elimina márgenes del contenedor y conserva solo las etiquetas seleccionadas. La hoja A4 usa tres columnas y las etiquetas individuales se separan por página de 50 × 30 mm.
+- **Alcance:** solo impresión; se mantienen la selección de productos, cantidades, códigos de barras y precios.
+- **Verificación:** `npm run build`, `npm run type-check`, `npm run lint`, `npm test` (56 archivos/193 pruebas) y `git diff --check` correctos. No se probó con una impresora física.

@@ -14,7 +14,7 @@ export default async function PanelLayout({ children }: Readonly<{ children: Rea
   if (usuario) {
     const productosPorReponer = await contarProductosPorReponer();
     return (
-      <div className={styles.aplicacion}>
+      <div className={styles.aplicacion} data-panel-aplicacion>
         <NavegacionPanel
           rol={usuario.rol}
           nombre={usuario.nombre}
