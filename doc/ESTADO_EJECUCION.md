@@ -236,6 +236,14 @@ DEMO-008    34     0         No
 - **Observación en producción:** el inventario y los indicadores se leen de PostgreSQL, pero los nombres `DEMO-*` observados en el inventario sugieren datos de demostración en la base conectada. No se borraron ni modificaron; hace falta confirmar si son datos reales o semilla antes de cualquier limpieza.
 - **Pruebas del navegador:** se verificó render y navegación autenticada de dueño en páginas de lectura; a 390 px Economía cambió a tarjetas y el documento no tuvo desbordamiento horizontal (375 px de contenido frente a viewport de 390 px). El menú móvil abrió y cerró con teclado (Enter) y expuso sus enlaces; el clic automatizado por puntero agotó el tiempo esperando estabilidad antes de activarse, así que ese método queda sin validar. El navegador conservaba eventos previos de respuestas 401 y peticiones RSC abortadas durante navegación rápida; no se reprodujo error visible en las páginas cargadas. No se ejecutaron mutaciones productivas.
 - **Pruebas locales de esta auditoría:** tras restringir el cálculo comercial sin empresa activa, `npm test` pasó 33 archivos y 130/130 pruebas; `npm run build`, `npm run type-check` y `npm run lint` correctos. GitHub Actions del commit `b9b9366` completó CI con éxito.
+
+### Acceso de cuentas nuevas · 2026-11-21
+
+- **Implementación:** el dueño crea la identidad en Supabase Auth y el perfil Stockly vinculado por `auth_ref` al enviar una invitación por correo. El callback admite enlaces de invitación y recuperación; la persona establece su contraseña antes de iniciar sesión con su correo.
+- **Correo y errores:** se usa la plantilla de invitación existente de Resend. Si falla el envío, se intenta eliminar el perfil y la identidad recién creados y se informa el error. La producción requiere `RESEND_FROM` de un dominio verificado y la URL de callback permitida en Supabase.
+- **Compatibilidad de pruebas:** `scripts/probar-flujo.ts` conserva su prueba de perfil vinculado mediante `crearUsuarioVinculado`, evitando generar invitaciones o enviar correos durante ese flujo.
+- **Verificación:** `npm run build`, `npm run type-check`, `npm run lint` y `git diff --check` correctos; `npm test` pasó 55 archivos y 188/188 pruebas.
+- **Pendiente manual:** no se envió una invitación real ni se verificó el inicio de sesión de una cuenta nueva en producción; requiere confirmar las variables y URLs de Supabase/Resend y probar el flujo extremo a extremo.
 - **Límite de aceptación:** sin PostgreSQL aislado, restauración de respaldo, credenciales de trabajador ni logs del servidor, no se puede certificar compras/ventas/devoluciones, aislamiento multiempresa o errores backend de extremo a extremo. No declarar listo para producción.
 
 ### Auditoría restringida a entorno aislado · avance 2026-11-07

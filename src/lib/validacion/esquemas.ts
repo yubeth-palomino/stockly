@@ -326,9 +326,7 @@ export const esquemaUsuario = z.object({
   nombre: texto(2, 120),
   usuario: texto(3, 60),
   rol: z.enum(ROLES, { error: 'Seleccione un rol válido.' }),
-  authRef: z
-    .string({ error: 'El UUID de Supabase Auth debe ser texto.' })
-    .uuid({ error: 'Ingrese un UUID válido de Supabase Auth.' }),
+  correo: z.string().trim().email({ error: 'Ingrese un correo válido.' }).toLowerCase(),
 });
 
 export const esquemaCambiosUsuario = z

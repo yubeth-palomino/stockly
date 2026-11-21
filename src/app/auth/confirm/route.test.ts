@@ -8,12 +8,15 @@ import { GET } from './route';
 
 describe('GET /auth/confirm', () => {
   const exchangeCodeForSession = vi.fn();
+  const verifyOtp = vi.fn();
 
   beforeEach(() => {
     exchangeCodeForSession.mockReset();
     exchangeCodeForSession.mockResolvedValue({ error: null });
+    verifyOtp.mockReset();
+    verifyOtp.mockResolvedValue({ error: null });
     createClientMock.mockReset();
-    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession } });
+    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession, verifyOtp } });
   });
 
   it('intercambia el código PKCE y vuelve al formulario de contraseña', async () => {
@@ -22,6 +25,26 @@ describe('GET /auth/confirm', () => {
     expect(response.status).toBe(307);
     expect(response.headers.get('location')).toBe('http://localhost:3000/reset-password');
     expect(exchangeCodeForSession).toHaveBeenCalledWith('valid-code');
+  });
+
+  it('verifica el token hash de una invitación y habilita el formulario de contraseña', async () => {
+    const response = await GET(
+      new Request('http://localhost:3000/auth/confirm?token_hash=invite-token&type=invite'),
+    );
+
+    expect(response.headers.get('location')).toBe('http://localhost:3000/reset-password');
+    expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'invite-token', type: 'invite' });
+  });
+
+  it('rechaza tipos de token no permitidos', async () => {
+    const response = await GET(
+      new Request('http://localhost:3000/auth/confirm?token_hash=token&type=signup'),
+    );
+
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:3000/reset-password?error=link',
+    );
+    expect(createClientMock).not.toHaveBeenCalled();
   });
 
   it('vuelve al login ante un error de código', async () => {

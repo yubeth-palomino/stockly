@@ -19,14 +19,9 @@ Stockly es una aplicación web para gestionar el inventario y las ventas de una 
 - Los productos agotados no se eliminan; el dueño puede desactivarlos.
 - El precio de compra y los cálculos económicos solo se muestran a dueños.
 
-La autenticación existente usa Supabase Auth; Stockly no almacena contraseñas. El formulario de inicio de sesión permite entrar y recuperar la contraseña, pero no registra cuentas nuevas. Para habilitar una cuenta de trabajador:
+La autenticación usa Supabase Auth; Stockly no almacena contraseñas. El formulario de inicio de sesión permite entrar y recuperar la contraseña, pero no tiene registro público. Para dar acceso a otra persona, el dueño abre **Panel → Usuarios**, indica nombre, identificador interno, rol y correo, y envía la invitación. Supabase Auth y el perfil Stockly quedan vinculados en el mismo flujo; la persona recibe un enlace para activar su cuenta y establecer su contraseña. Para iniciar sesión debe usar el **correo de la invitación**, no el identificador interno de Stockly.
 
-1. En Supabase, crea o invita a la persona desde **Authentication → Users** y completa el proceso de contraseña en Supabase Auth.
-2. Copia el UUID de esa cuenta.
-3. Como dueño de Stockly, abre **Usuarios** y registra el nombre, el identificador Stockly, el rol y el UUID. La cuenta debe existir en Supabase Auth antes de vincularla.
-4. La persona inicia sesión en Stockly con el correo y la contraseña de Supabase Auth.
-
-El UUID no es una contraseña ni sustituye la autenticación. Nunca guardes contraseñas en la tabla `usuarios`.
+El envío requiere el conector de Resend o `RESEND_API_KEY`; en producción también debe estar configurado `RESEND_FROM` con un remitente de un dominio verificado.
 
 ## Requisitos
 

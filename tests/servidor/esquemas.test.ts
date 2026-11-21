@@ -45,18 +45,16 @@ describe('esquemas de servidor', () => {
     expect(esquemaFiltrosInventario.parse({ soloDisponibles: 'true' }).soloDisponibles).toBe(true);
   });
 
-  it('valida el identificador de vínculo con Supabase Auth', () => {
+  it('normaliza el correo de invitación para crear una cuenta', () => {
     const datos = {
-      nombre: 'Dueña de Stockly',
-      usuario: 'duena_stockly',
-      rol: 'dueno',
-      authRef: '63f16e10-83fc-4baa-8e59-9ef6e970dff0',
+      nombre: 'Trabajadora Stockly',
+      usuario: 'trabajadora_stockly',
+      rol: 'trabajador',
+      correo: ' ANA@EXAMPLE.COM ',
     };
 
-    expect(esquemaUsuario.safeParse(datos).success).toBe(true);
-    expect(esquemaUsuario.safeParse({ ...datos, authRef: 'correo@example.com' }).success).toBe(
-      false,
-    );
+    expect(esquemaUsuario.parse(datos).correo).toBe('ana@example.com');
+    expect(esquemaUsuario.safeParse({ ...datos, correo: 'correo-invalido' }).success).toBe(false);
   });
 
   it('rechaza rangos de ventas invertidos', () => {

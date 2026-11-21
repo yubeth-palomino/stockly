@@ -137,6 +137,7 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 - Después de autenticar: `src/components/auth/LoginForm.tsx` reemplaza la ruta por `/panel`.
 - Protección/proxy: `src/proxy.ts` protege `/panel/:path*` y `/api/panel/:path*`; las API verifican también el perfil activo Stockly.
 - Perfil y rol Stockly: `src/lib/auth/sesion.ts` vincula el UUID de Supabase Auth con `usuarios.auth_ref` y devuelve el rol Stockly activo.
+- Alta de cuentas Stockly: el dueño invita desde `/panel/usuarios`; Supabase Auth genera el enlace y Resend envía la invitación. El perfil se enlaza automáticamente por `auth_ref`; la persona establece su contraseña desde el enlace y luego inicia sesión con su correo.
 - Cierre de sesión: POST `/api/auth/logout`, que llama `supabase.auth.signOut({ scope: 'local' })`; el botón navega a `/login`.
 - Tabla de perfil existente en la migración local: `public.users`, columnas `id` (UUID, referencia a `auth.users.id`), `email`, `full_name`, `role` (`admin` o `user`), `created_at` y `updated_at`. No es la tabla `usuarios` requerida por el módulo Stockly.
 - P01 verificó en la base remota `public.users` con las columnas anteriores y sus objetos del login (índice, función de perfil y trigger de Auth). También confirmó que antes de P01 no existían `usuarios`, `productos`, `ventas`, `eventos_inventario`, `v_productos` ni `_migrations`. La migración del perfil se registró sin reejecutarla y M1/M2 se aplicaron.

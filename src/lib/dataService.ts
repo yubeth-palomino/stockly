@@ -94,6 +94,7 @@ export { contarProductosPorReponer, obtenerResumen } from '@/lib/datos/resumen';
 export {
   actualizarUsuario,
   crearUsuario,
+  crearUsuarioVinculado,
   listarUsuarios,
   obtenerUsuarioActual,
 } from '@/lib/datos/usuarios';

@@ -30,6 +30,10 @@ export type DatosUsuario = {
   nombre: string;
   usuario: string;
   rol: Rol;
+  correo: string;
+};
+
+export type DatosUsuarioVinculado = Omit<DatosUsuario, 'correo'> & {
   authRef: string;
 };
 

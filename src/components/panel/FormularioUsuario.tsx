@@ -18,7 +18,7 @@ export function FormularioUsuario() {
   const [nombre, setNombre] = useState('');
   const [usuario, setUsuario] = useState('');
   const [rol, setRol] = useState<'trabajador' | 'dueno'>('trabajador');
-  const [authRef, setAuthRef] = useState('');
+  const [correo, setCorreo] = useState('');
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -27,7 +27,7 @@ export function FormularioUsuario() {
     evento.preventDefault();
     setError('');
     setExito('');
-    const parsed = esquemaUsuario.safeParse({ nombre, usuario, rol, authRef });
+    const parsed = esquemaUsuario.safeParse({ nombre, usuario, rol, correo });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? 'Revise los datos ingresados.');
       return;
@@ -44,8 +44,8 @@ export function FormularioUsuario() {
       setNombre('');
       setUsuario('');
       setRol('trabajador');
-      setAuthRef('');
-      setExito('Usuario vinculado a Stockly. Ya puede iniciar sesión con su cuenta de Supabase Auth.');
+      setCorreo('');
+      setExito('Invitación enviada. La persona podrá activar su cuenta y crear una contraseña.');
       router.refresh();
     } catch (errorCapturado) {
       setError(
@@ -60,13 +60,27 @@ export function FormularioUsuario() {
     <section className={styles.formularioUsuario}>
       <h2>Dar de alta una cuenta</h2>
       <p className={styles.textoSuave}>
-        Primero crea la cuenta en Supabase Auth y luego vincúlala aquí con su UUID de usuario.
+        Envía una invitación segura para que la persona active su cuenta y establezca su contraseña.
       </p>
       {error && <Aviso tipo="error">{error}</Aviso>}
       {exito && <Aviso tipo="exito">{exito}</Aviso>}
       <form className={styles.formularioPanel} onSubmit={crear} noValidate>
         <Campo etiqueta="Nombre" value={nombre} onChange={(evento) => setNombre(evento.target.value)} required />
-        <Campo etiqueta="Usuario" value={usuario} onChange={(evento) => setUsuario(evento.target.value)} required />
+        <Campo
+          etiqueta="Usuario"
+          value={usuario}
+          onChange={(evento) => setUsuario(evento.target.value)}
+          ayuda="Identificador interno de Stockly. Para iniciar sesión se usa el correo de invitación."
+          required
+        />
+        <Campo
+          etiqueta="Correo de inicio de sesión"
+          type="email"
+          value={correo}
+          onChange={(evento) => setCorreo(evento.target.value)}
+          autoComplete="email"
+          required
+        />
         <Selector
           etiqueta="Rol"
           value={rol}
@@ -79,15 +93,7 @@ export function FormularioUsuario() {
           <option value="trabajador">Trabajador</option>
           <option value="dueno">Dueño</option>
         </Selector>
-        <Campo
-          etiqueta="UUID de Supabase Auth"
-          value={authRef}
-          onChange={(evento) => setAuthRef(evento.target.value)}
-          ayuda="Identificador de la cuenta Auth; no es la contraseña ni el correo."
-          autoComplete="off"
-          required
-        />
-        <Boton type="submit" cargando={cargando}>Crear usuario Stockly</Boton>
+        <Boton type="submit" cargando={cargando}>Enviar invitación</Boton>
       </form>
     </section>
   );

@@ -44,7 +44,7 @@ export const MENSAJES: Record<CodigoError, string> = {
   IDEMPOTENCIA_CONFLICTO: 'La clave de operación ya fue usada con datos diferentes.',
   REFERENCIA_CATALOGO_INCONSISTENTE: 'La referencia ya existe con datos de catálogo diferentes.',
   PAGO_VENTA_NO_COINCIDE: 'La suma de los pagos debe coincidir con el total de la venta.',
-  USUARIO_DUPLICADO: 'Ya existe un usuario con ese nombre de usuario.',
+  USUARIO_DUPLICADO: 'Ya existe una cuenta con ese correo o nombre de usuario.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe.',
   ULTIMO_DUENO: 'No puede quitar el rol de dueño ni desactivar la única cuenta de dueño.',
   PRECIO_VENTA_NO_SUPERA_COMPRA: 'El precio de venta debe ser mayor que el precio de compra.',

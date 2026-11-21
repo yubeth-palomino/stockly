@@ -4,7 +4,7 @@ import {
   actualizarProducto,
   actualizarUsuario,
   cerrarPool,
-  crearUsuario,
+  crearUsuarioVinculado,
   desactivarProducto,
   listarInventario,
   listarVentas,
@@ -79,14 +79,14 @@ async function ejecutar(): Promise<void> {
   if (!dueno) throw new Error('Se requiere al menos un usuario dueño activo para probar el flujo.');
 
   const nombreUsuarioPrueba = `prueba_flujo_${randomUUID().replaceAll('-', '').slice(0, 12)}`;
-  const usuarioPrueba = await crearUsuario({
+  const usuarioPrueba = await crearUsuarioVinculado({
     nombre: 'Usuario prueba de flujo',
     usuario: nombreUsuarioPrueba,
     rol: 'trabajador',
     authRef: randomUUID(),
   });
   await debeFallarCon('USUARIO_DUPLICADO', () =>
-    crearUsuario({
+    crearUsuarioVinculado({
       nombre: 'Usuario duplicado de flujo',
       usuario: nombreUsuarioPrueba,
       rol: 'trabajador',
