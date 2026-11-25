@@ -19,7 +19,7 @@ Stockly es una aplicación web para gestionar el inventario y las ventas de una 
 - Los productos agotados no se eliminan; el dueño puede desactivarlos.
 - El precio de compra y los cálculos económicos solo se muestran a dueños.
 
-La autenticación usa Supabase Auth; Stockly no almacena contraseñas. El formulario de inicio de sesión permite entrar y recuperar la contraseña, pero no tiene registro público. Para dar acceso a otra persona, el dueño abre **Panel → Usuarios**, indica nombre, identificador interno, rol y correo, y envía la invitación. Supabase Auth y el perfil Stockly quedan vinculados en el mismo flujo; la persona recibe un enlace para activar su cuenta y establecer su contraseña. Para iniciar sesión debe usar el **correo de la invitación**, no el identificador interno de Stockly.
+La autenticación usa Supabase Auth; Stockly no almacena contraseñas. Una persona puede crear un negocio y su primera cuenta de dueño en `/register`; si Supabase requiere confirmación, debe confirmar el correo antes de iniciar sesión. Para dar acceso a otra persona, el dueño abre **Panel → Usuarios**, indica nombre, identificador interno, rol y correo, y envía la invitación. Supabase Auth y el perfil Stockly quedan vinculados en el mismo flujo; la persona recibe un enlace para activar su cuenta y establecer su contraseña. Para iniciar sesión debe usar el **correo de la invitación**, no el identificador interno de Stockly.
 
 El envío requiere el conector de Resend o `RESEND_API_KEY`; en producción también debe estar configurado `RESEND_FROM` con un remitente de un dominio verificado.
 
@@ -51,7 +51,7 @@ Configura los valores directamente en `.env.local` y en la plataforma de desplie
    npm run db:verificar
    ```
 
-4. Crea primero la cuenta del dueño en Supabase Auth. Copia su UUID desde **Authentication → Users** y vincúlala:
+4. Para una base existente del esquema legado, crea primero la cuenta del dueño en Supabase Auth. Copia su UUID desde **Authentication → Users** y vincúlala:
 
    ```bash
    npm run db:vincular-dueno -- "<UUID de Supabase Auth>" "<Nombre del dueño>"
@@ -64,9 +64,9 @@ Configura los valores directamente en `.env.local` y en la plataforma de desplie
    npm run dev
    ```
 
-Abre `http://localhost:3000/login`. El login no incluye registro público de cuentas; el dueño vincula cuentas existentes desde **Usuarios**.
+Abre `http://localhost:3000/register` para crear un negocio nuevo y su primera cuenta de dueño, o `http://localhost:3000/login` para una cuenta existente. El dueño puede invitar trabajadores y otros dueños desde **Panel → Usuarios**. El registro público requiere la migración multiempresa descrita abajo; mientras no esté validada en una base aislada, no lo habilites en producción. Para una base existente que requiera vincular manualmente la cuenta inicial, usa `npm run db:vincular-dueno` como se indica arriba.
 
-Las migraciones comerciales `20261114000100`–`20261114000400` amplían el esquema legado y deben aplicarse únicamente a la base de desarrollo/pruebas que se haya respaldado y confirmado. No aplicarlas a producción sin un plan de respaldo y despliegue revisado.
+La migración `20261115000100_multiempresa_registro.sql` es un requisito de `/register` y aún debe validarse en una base aislada antes de desplegar esa ruta. Las migraciones comerciales `20261114000100`–`20261114000400` amplían el esquema legado y deben aplicarse únicamente a la base de desarrollo/pruebas que se haya respaldado y confirmado. No las apliques a producción sin un plan de respaldo y despliegue revisado.
 
 ## Comandos
 

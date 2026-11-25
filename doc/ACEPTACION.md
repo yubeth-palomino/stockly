@@ -2,6 +2,8 @@
 
 Ejecutar los casos en el despliegue de Vercel con una cuenta de trabajador y una de dueño. Registrar el resultado real y adjuntar evidencia; no marcar como aprobados casos que no se hayan ejecutado.
 
+Los casos A-01 a A-19 corresponden al cierre de P10. A-20 a A-23 se añadieron con el módulo económico de P11.
+
 | ID | Acción | Resultado esperado | Resultado obtenido | Evidencia | Observación |
 |---|---|---|---|---|---|
 | A-01 | Entrar como trabajador | Llega a `/panel`; no ve Usuarios ni Economía | Pendiente: no se pudo acceder a la cuenta de trabajador. | | Recuperar o invitar la cuenta; no compartir credenciales. |

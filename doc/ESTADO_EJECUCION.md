@@ -182,7 +182,7 @@ DEMO-008    34     0         No
 - **P07 inventario:** filtros sincronizados con URL, listado adaptable, detalle e historial; edición y desactivación restringidas al dueño. La serialización por rol omite los campos económicos para trabajadores.
 - **P08 entrada:** formulario validado, fecha Bogotá, normalización, re-stock y actualización de costo exclusiva del dueño. Los esquemas de trabajadores descartan `precioCompra` incluso cuando llega inválido.
 - **P09 ventas:** búsqueda, confirmación, verificación transaccional de stock e historial filtrable con el precio de venta histórico.
-- **P10 usuarios:** administración de cuentas Stockly para dueños, incluyendo cambio de rol/estado y protección del último dueño. El alta de identidad se realiza primero en Supabase Auth; el login no se reescribió ni se añadió registro público.
+- **P10 usuarios:** administración de cuentas Stockly para dueños, incluyendo invitaciones, cambio de rol/estado y protección del último dueño. En esa fase no se añadió registro público; el flujo público de creación de negocio y primera cuenta de dueño se incorporó posteriormente (ver actualización del 2026-11-21).
 - **P11 economía:** módulo activado, captura de costo solo para dueño, validación de margen, resumen y desglose económico, incluyendo productos sin costo y ventas de productos agotados.
 - **API y validación por rol:** las rutas POST/PATCH ahora usan esquemas distintos para dueño y trabajador; no aplican `.omit()` sobre un objeto Zod refinado. Las pruebas cubren la omisión de costos inválidos enviados por trabajadores.
 - **Verificación local:** `npm run type-check`, `npm test` (26 archivos, 95/95), `npm run lint` y `npm run build` correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; eliminó solo sus datos temporales `PRUEBA` (3 ventas, 10 eventos, 3 productos y 1 usuario).
@@ -350,3 +350,12 @@ DEMO-008    34     0         No
 - **Aislamiento:** los datos previos se asignan al negocio inicial; el negocio autenticado se obtiene del servidor y se propaga a consultas, escrituras, economía, movimientos y operaciones comerciales. Se añadieron relaciones/índices por empresa, políticas de lectura y claves de idempotencia compuestas, incluida la clave histórica `idempotency_key`.
 - **Pruebas y documentación:** se agregaron pruebas del registro y de la reversión de Auth ante fallos transaccionales. `npm test` pasó 62 archivos/212 pruebas; `npm run type-check`, `npm run lint`, `npm run build` y `git diff --check` finalizaron correctamente.
 - **Pendiente crítico:** la migración `supabase/migrations/20261115000100_multiempresa_registro.sql` no se aplicó ni se probó contra una base aislada. No desplegar ni declarar listo para producción antes de respaldar y validar la migración; la app requiere esas columnas/tablas. Tampoco se verificó un correo real ni un inicio de sesión de registro en Supabase.
+
+### P10 · revalidación de cierre · 2026-11-25
+
+- **Documentación:** se actualizó el README para reflejar el registro público de negocio/dueño añadido después de P10, y se aclaró que A-20 a A-23 se incorporaron con P11. Los checkpoints de fases 5 y 6 ya existían.
+- **Ejecución del flujo:** se declaró `server-only` como dependencia directa y el script `probar:flujo` activa la condición `react-server`. Build, lint, tipos y pruebas siguieron correctos tras el cambio.
+- **Verificación técnica:** `npm run build`, `npm run lint`, `npm run type-check` y `npm test` correctos; Vitest pasó 62 archivos y 212 pruebas. La advertencia de configuración `configLoader: 'native'` no afecta los resultados.
+- **Privacidad:** `.env.local` está excluido de Git; la búsqueda de variables con valores en archivos rastreados no encontró coincidencias.
+- **Prueba de integración bloqueada:** `npm run probar:flujo` se detuvo antes de conectarse porque Node no recibió `STOCKLY_POSTGRES_URL` ni `STOCKLY_POSTGRES_URL_NON_POOLING`. La limpieza no pudo ejecutarse; no se tocó ninguna base ni los datos DEMO.
+- **Aceptación manual pendiente:** A-01, A-07, A-13, A-14, A-17 y A-19 requieren sesiones autenticadas y/o un entorno de prueba en Vercel. No se declaran aprobados ni se marca la aceptación de P10 como completa.

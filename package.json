@@ -17,7 +17,7 @@
     "db:vincular-dueno": "node --env-file=.env.local scripts/vincular-dueno.mjs",
     "db:limpiar": "node --env-file=.env.local scripts/limpiar-prueba.mjs",
     "db:demo": "node --env-file=.env.local --import tsx scripts/cargar-demo.ts",
-    "probar:flujo": "node --env-file=.env.local --import tsx scripts/probar-flujo.ts",
+    "probar:flujo": "node --conditions=react-server --env-file=.env.local --import tsx scripts/probar-flujo.ts",
     "probar:comercial": "node --env-file=.env.local --import tsx scripts/probar-comercial.ts"
   },
   "bugs": {
@@ -35,6 +35,7 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "resend": "^6.34.1",
+    "server-only": "^0.0.1",
     "zod": "^4.6.2"
   },
   "devDependencies": {
