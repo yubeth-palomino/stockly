@@ -1,6 +1,9 @@
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+
+const directorioProyecto = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
@@ -12,8 +15,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@data': path.resolve(__dirname, './data'),
+      '@': path.resolve(directorioProyecto, 'src'),
+      '@data': path.resolve(directorioProyecto, 'data'),
     },
   },
 });
