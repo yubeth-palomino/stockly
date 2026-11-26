@@ -64,9 +64,9 @@ Configura los valores directamente en `.env.local` y en la plataforma de desplie
    npm run dev
    ```
 
-Abre `http://localhost:3000/register` para crear un negocio nuevo y su primera cuenta de dueño, o `http://localhost:3000/login` para una cuenta existente. El dueño puede invitar trabajadores y otros dueños desde **Panel → Usuarios**. El registro público requiere la migración multiempresa descrita abajo; mientras no esté validada en una base aislada, no lo habilites en producción. Para una base existente que requiera vincular manualmente la cuenta inicial, usa `npm run db:vincular-dueno` como se indica arriba.
+Abre `http://localhost:3000/register` para crear un negocio nuevo y su primera cuenta de dueño, o `http://localhost:3000/login` para una cuenta existente. El dueño puede invitar trabajadores y otros dueños desde **Panel → Usuarios**. El registro público requiere la migración multiempresa descrita abajo. Para una base existente que requiera vincular manualmente la cuenta inicial, usa `npm run db:vincular-dueno` como se indica arriba.
 
-La migración `20261115000100_multiempresa_registro.sql` es un requisito de `/register` y aún debe validarse en una base aislada antes de desplegar esa ruta. Las migraciones comerciales `20261114000100`–`20261114000400` amplían el esquema legado y deben aplicarse únicamente a la base de desarrollo/pruebas que se haya respaldado y confirmado. No las apliques a producción sin un plan de respaldo y despliegue revisado.
+La migración `20261115000100_multiempresa_registro.sql` se verificó aplicada en la base aislada configurada localmente el 2026-11-26: `npm run db:migrar` la omitió por estar registrada, `npm run db:verificar` terminó con 0 fallas y las comprobaciones de empresas, membresías y referencias huérfanas no encontraron inconsistencias. Esto no confirma el estado de la base de producción de Vercel. Antes de habilitar `/register` en producción, respalda esa base, verifica/aplica allí las migraciones y ejecuta `npm run db:verificar`. Las migraciones comerciales `20261114000100`–`20261114000400` amplían el esquema legado y deben aplicarse únicamente a la base de desarrollo/pruebas que se haya respaldado y confirmado. No las apliques a producción sin un plan de respaldo y despliegue revisado.
 
 ## Comandos
 

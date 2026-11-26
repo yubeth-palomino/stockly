@@ -349,7 +349,8 @@ DEMO-008    34     0         No
 - **Registro:** se añadió `/register` con nombre, correo, contraseña visible/oculta y navegación recíproca con `/login`. El endpoint crea Auth y, en una transacción, un negocio vacío, sucursal principal, perfil de dueño y membresías; con sesión inmediata envía al panel y, si falta confirmación, informa revisar el correo.
 - **Aislamiento:** los datos previos se asignan al negocio inicial; el negocio autenticado se obtiene del servidor y se propaga a consultas, escrituras, economía, movimientos y operaciones comerciales. Se añadieron relaciones/índices por empresa, políticas de lectura y claves de idempotencia compuestas, incluida la clave histórica `idempotency_key`.
 - **Pruebas y documentación:** se agregaron pruebas del registro y de la reversión de Auth ante fallos transaccionales. `npm test` pasó 62 archivos/212 pruebas; `npm run type-check`, `npm run lint`, `npm run build` y `git diff --check` finalizaron correctamente.
-- **Pendiente crítico:** la migración `supabase/migrations/20261115000100_multiempresa_registro.sql` no se aplicó ni se probó contra una base aislada. No desplegar ni declarar listo para producción antes de respaldar y validar la migración; la app requiere esas columnas/tablas. Tampoco se verificó un correo real ni un inicio de sesión de registro en Supabase.
+- **Estado actualizado 2026-11-26:** la migración `supabase/migrations/20261115000100_multiempresa_registro.sql` está registrada en la base aislada configurada localmente. `npm run db:migrar` la omitió por aplicada; `npm run db:verificar` pasó con 0 fallas. La revisión de datos confirmó una empresa y sucursal, dos membresías y cero usuarios sin membresía, asignaciones sin sucursal, productos sin empresa o ventas sin empresa. No se verificó ni se debe inferir el estado de producción en Vercel.
+- **Pendiente de producción:** antes de habilitar `/register` allí, respaldar la base de producción, comprobar/aplicar la migración en ese entorno y ejecutar su verificación. Sigue pendiente validar correo real e inicio de sesión de registro en Supabase.
 
 ### P10 · revalidación de cierre · 2026-11-25
 
@@ -360,14 +361,15 @@ DEMO-008    34     0         No
 - **Prueba de integración bloqueada:** `npm run probar:flujo` se detuvo antes de conectarse porque Node no recibió `STOCKLY_POSTGRES_URL` ni `STOCKLY_POSTGRES_URL_NON_POOLING`. La limpieza no pudo ejecutarse; no se tocó ninguna base ni los datos DEMO.
 - **Aceptación manual pendiente:** A-01, A-07, A-13, A-14, A-17 y A-19 requieren sesiones autenticadas y/o un entorno de prueba en Vercel. No se declaran aprobados ni se marca la aceptación de P10 como completa.
 
-### P10–P17 · cierre técnico del tramo existente · 2026-11-25
+### P10–P17 · cierre técnico y seguimiento de aceptación · 2026-11-26
 
 - **P10:** usuarios, invitaciones, cambio de rol/estado y protección del último dueño quedan implementados y cubiertos por pruebas; la aceptación autenticada A-01, A-07, A-13, A-14, A-17 y A-19 permanece pendiente.
 - **P11:** se completó el cálculo de ganancia realizada desde `ventas.costo_unitario`. Las ventas nuevas conservan el costo vigente en la fila de venta; ventas sin costo aportan cero y no se inventa un costo histórico.
 - **P12:** auditoría y planificación comercial documentadas; no corresponde una migración adicional.
 - **P13–P17:** base comercial, servicios/API, caja, directorios/crédito/abonos y dashboard quedan implementados según sus checkpoints. A-24–A-44 siguen siendo aceptación manual y no se consideran aprobados.
-- **Validación pendiente por entorno:** `npm run probar:flujo` y `npm run db:limpiar -- --prueba` no pudieron ejecutarse porque `.env.local` no contenía la cadena PostgreSQL en la sesión actual. No se modificó ni limpió la base.
+- **Migración multiempresa:** en la base aislada actual, `npm run db:migrar` omitió todas las migraciones, incluida `20261115000100_multiempresa_registro.sql`; `npm run db:verificar` terminó con 0 fallas. Hay una empresa, una sucursal, dos membresías y cero referencias huérfanas. Esto no verifica la BD de Vercel/producción.
 - **Cierre de código:** `npm run build`, `npm run lint`, `npm run type-check` y `npm test` terminaron correctamente; Vitest pasó 62 archivos y 212 pruebas en la ejecución final.
 - **Revalidación con variables configuradas:** `npm run db:verificar` terminó con 0 fallas; `npm run probar:flujo` completó 17/17 pasos y limpió sus datos; `npm run probar:comercial` completó 14/14 comprobaciones.
 - **Correcciones adicionales:** se incluyó `empresa_id` en las inserciones de verificación, la limpieza eliminó dependencias comerciales antes de ventas/usuarios y el flujo dejó de depender de cookies de una petición HTTP al ejecutar servicios directos.
-- **Bloqueo externo:** no se pudieron obtener sesiones reales de dueño/trabajador ni validar cámara/lector e impresora física desde el entorno compartido. A-01–A-44 no deben marcarse aprobados sin esa ejecución.
+- **Sesión en despliegue:** se observó GET `/api/panel/sesion` con respuesta 401 `NO_AUTORIZADO` y el navegador quedó en `/login`; no se logró comprobar la sesión de dueño declarada por la persona usuaria ni iniciar una sesión trabajador. La aceptación autenticada A-01–A-23 queda sin cerrar.
+- **Hardware:** la persona usuaria informó que cámara/lector e impresora están disponibles, pero todavía no se ha capturado lectura ni impresión como evidencia. A-24–A-44 requieren verificación visual/hardware; no se marcan aprobados por pruebas automatizadas.
