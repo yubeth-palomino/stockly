@@ -7,6 +7,7 @@ import {
   registrarVenta,
 } from '@/lib/dataService';
 import { hoyBogota } from '@/lib/reglas/fechas';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 const productosDemo = [
   {
@@ -111,6 +112,7 @@ async function cargar(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  exigirDestinoDePruebas('runtime');
   try {
     await cargar();
   } catch (error) {

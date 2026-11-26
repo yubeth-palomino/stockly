@@ -1,4 +1,5 @@
 import { crearClienteBaseDatos } from './db-client.mjs';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 const [authRef, nombreIngresado, ...argumentosExtra] = process.argv.slice(2);
 const authRefValido =
@@ -16,6 +17,7 @@ if (
   console.error('Uso: npm run db:vincular-dueno -- "<UUID de Supabase Auth>" "<Nombre del dueño>"');
   process.exitCode = 1;
 } else {
+  exigirDestinoDePruebas();
   const cliente = crearClienteBaseDatos();
   const usuario = `dueno_${authRef.replaceAll('-', '').slice(0, 12)}`;
 

@@ -9,6 +9,7 @@ import { obtenerEconomia } from '@/lib/datos/economia';
 import { ErrorDeNegocio, type CodigoError } from '@/lib/reglas/errores';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import type { DatosEntrada } from '@/lib/datos/tipos';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 const usuarioLimpieza = ['--env-file=.env.local', 'scripts/limpiar-prueba.mjs', '--prueba'];
 let fallas = 0;
@@ -351,6 +352,7 @@ async function ejecutar(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  exigirDestinoDePruebas('runtime');
   try {
     await ejecutar();
   } catch (error) {

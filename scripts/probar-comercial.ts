@@ -13,6 +13,7 @@ import { cerrarPool } from '@/lib/datos/conexion';
 import { conTransaccion, consultar } from '@/lib/db/conexion';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import type { DatosVentaComercial } from '@/lib/datos/tipos';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 if (process.env.STOCKLY_PRUEBA_COMERCIAL !== 'SI') {
   throw new Error('Para ejecutar esta prueba, define STOCKLY_PRUEBA_COMERCIAL=SI explícitamente.');
@@ -98,6 +99,7 @@ async function limpiarDatosDePrueba() {
 }
 
 async function main() {
+  exigirDestinoDePruebas('runtime');
   const propietarios = await consultar<{ id: string; empresa_id: string }>(
     `SELECT id, empresa_id FROM public.usuarios WHERE rol = 'dueno' AND activo = true
      ORDER BY created_at, id LIMIT 1`,

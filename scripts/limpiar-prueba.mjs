@@ -1,4 +1,5 @@
 import { crearClienteBaseDatos } from './db-client.mjs';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 const argumentos = new Set(process.argv.slice(2));
 const opcionesValidas = new Set(['--prueba', '--demo']);
@@ -8,6 +9,7 @@ if (invalidos.length > 0 || argumentos.size === 0) {
   console.error('Uso: npm run db:limpiar -- [--prueba] [--demo]');
   process.exitCode = 1;
 } else {
+  exigirDestinoDePruebas();
   const prefijosProducto = [];
   const prefijosUsuario = [];
   if (argumentos.has('--prueba')) {

@@ -2,9 +2,11 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crearClienteBaseDatos } from './db-client.mjs';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
 const directorio = path.dirname(fileURLToPath(import.meta.url));
 const carpetaMigraciones = path.resolve(directorio, '../supabase/migrations');
+exigirDestinoDePruebas();
 const cliente = crearClienteBaseDatos();
 
 async function perfilLoginAplicado() {

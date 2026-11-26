@@ -1,5 +1,7 @@
 import { crearClienteBaseDatos } from './db-client.mjs';
+import { exigirDestinoDePruebas } from './entorno-pruebas.mjs';
 
+exigirDestinoDePruebas();
 const cliente = crearClienteBaseDatos();
 
 let fallas = 0;
