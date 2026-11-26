@@ -28,6 +28,7 @@ type FilaCantidad = {
   cantidad: number;
   referencia?: string;
   precioVenta?: number;
+  fotoPath?: string | null;
 };
 type ErrorPostgres = { code?: string; constraint?: string };
 
@@ -109,7 +110,12 @@ export async function registrarEntrada(
   usuarioId: string,
   rol: Rol = 'trabajador',
   empresaId: string,
-): Promise<{ productoId: string; sumado: boolean; cantidadResultante: number }> {
+): Promise<{
+  productoId: string;
+  sumado: boolean;
+  cantidadResultante: number;
+  fotoPathAnterior?: string | null;
+}> {
   validarEntrada({ ...datos, hoy: hoyBogota() });
   const precioCompra = rol === 'dueno' ? datos.precioCompra : undefined;
 
@@ -123,9 +129,14 @@ export async function registrarEntrada(
       ]);
 
       const existentes = await tx.query<FilaCantidad>(
-        `SELECT id, cantidad, precio_venta AS "precioVenta" FROM productos
-         WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
-         FOR UPDATE`,
+        datos.fotoPath === undefined
+          ? `SELECT id, cantidad, precio_venta AS "precioVenta" FROM productos
+             WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
+             FOR UPDATE`
+          : `SELECT id, cantidad, precio_venta AS "precioVenta", foto_path AS "fotoPath"
+             FROM productos
+             WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
+             FOR UPDATE`,
         [empresaId, referenciaNormalizada, tallaNormalizada],
       );
       const existente = existentes.rows[0];
@@ -137,14 +148,23 @@ export async function registrarEntrada(
           }
           validarPrecioCompra(precioCompra, existente.precioVenta);
         }
-        const filas = await tx.query<FilaCantidad>(
-          `UPDATE productos
-           SET cantidad = cantidad + $1,
-               precio_compra = COALESCE($2, precio_compra)
-           WHERE id = $3 AND empresa_id = $4
-           RETURNING id, cantidad`,
-          [datos.cantidad, precioCompra ?? null, existente.id, empresaId],
-        );
+        const filas = datos.fotoPath === undefined
+          ? await tx.query<FilaCantidad>(
+              `UPDATE productos
+               SET cantidad = cantidad + $1, precio_compra = COALESCE($2, precio_compra)
+               WHERE id = $3 AND empresa_id = $4
+               RETURNING id, cantidad`,
+              [datos.cantidad, precioCompra ?? null, existente.id, empresaId],
+            )
+          : await tx.query<FilaCantidad>(
+              `UPDATE productos
+               SET cantidad = cantidad + $1,
+                   precio_compra = COALESCE($2, precio_compra),
+                   foto_path = COALESCE($3, foto_path)
+               WHERE id = $4 AND empresa_id = $5
+               RETURNING id, cantidad`,
+              [datos.cantidad, precioCompra ?? null, datos.fotoPath, existente.id, empresaId],
+            );
         const actualizado = filas.rows[0];
         if (!actualizado) throw new Error('No se pudo actualizar la cantidad del producto.');
         await registrarEvento(tx, {
@@ -163,6 +183,7 @@ export async function registrarEntrada(
           productoId: actualizado.id,
           sumado: true,
           cantidadResultante: actualizado.cantidad,
+          ...(datos.fotoPath !== undefined ? { fotoPathAnterior: existente.fotoPath ?? null } : {}),
         };
       }
 
@@ -173,24 +194,33 @@ export async function registrarEntrada(
       const secuencia = secuencias.rows[0]?.secuencia;
       if (!secuencia) throw new Error('No se pudo reservar la secuencia del código de barras.');
       const codigoBarras = generarCodigoBarras(secuencia);
-      const filas = await tx.query<FilaId & { cantidad: number }>(
-        `INSERT INTO productos
-           (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         RETURNING id, cantidad`,
-        [
-          empresaId,
-          datos.referencia.trim(),
-          datos.marca.trim(),
-          datos.descripcion.trim(),
-          datos.talla.trim(),
-          datos.cantidad,
-          datos.precioVenta,
-          precioCompra ?? null,
-          datos.fechaEntrada,
-          codigoBarras,
-        ],
-      );
+      const valoresEntrada = [
+        empresaId,
+        datos.referencia.trim(),
+        datos.marca.trim(),
+        datos.descripcion.trim(),
+        datos.talla.trim(),
+        datos.cantidad,
+        datos.precioVenta,
+        precioCompra ?? null,
+        datos.fechaEntrada,
+        codigoBarras,
+      ];
+      const filas = datos.fotoPath === undefined
+        ? await tx.query<FilaId & { cantidad: number }>(
+            `INSERT INTO productos
+               (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             RETURNING id, cantidad`,
+            valoresEntrada,
+          )
+        : await tx.query<FilaId & { cantidad: number }>(
+            `INSERT INTO productos
+               (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, precio_compra, fecha_entrada, codigo_barras, foto_path)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+             RETURNING id, cantidad`,
+            [...valoresEntrada, datos.fotoPath],
+          );
       const creado = filas.rows[0];
       if (!creado) throw new Error('La base de datos no devolvió el producto recién creado.');
       await registrarEvento(tx, {
@@ -292,7 +322,8 @@ export async function obtenerProducto(
   const producto = productos[0];
   if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
 
-  const [eventos, tiposEventos, ventas] = await Promise.all([
+  const [fotoPath, eventos, tiposEventos, ventas] = await Promise.all([
+    obtenerFotoPathOpcional(id, empresaId),
     listarEventosProducto(id, rol, usuarioId, empresaId, filtros),
     listarTiposEventosProducto(id, rol, usuarioId, empresaId),
     consultar<FilaVenta>(
@@ -307,7 +338,13 @@ export async function obtenerProducto(
     ),
   ]);
 
-  const detalle = { ...producto, eventos, tiposEventos, ventas };
+  const detalle = {
+    ...producto,
+    fotoUrl: fotoPath ? `/api/panel/productos/${id}/foto` : null,
+    eventos,
+    tiposEventos,
+    ventas,
+  };
   if (rol !== 'dueno') return detalle;
   if (producto.precioCompra == null) {
     return { ...detalle, inversion: null, gananciaPotencial: null };
@@ -321,6 +358,31 @@ export async function obtenerProducto(
       producto.cantidad,
     ),
   };
+}
+
+async function obtenerFotoPathOpcional(id: string, empresaId: string): Promise<string | null> {
+  try {
+    return await obtenerFotoPathProducto(id, empresaId);
+  } catch (error) {
+    if (esErrorPostgres(error) && error.code === '42703') {
+      console.warn('Falta aplicar la migración de fotografías de productos.');
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function obtenerFotoPathProducto(id: string, empresaId: string): Promise<string | null> {
+  const filas = await consultar<{ fotoPath: string | null }>(
+    `SELECT foto_path AS "fotoPath"
+     FROM productos
+     WHERE id = $1 AND empresa_id = $2
+     LIMIT 1`,
+    [id, empresaId],
+  );
+  const producto = filas[0];
+  if (!producto) throw new ErrorDeNegocio('PRODUCTO_NO_ENCONTRADO');
+  return producto.fotoPath;
 }
 
 function condicionesVisibilidadEventos(

@@ -8,6 +8,7 @@ import { Aviso } from '@/components/ui/Aviso';
 import { Boton } from '@/components/ui/Boton';
 import { Campo } from '@/components/ui/Campo';
 import { EscanerCamara } from '@/components/panel/EscanerCamara';
+import { CapturaFotoProducto } from '@/components/panel/CapturaFotoProducto';
 import { leerRespuestaApi } from '@/lib/http/cliente';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import { normalizarReferencia, normalizarTalla } from '@/lib/reglas/producto';
@@ -49,6 +50,7 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
   const [fechaEntrada, setFechaEntrada] = useState(fechaHoy);
+  const [foto, setFoto] = useState<File | null>(null);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(false);
   const [cargandoExistencia, setCargandoExistencia] = useState(false);
@@ -222,10 +224,21 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
 
     setCargando(true);
     try {
+      let body: BodyInit;
+      let headers: HeadersInit | undefined;
+      if (foto) {
+        const formulario = new FormData();
+        formulario.set('datos', JSON.stringify(parsed.data));
+        formulario.set('foto', foto);
+        body = formulario;
+      } else {
+        headers = { 'Content-Type': 'application/json' };
+        body = JSON.stringify(parsed.data);
+      }
       const response = await fetch('/api/panel/productos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
+        ...(headers ? { headers } : {}),
+        body,
       });
       const creado = await leerRespuestaApi(response, esquemaResultadoEntrada);
       setResultado({ ...creado, cantidadSolicitada: parsed.data.cantidad });
@@ -394,6 +407,7 @@ export function FormularioProducto({ rol }: { rol: Rol }) {
           {...(errores.fechaEntrada ? { error: errores.fechaEntrada } : {})}
           required
         />
+        <CapturaFotoProducto onFotoChange={setFoto} />
         <Boton type="submit" cargando={cargando}>Registrar entrada</Boton>
       </form>
     </div>

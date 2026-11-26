@@ -10,6 +10,7 @@ export type DatosEntrada = {
   precioVenta: number;
   precioCompra?: number;
   fechaEntrada: string;
+  fotoPath?: string;
 };
 
 export type DatosVenta = {
@@ -87,6 +88,7 @@ export type FilaVenta = {
 };
 
 export type DetalleProducto = FilaProducto & {
+  fotoUrl?: string | null;
   eventos: FilaEvento[];
   tiposEventos: string[];
   ventas: FilaVenta[];

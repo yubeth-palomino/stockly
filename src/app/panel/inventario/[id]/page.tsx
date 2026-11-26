@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { AccionesProducto } from '@/components/panel/AccionesProducto';
 import { InsigniaDisponibilidad } from '@/components/panel/InsigniaDisponibilidad';
@@ -59,6 +60,16 @@ export default async function DetalleProductoPage({ params, searchParams }: Prop
 
       <div className={styles.detalleProducto}>
         <Tarjeta>
+          {producto.fotoUrl && (
+            <Image
+              className={styles.fotoProducto}
+              src={producto.fotoUrl}
+              alt={`Fotografía del producto ${producto.referencia}`}
+              width={800}
+              height={600}
+              unoptimized
+            />
+          )}
           <h2>Información del producto</h2>
           <dl className={styles.detalleLista}>
             <div><dt>Descripción</dt><dd>{producto.descripcion}</dd></div>

@@ -124,6 +124,11 @@ export async function obtenerProducto(
   return datosProductos.obtenerProducto(id, usuario.rol, usuario.id, usuario.empresaId, filtros);
 }
 
+export async function obtenerFotoPathProducto(id: string) {
+  const usuario = await exigirUsuario();
+  return datosProductos.obtenerFotoPathProducto(id, usuario.empresaId);
+}
+
 export async function listarEventosProducto(
   id: string,
   _rol?: Parameters<typeof datosProductos.listarEventosProducto>[1],
