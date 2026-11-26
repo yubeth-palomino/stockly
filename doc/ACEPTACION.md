@@ -4,7 +4,7 @@ Ejecutar los casos en el despliegue de Vercel con una cuenta de trabajador y una
 
 Los casos A-01 a A-19 corresponden al cierre de P10. A-20 a A-23 se añadieron con el módulo económico de P11.
 
-Nota de revalidación 2026-11-26: la evidencia automatizada cubre flujo, base y privacidad técnica. Los casos que requieren una sesión real compartida de dueño o trabajador siguen pendientes; no se sustituyó esa ejecución por pruebas unitarias o por una sesión anónima.
+Nota de cierre 2026-11-26: las pruebas unitarias locales no sustituyen la aceptación autenticada. Las integraciones 17/17 y 14/14 registradas en la bitácora son evidencia histórica de una base aislada; no se repitieron en esta ejecución. El proyecto staging sigue sin migraciones ni variables Preview, por lo que las aceptaciones pendientes no se declaran aprobadas.
 
 | ID | Acción | Resultado esperado | Resultado obtenido | Evidencia | Observación |
 |---|---|---|---|---|---|

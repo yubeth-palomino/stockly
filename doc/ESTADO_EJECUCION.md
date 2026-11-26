@@ -5,12 +5,14 @@
 - Esta síntesis prevalece sobre las observaciones históricas que siguen en la bitácora.
 - **Alcance:** P00–P11 son los prompts del documento rector; P12–P17 son fases de mejora registradas en `PLAN_MEJORAS.md` y sus checkpoints, no prompts de `PROMPTS_STOCKLY.md`. No se encontraron definiciones de P18 ni P19. La implementación técnica no equivale al cierre formal de un prompt cuando falta una verificación obligatoria.
 - **Discrepancias de cierre:** P05 tiene implementación y pruebas automatizadas, pero falta la verificación real con trabajador que exige el prompt. P10 sigue abierto por aceptación A-01–A-19. P11 se implementó sin cumplir su precondición de aceptación diligenciada y mantiene verificaciones manuales pendientes; por ello no se declara cerrado. Su fórmula ya se alineó con el plan: usa el precio de compra actual del producto.
-- **Validación local:** `npm.cmd run build`, `npm.cmd test` (63 archivos, 218/218 pruebas), `npm.cmd run lint` y `npm.cmd run type-check` terminaron correctamente en esta revisión. Vitest conserva una advertencia no bloqueante sobre `configLoader: 'native'`.
-- **Aislamiento de staging:** el código distingue `VERCEL_ENV=preview` y requiere variables `STOCKLY_PREVIEW_*` para PostgreSQL y Supabase, sin recurrir a credenciales de producción. Las pruebas verifican también el fallo explícito si falta una variable de Preview. El proyecto Supabase `stockly-staging` continúa vacío; todavía no se configuraron las variables en Vercel, ni se aplicaron migraciones, ni se ejecutaron aceptaciones manuales.
+- **Validación local de cierre:** `npm.cmd run build`, `npm.cmd run lint`, `npm.cmd run type-check` y `npm.cmd test` terminaron correctamente. Vitest pasó 64 archivos y 225/225 pruebas; las pruebas focalizadas del guard y registro pasaron 12/12. Una primera ejecución paralela sufrió timeouts por contención; la repetición aislada pasó completa. La advertencia `configLoader: 'native'` se eliminó al renombrar la configuración a `vitest.config.mts`.
+- **Aislamiento de staging:** las herramientas distinguen `VERCEL_ENV=preview` y requieren variables `STOCKLY_PREVIEW_*`. La verificación aislada del helper con `.env.local` confirmó que bloquea Production, sin imprimir valores. La interfaz de Vercel permite abrir el formulario, pero no se guardaron variables; Vercel CLI no tiene sesión. Faltan `STOCKLY_PREVIEW_POSTGRES_URL`, `STOCKLY_PREVIEW_POSTGRES_URL_NON_POOLING`, `STOCKLY_PREVIEW_SUPABASE_URL`, `STOCKLY_PREVIEW_SUPABASE_PUBLISHABLE_KEY` y `STOCKLY_PREVIEW_SUPABASE_SERVICE_ROLE_KEY`. El panel de Supabase permite identificar `stockly-staging`, pero no hay conexión local utilizable ni migraciones aplicadas. No se ejecutó `db:migrar`, `db:verificar`, `probar:flujo` ni `probar:comercial`.
 - **Base de producción:** revisión de solo lectura confirmó 14 migraciones registradas, incluida `20261115000100_multiempresa_registro.sql`, y las tablas `empresas`, `sucursales`, `empresas_usuarios` y `usuarios_sucursales`. No se aplicó SQL ni se modificaron datos.
 - **Comparación de migraciones:** consulta de solo lectura comparó los 14 archivos SQL locales con `_migrations` en producción: 14/14 registrados, sin faltantes. `.env.local` apunta a Production; no se usó para migrar el staging.
 - **Registro público:** el signup de Supabase y el proveedor Email están habilitados, con confirmación por correo activa. El error reportado coincide con una identidad que Supabase considera duplicada; no se verificó la dirección concreta ni se determinó si las variables de Vercel apuntan al mismo proyecto.
-- **Pendiente para cerrar aceptación:** siguen pendientes A-01, A-07, A-13, A-14, A-17 y A-19; A-21 requiere datos de prueba, y A-24–A-44 requieren aceptación manual/visual y, según el caso, hardware. También falta probar el envío real de correo y confirmar el despliegue de `RESEND_FROM`.
+- **Dependencias:** `npm audit fix` sin `--force` actualizó el lockfile y redujo el reporte a 36 vulnerabilidades (1 crítica, 20 altas, 15 moderadas). Permanece crítica `tar`; la solución sugerida por npm requiere una actualización mayor de Vercel CLI y no se aplicó.
+- **Correo:** `src/lib/correo.ts` usa `RESEND_FROM` en producción y rechaza el remitente de prueba; las pruebas locales cubren la selección y la respuesta del proveedor. No se envió ningún correo real. Para redeploy: confirmar dominio verificado en Resend; definir `RESEND_FROM` solo en el entorno Vercel requerido; confirmar que el conector/clave exista sin revelar su valor; desplegar; verificar el estado del deployment; probar, si se autoriza, solo con una dirección propia.
+- **Pendiente para cerrar aceptación:** siguen pendientes A-01, A-07, A-13, A-14, A-17 y A-19; A-21 requiere datos de prueba, y A-24–A-44 requieren aceptación contra staging y, según el caso, hardware. No se probó el envío real de correo ni se confirmó un redeploy de `RESEND_FROM`.
 
 | Prompt                                   | Estado                                                                                            | Build                         | Tests                         | Fecha de evidencia |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------- | --------------- |
@@ -27,26 +29,44 @@
 | P10 Usuarios y aceptación                | implementación técnica; prompt no cerrado por aceptación A-01–A-19 pendiente                       | correcto                      | 212/212                       | 2026-11-25      |
 | P11 Módulo económico (opcional)          | implementación alineada con el plan; no cerrado por precondición P10 y validaciones manuales    | correcto                      | 212/212                       | 2026-11-26      |
 | P12 Auditoría y planificación de mejoras | auditoría/diseño cerrados; aprobación posterior para desarrollo de prueba registrada en PLAN_MEJORAS | correcto                      | 158/158                       | 2026-11-14      |
-| Evolución comercial                      | implementada técnicamente en P13–P17; migración registrada en producción; aceptación manual pendiente | correcto                      | 212/212; integración comercial 14/14 en BD aislada | 2026-11-26      |
-| P13 Base de datos comercial              | migraciones verificadas en pruebas; registro y tablas comerciales confirmados en producción (solo lectura) | correcto                      | 212/212; BD aislada 0 fallas | 2026-11-26      |
+| Evolución comercial                      | implementada técnicamente en P13–P17; aceptación manual pendiente                                      | correcto                      | 212/212; comercial 14/14 en BD aislada (histórico) | 2026-11-26      |
+| P13 Base de datos comercial              | migraciones verificadas en pruebas; registro y tablas comerciales confirmados en producción (solo lectura) | correcto                      | 212/212; BD aislada 0 fallas (histórico) | 2026-11-26      |
 | P14 Servicios y API                      | reglas, transacciones, idempotencia y autorización implementadas; integradas contra BD de pruebas | correcto                      | 171/171                       | 2026-11-14      |
 | P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                              | correcto                      | 171/171                       | 2026-11-14      |
 | P16 Proveedores, clientes y créditos     | páginas, API, saldos y abonos concurrentes; aceptación manual pendiente                           | correcto                      | 171/171                       | 2026-11-14      |
 | P17 Dashboard y aceptación               | dashboard con series y filtros reales; aceptación A-24–A-44 sin diligenciar                       | correcto                      | 171/171                       | 2026-11-14      |
-| Revisión funcional global                | automatización revalidada; aceptación manual y prueba real de correo pendientes                  | correcto                      | 212/212; BD aislada 0 fallas; flujo 17/17; comercial 14/14 | 2026-11-26      |
+| Revisión funcional global                | automatización local aprobada; aceptación manual, staging y correo real pendientes               | correcto                      | 225/225; BD aislada 0 fallas, flujo 17/17 y comercial 14/14 históricos | 2026-11-26      |
+
+### Cierre de la solicitud integral · 2026-11-26
+
+- **Línea base:** build, lint, type-check y suite completa aprobados; Vitest 64 archivos/225 pruebas. La primera suite completa coincidió con lint y type-check y tuvo tres timeouts de pruebas y uno al iniciar un worker; la repetición independiente pasó 225/225. Las pruebas focalizadas de los cambios pasaron 12/12.
+- **Protección de datos:** el helper cargado con `.env.local` informó que bloquea el destino Production. No se ejecutó SQL ni se invocaron scripts de base de datos; Production no recibió escrituras. No se ejecutaron integraciones o E2E por no disponer de conexión local a staging y cuentas autenticadas de prueba.
+- **Staging/Preview:** los paneles web identifican el proyecto `stockly-staging` y el proyecto Vercel `stockly`; se abrió el formulario para variables Preview, pero no se guardó ninguna. Vercel CLI no está autenticado y no se dispone de las URL/credenciales de Postgres para correr las migraciones. Las 14 migraciones y las integraciones 17/17 y 14/14 registradas en secciones anteriores son resultados históricos, no evidencia de esta ejecución.
+- **Cambios de código:** los scripts de escritura ahora validan el destino y bloquean Production; `/api/auth/register` registra solo metadatos de error permitidos y protege las tareas de reversión. Las pruebas locales cubren el bloqueo de Production, destinos discordantes y un error de Auth no duplicado sin incluir correo en los logs.
+- **Dependencias:** `npm audit fix` sin `--force` actualizó `package-lock.json` y redujo el reporte de 50 a 36 vulnerabilidades: 1 crítica, 20 altas y 15 moderadas. La crítica restante es `tar`; la solución automática propone `vercel@67.0.0`, un salto mayor que no se aplicó. También queda `vercel` como dependencia directa con hallazgos altos transitivos.
+- **Registro/correo:** la ruta de registro tiene pruebas unitarias de creación y reversión simuladas, pero no hubo prueba real de `/register`. `RESEND_FROM` es obligatorio en producción; se verificaron en código la selección del remitente y el fallo explícito ante ausencia, pero no se envió correo ni se confirmó un redeploy.
+- **Cierre formal:** P05 y P07 no se cierran sin una sesión real de trabajador y evidencia de 403/privacidad. P10 sigue abierto por aceptación A-01–A-19; P11 depende del cierre de P10 y de A-21. P13–P17 son fases de mejora, no prompts, y su aceptación A-24–A-44 sigue pendiente. Ninguno de estos alcances queda formalmente cerrado por esta ejecución.
+
+#### Checklist de redeploy para correo
+
+1. Verificar en Resend que el dominio remitente esté verificado.
+2. En Vercel, configurar `RESEND_FROM` únicamente en el entorno que se va a desplegar y confirmar el conector/`RESEND_API_KEY` sin copiar valores a logs o repositorio.
+3. Confirmar que `APP_URL` y las URL de callback de Supabase apunten al dominio correcto.
+4. Crear un deployment nuevo y comprobar que su estado sea listo.
+5. Si se autoriza una prueba de entrega, enviarla solo a una dirección propia y guardar evidencia sin publicar la dirección ni secretos.
 
 ## Bitácora
 
-### Preparación de Preview aislado · 2026-11-26
+### Preparación de Preview aislado · 2026-11-26 (intento anterior)
 
 - **Aislamiento:** runtime y cliente administrativo de Supabase usan variables `STOCKLY_PREVIEW_*` únicamente en Vercel Preview; las herramientas de migración priorizan la URL no agrupada de staging cuando existe.
 - **Verificación local:** 63 archivos y 218/218 pruebas aprobaron; `npm.cmd run build`, `npm.cmd run lint` y `npm.cmd run type-check` aprobaron. `git diff --check` no reportó problemas.
 - **Pendiente:** Vercel todavía no tiene las variables exclusivas de Preview; no se aplicaron migraciones al proyecto staging y la aceptación manual sigue abierta. No se modificó Production ni se hizo push.
 
-### Verificación del destino de migración · 2026-11-26
+### Verificación del destino de migración · 2026-11-26 (intento previo)
 
 - **Production:** la conexión configurada localmente identifica el proyecto `kzjvamlbbberhqdzqqhj`; una consulta de solo lectura confirmó las 14 migraciones locales ya registradas y ninguna pendiente. No se ejecutó el migrador en Production.
-- **Staging:** el proyecto `stockly-staging` (`vmuwhxxdocujvbolrfhx`) sigue siendo el destino aislado para las aceptaciones, pero no hay conexión local configurada para él y el panel Supabase no terminó de cargar. No se aplicó SQL en ese proyecto.
+- **Staging:** el proyecto `stockly-staging` (`vmuwhxxdocujvbolrfhx`) sigue siendo el destino aislado para las aceptaciones; en ese intento el panel no terminó de cargar. La revisión de cierre posterior identificó el proyecto en el panel, pero no obtuvo una conexión PostgreSQL utilizable ni aplicó SQL.
 
 ### P12 · Auditoría y planificación de mejoras
 
