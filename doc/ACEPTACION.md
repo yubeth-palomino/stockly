@@ -4,6 +4,8 @@ Ejecutar los casos en el despliegue de Vercel con una cuenta de trabajador y una
 
 Los casos A-01 a A-19 corresponden al cierre de P10. A-20 a A-23 se añadieron con el módulo económico de P11.
 
+Nota de revalidación 2026-11-26: la evidencia automatizada cubre flujo, base y privacidad técnica. Los casos que requieren una sesión real compartida de dueño o trabajador siguen pendientes; no se sustituyó esa ejecución por pruebas unitarias o por una sesión anónima.
+
 | ID | Acción | Resultado esperado | Resultado obtenido | Evidencia | Observación |
 |---|---|---|---|---|---|
 | A-01 | Entrar como trabajador | Llega a `/panel`; no ve Usuarios ni Economía | Pendiente: no se pudo acceder a la cuenta de trabajador. | | Recuperar o invitar la cuenta; no compartir credenciales. |

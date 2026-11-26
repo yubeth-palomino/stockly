@@ -368,3 +368,6 @@ DEMO-008    34     0         No
 - **P13–P17:** base comercial, servicios/API, caja, directorios/crédito/abonos y dashboard quedan implementados según sus checkpoints. A-24–A-44 siguen siendo aceptación manual y no se consideran aprobados.
 - **Validación pendiente por entorno:** `npm run probar:flujo` y `npm run db:limpiar -- --prueba` no pudieron ejecutarse porque `.env.local` no contenía la cadena PostgreSQL en la sesión actual. No se modificó ni limpió la base.
 - **Cierre de código:** `npm run build`, `npm run lint`, `npm run type-check` y `npm test` terminaron correctamente; Vitest pasó 62 archivos y 212 pruebas en la ejecución final.
+- **Revalidación con variables configuradas:** `npm run db:verificar` terminó con 0 fallas; `npm run probar:flujo` completó 17/17 pasos y limpió sus datos; `npm run probar:comercial` completó 14/14 comprobaciones.
+- **Correcciones adicionales:** se incluyó `empresa_id` en las inserciones de verificación, la limpieza eliminó dependencias comerciales antes de ventas/usuarios y el flujo dejó de depender de cookies de una petición HTTP al ejecutar servicios directos.
+- **Bloqueo externo:** no se pudieron obtener sesiones reales de dueño/trabajador ni validar cámara/lector e impresora física desde el entorno compartido. A-01–A-44 no deben marcarse aprobados sin esa ejecución.

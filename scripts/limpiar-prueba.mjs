@@ -28,6 +28,37 @@ if (invalidos.length > 0 || argumentos.size === 0) {
       .map((_, indice) => `left(clave_referencia, char_length($${indice + 1})) = $${indice + 1}`)
       .join(' OR ');
 
+    await cliente.query(
+      `DELETE FROM abonos
+       WHERE cuenta_id IN (
+         SELECT c.id
+         FROM cuentas_por_cobrar c
+         JOIN ventas v ON v.id = c.venta_id
+         JOIN productos p ON p.id = v.producto_id
+         WHERE ${condicionesProducto}
+       )`,
+      prefijosProducto,
+    );
+    await cliente.query(
+      `DELETE FROM cuentas_por_cobrar
+       WHERE venta_id IN (
+         SELECT v.id
+         FROM ventas v
+         JOIN productos p ON p.id = v.producto_id
+         WHERE ${condicionesProducto}
+       )`,
+      prefijosProducto,
+    );
+    await cliente.query(
+      `DELETE FROM pagos_venta
+       WHERE venta_id IN (
+         SELECT v.id
+         FROM ventas v
+         JOIN productos p ON p.id = v.producto_id
+         WHERE ${condicionesProducto}
+       )`,
+      prefijosProducto,
+    );
     const ventas = await cliente.query(
       `DELETE FROM ventas
        WHERE producto_id IN (
@@ -50,6 +81,20 @@ if (invalidos.length > 0 || argumentos.size === 0) {
     const condicionesUsuario = prefijosUsuario
       .map((_, indice) => `left(lower(btrim(usuario)), length($${indice + 1})) = $${indice + 1}`)
       .join(' OR ');
+    await cliente.query(
+      `DELETE FROM usuarios_sucursales
+       WHERE usuario_id IN (
+         SELECT id FROM usuarios WHERE ${condicionesUsuario}
+       )`,
+      prefijosUsuario,
+    );
+    await cliente.query(
+      `DELETE FROM empresas_usuarios
+       WHERE usuario_id IN (
+         SELECT id FROM usuarios WHERE ${condicionesUsuario}
+       )`,
+      prefijosUsuario,
+    );
     const usuarios = await cliente.query(
       `DELETE FROM usuarios WHERE ${condicionesUsuario}`,
       prefijosUsuario,

@@ -2,6 +2,8 @@
 
 Los casos se mantienen sin resultado hasta ejecutarlos manualmente con el perfil y el entorno indicados. Las pruebas automatizadas y de integración no sustituyen la aceptación visual con hardware ni la validación del usuario.
 
+Nota de revalidación 2026-11-26: las 14 comprobaciones comerciales automatizadas aprobaron en base de pruebas; cámara/lector e impresora física siguen sin dispositivo disponible y no se marcarán como aprobados.
+
 | ID   | Acción                      | Resultado esperado                               | Resultado obtenido | Evidencia | Observaciones |
 | ---- | --------------------------- | ------------------------------------------------ | ------------------ | --------- | ------------- |
 | A-24 | Generar código de barras    | Código único para SKU/variante                   |                    |           |               |

@@ -1,19 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import {
-  actualizarProducto,
-  actualizarUsuario,
-  cerrarPool,
-  crearUsuarioVinculado,
-  desactivarProducto,
-  listarInventario,
-  listarVentas,
-  listarUsuarios,
-  obtenerEconomia,
-  obtenerProducto,
-  registrarEntrada,
-  registrarVenta,
-} from '@/lib/dataService';
+import { consultar } from '@/lib/db/conexion';
+import { cerrarPool } from '@/lib/datos/conexion';
+import { actualizarProducto, desactivarProducto, listarInventario, obtenerProducto, registrarEntrada } from '@/lib/datos/productos';
+import { registrarVenta, listarVentas } from '@/lib/datos/ventas';
+import { actualizarUsuario, crearUsuarioVinculado, listarUsuarios } from '@/lib/datos/usuarios';
+import { obtenerEconomia } from '@/lib/datos/economia';
 import { ErrorDeNegocio, type CodigoError } from '@/lib/reglas/errores';
 import { hoyBogota } from '@/lib/reglas/fechas';
 import type { DatosEntrada } from '@/lib/datos/tipos';
@@ -73,7 +65,13 @@ function entrada(cambios: Partial<DatosEntrada> = {}): DatosEntrada {
 
 async function ejecutar(): Promise<void> {
   limpiarPruebas();
-  const dueno = (await listarUsuarios()).find(
+  const empresas = await consultar<{ id: string }>(
+    'SELECT id FROM empresas ORDER BY created_at ASC, id ASC LIMIT 1',
+    [],
+  );
+  const empresaId = empresas[0]?.id;
+  if (!empresaId) throw new Error('Se requiere al menos una empresa para probar el flujo.');
+  const dueno = (await listarUsuarios(empresaId)).find(
     (usuario) => usuario.rol === 'dueno' && usuario.activo,
   );
   if (!dueno) throw new Error('Se requiere al menos un usuario dueño activo para probar el flujo.');
@@ -84,29 +82,29 @@ async function ejecutar(): Promise<void> {
     usuario: nombreUsuarioPrueba,
     rol: 'trabajador',
     authRef: randomUUID(),
-  });
+  }, empresaId);
   await debeFallarCon('USUARIO_DUPLICADO', () =>
     crearUsuarioVinculado({
       nombre: 'Usuario duplicado de flujo',
       usuario: nombreUsuarioPrueba,
       rol: 'trabajador',
       authRef: randomUUID(),
-    }),
+    }, empresaId),
   );
   await debeFallarCon('ULTIMO_DUENO', () =>
-    actualizarUsuario(dueno.id, { rol: 'trabajador' }, dueno.id),
+    actualizarUsuario(dueno.id, { rol: 'trabajador' }, dueno.id, empresaId),
   );
 
   await paso(1, 'crear PRUEBA-A y dejarlo disponible', async () => {
-    const resultado = await registrarEntrada(entrada(), usuarioPrueba.id);
+    const resultado = await registrarEntrada(entrada(), usuarioPrueba.id, 'trabajador', empresaId);
     productoId = resultado.productoId;
     if (resultado.sumado || resultado.cantidadResultante !== 10) {
       throw new Error('La entrada inicial no creó el producto con 10 unidades.');
     }
-    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
+    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id, empresaId);
     if (!producto.disponible) throw new Error('El producto inicial no quedó disponible.');
-    await actualizarProducto(productoId, { marca: 'Marca actualizada' }, usuarioPrueba.id);
-    const actualizado = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
+    await actualizarProducto(productoId, { marca: 'Marca actualizada' }, usuarioPrueba.id, 'trabajador', empresaId);
+    const actualizado = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id, empresaId);
     if (actualizado.marca !== 'Marca actualizada') {
       throw new Error('No se guardó la actualización del producto.');
     }
@@ -116,6 +114,8 @@ async function ejecutar(): Promise<void> {
     const resultado = await registrarEntrada(
       entrada({ referencia: 'prueba-a', talla: 'm', cantidad: 5 }),
       usuarioPrueba.id,
+      'trabajador',
+      empresaId,
     );
     if (!resultado.sumado || resultado.cantidadResultante !== 15) {
       throw new Error('El re-stock no sumó cinco unidades al producto existente.');
@@ -124,18 +124,18 @@ async function ejecutar(): Promise<void> {
 
   await paso(3, 'rechazar una entrada de cantidad cero', async () => {
     await debeFallarCon('DATOS_INVALIDOS', () =>
-      registrarEntrada(entrada({ cantidad: 0 }), usuarioPrueba.id),
+      registrarEntrada(entrada({ cantidad: 0 }), usuarioPrueba.id, 'trabajador', empresaId),
     );
   });
 
   await paso(4, 'rechazar una fecha de entrada futura', async () => {
     await debeFallarCon('FECHA_FUTURA', () =>
-      registrarEntrada(entrada({ fechaEntrada: mananaBogota() }), usuarioPrueba.id),
+      registrarEntrada(entrada({ fechaEntrada: mananaBogota() }), usuarioPrueba.id, 'trabajador', empresaId),
     );
   });
 
   await paso(5, 'listar como trabajador sin exponer precioCompra', async () => {
-    const productos = await listarInventario({ referencia: 'PRUEBA-A' }, 'trabajador');
+    const productos = await listarInventario({ referencia: 'PRUEBA-A' }, 'trabajador', empresaId);
     if (productos.length !== 1 || Object.hasOwn(productos[0]!, 'precioCompra')) {
       throw new Error('El trabajador recibió un resultado inesperado o precioCompra.');
     }
@@ -143,10 +143,10 @@ async function ejecutar(): Promise<void> {
 
   await paso(6, 'rechazar vender más de lo disponible sin cambiar stock', async () => {
     await debeFallarCon('STOCK_INSUFICIENTE', () =>
-      registrarVenta({ referencia: 'PRUEBA-A', talla: 'M', cantidad: 20 }, usuarioPrueba.id),
+      registrarVenta({ referencia: 'PRUEBA-A', talla: 'M', cantidad: 20 }, usuarioPrueba.id, empresaId),
     );
     if (!productoId) throw new Error('No se creó PRUEBA-A.');
-    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id);
+    const producto = await obtenerProducto(productoId, 'trabajador', usuarioPrueba.id, empresaId);
     if (producto.cantidad !== 15) throw new Error('El stock cambió pese al rechazo de la venta.');
   });
 
@@ -154,6 +154,7 @@ async function ejecutar(): Promise<void> {
     const resultado = await registrarVenta(
       { referencia: 'PRUEBA-A', talla: 'M', cantidad: 5 },
       usuarioPrueba.id,
+      empresaId,
     );
     if (resultado.cantidadResultante !== 10 || resultado.venta.precioVenta !== 50_000) {
       throw new Error('La venta parcial o la copia del precio no coincide.');
@@ -164,6 +165,7 @@ async function ejecutar(): Promise<void> {
     const resultado = await registrarVenta(
       { referencia: 'PRUEBA-A', talla: 'M', cantidad: 10 },
       usuarioPrueba.id,
+      empresaId,
     );
     if (resultado.cantidadResultante !== 0 || !resultado.agotado) {
       throw new Error('La venta total no agotó el producto.');
@@ -172,7 +174,7 @@ async function ejecutar(): Promise<void> {
 
   await paso(9, 'rechazar la venta de un producto agotado', async () => {
     await debeFallarCon('STOCK_INSUFICIENTE', () =>
-      registrarVenta({ referencia: 'PRUEBA-A', talla: 'M', cantidad: 1 }, usuarioPrueba.id),
+      registrarVenta({ referencia: 'PRUEBA-A', talla: 'M', cantidad: 1 }, usuarioPrueba.id, empresaId),
     );
   });
 
@@ -180,6 +182,7 @@ async function ejecutar(): Promise<void> {
     const productos = await listarInventario(
       { referencia: 'PRUEBA-A', soloDisponibles: true },
       'trabajador',
+      empresaId,
     );
     if (productos.length !== 0) throw new Error('El producto agotado apareció como disponible.');
   });
@@ -189,19 +192,20 @@ async function ejecutar(): Promise<void> {
       registrarVenta(
         { referencia: 'PRUEBA-INEXISTENTE', talla: 'M', cantidad: 1 },
         usuarioPrueba.id,
+        empresaId,
       ),
     );
   });
 
   await paso(12, 'desactivar el producto agotado como dueño', async () => {
     if (!productoId) throw new Error('No se creó PRUEBA-A.');
-    await desactivarProducto(productoId, dueno.id);
-    const producto = await obtenerProducto(productoId, 'dueno', dueno.id);
+    await desactivarProducto(productoId, dueno.id, empresaId);
+    const producto = await obtenerProducto(productoId, 'dueno', dueno.id, empresaId);
     if (producto.activo) throw new Error('El producto siguió activo.');
   });
 
   await paso(13, 'listar las dos ventas y sus precios históricos', async () => {
-    const ventas = await listarVentas({ referencia: 'PRUEBA-A' });
+    const ventas = await listarVentas({ referencia: 'PRUEBA-A' }, empresaId);
     if (
       ventas.length !== 2 ||
       ventas.some((venta) => venta.precioVenta !== 50_000) ||
@@ -224,9 +228,10 @@ async function ejecutar(): Promise<void> {
       }),
       dueno.id,
       'dueno',
+      empresaId,
     );
     productoEconomicoId = resultado.productoId;
-    const detalle = await obtenerProducto(productoEconomicoId, 'dueno', dueno.id);
+    const detalle = await obtenerProducto(productoEconomicoId, 'dueno', dueno.id, empresaId);
     if (
       detalle.precioCompra !== 10_000 ||
       detalle.inversion !== 50_000 ||
@@ -242,10 +247,12 @@ async function ejecutar(): Promise<void> {
       productoEconomicoId,
       'trabajador',
       usuarioPrueba.id,
+      empresaId,
     );
     const listadoTrabajador = await listarInventario(
       { referencia: 'PRUEBA-ECONOMIA' },
       'trabajador',
+      empresaId,
     );
     if (
       Object.hasOwn(detalleTrabajador, 'precioCompra') ||
@@ -259,11 +266,12 @@ async function ejecutar(): Promise<void> {
     await registrarVenta(
       { referencia: 'PRUEBA-ECONOMIA', talla: 'L', cantidad: 2 },
       usuarioPrueba.id,
+      empresaId,
     );
-    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' });
+    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' }, empresaId);
     if (
       economia.productos.length !== 1 ||
-      economia.gananciaRealizadaTotal !== null ||
+      economia.gananciaRealizadaTotal !== 20_000 ||
       economia.inversionTotal !== 30_000 ||
       economia.gananciaPotencialTotal !== 30_000
     ) {
@@ -283,14 +291,15 @@ async function ejecutar(): Promise<void> {
       }),
       dueno.id,
       'dueno',
+      empresaId,
     );
-    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' });
+    const economia = await obtenerEconomia({ marca: 'Marca economía prueba' }, empresaId);
     if (
       !reingreso.sumado ||
       reingreso.cantidadResultante !== 5 ||
       economia.inversionTotal !== 60_000 ||
       economia.gananciaPotencialTotal !== 40_000 ||
-      economia.gananciaRealizadaTotal !== null
+      economia.gananciaRealizadaTotal !== 20_000
     ) {
       throw new Error('No se conservó el costo del inventario o se calculó utilidad histórica.');
     }
@@ -300,6 +309,7 @@ async function ejecutar(): Promise<void> {
         { precioVenta: 12_000 },
         dueno.id,
         'dueno',
+        empresaId,
       ),
     );
     await debeFallarCon('PRECIO_VENTA_NO_SUPERA_COMPRA', () =>
@@ -310,6 +320,7 @@ async function ejecutar(): Promise<void> {
         }),
         dueno.id,
         'dueno',
+        empresaId,
       ),
     );
   });
@@ -323,15 +334,16 @@ async function ejecutar(): Promise<void> {
       }),
       dueno.id,
       'dueno',
+      empresaId,
     );
-    const economia = await obtenerEconomia({ marca: 'Marca sin costo prueba' });
+    const economia = await obtenerEconomia({ marca: 'Marca sin costo prueba' }, empresaId);
     if (
       economia.productos.length !== 1 ||
       !economia.productos[0]?.sinPrecioCompra ||
       economia.productos[0].inversion !== null ||
       economia.inversionTotal !== 0 ||
       economia.gananciaPotencialTotal !== 0 ||
-      economia.gananciaRealizadaTotal !== null
+      economia.gananciaRealizadaTotal !== 0
     ) {
       throw new Error('El producto sin costo no está marcado o alteró los totales.');
     }

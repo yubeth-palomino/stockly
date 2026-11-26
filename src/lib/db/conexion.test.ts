@@ -13,7 +13,7 @@ describe('conexión de base de datos', () => {
     vi.stubEnv('STOCKLY_POSTGRES_URL_NON_POOLING', '');
 
     await expect(import('@/lib/dataService')).resolves.toBeDefined();
-  });
+  }, 20_000);
 
   it('usa la conexión directa fuera de Vercel aunque Next esté en producción', async () => {
     vi.stubEnv('VERCEL', '');

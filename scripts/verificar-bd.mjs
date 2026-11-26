@@ -201,11 +201,18 @@ async function verificarIntegridad() {
 
   await cliente.query('BEGIN');
   try {
+    const { rows: empresas } = await cliente.query(
+      'SELECT id FROM empresas ORDER BY created_at ASC, id ASC LIMIT 1',
+    );
+    if (!empresas[0]?.id) {
+      throw new Error('Se requiere al menos una empresa activa para las pruebas de integridad.');
+    }
+    const empresaId = empresas[0].id;
     await cliente.query(
       `INSERT INTO productos
-         (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-       VALUES ($1, 'X', 'Y', 'M', 10, 50000, $2)`,
-      [referenciaValidacion, fechaActual],
+         (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
+       VALUES ($1, $2, 'X', 'Y', 'M', 10, 50000, $3)`,
+      [empresaId, referenciaValidacion, fechaActual],
     );
     const { rows: normalizado } = await cliente.query(
       `SELECT id, clave_referencia, clave_talla
@@ -228,35 +235,35 @@ async function verificarIntegridad() {
     await casoQueFalla(
       'referencia/talla duplicadas normalizadas',
       `INSERT INTO productos
-         (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-       VALUES ($1, 'X', 'Y', 'm', 10, 50000, $2)`,
-      [referenciaValidacion, fechaActual],
+         (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
+       VALUES ($1, $2, 'X', 'Y', 'm', 10, 50000, $3)`,
+      [empresaId, referenciaValidacion, fechaActual],
       '23505',
       'ux_productos_ref_talla',
     );
     await casoQueFalla(
       'cantidad negativa',
       `INSERT INTO productos
-         (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-       VALUES ('NEG001', 'X', 'Y', 'M', -1, 50000, CURRENT_DATE)`,
-      [],
+         (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
+       VALUES ($1, 'NEG001', 'X', 'Y', 'M', -1, 50000, CURRENT_DATE)`,
+      [empresaId],
       '23514',
       'productos_cantidad_valida',
     );
     await casoQueFalla(
       'precio de venta cero',
       `INSERT INTO productos
-         (referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
-       VALUES ('PRE001', 'X', 'Y', 'M', 1, 0, CURRENT_DATE)`,
-      [],
+         (empresa_id, referencia, marca, descripcion, talla, cantidad, precio_venta, fecha_entrada)
+       VALUES ($1, 'PRE001', 'X', 'Y', 'M', 1, 0, CURRENT_DATE)`,
+      [empresaId],
       '23514',
       'productos_precio_venta_valido',
     );
     await casoQueFalla(
       'rol de usuario no permitido',
-      `INSERT INTO usuarios (nombre, usuario, rol)
-       VALUES ('Prueba inválida', 'prueba-invalida', 'gerente')`,
-      [],
+      `INSERT INTO usuarios (empresa_id, nombre, usuario, rol)
+       VALUES ($1, 'Prueba inválida', 'prueba-invalida', 'gerente')`,
+      [empresaId],
       '23514',
     );
 
