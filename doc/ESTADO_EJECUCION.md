@@ -429,3 +429,11 @@ DEMO-008    34     0         No
 - **Síntoma:** `/register` carga con HTTP 200. La persona usuaria reporta «No fue posible crear la cuenta con esos datos. Verifica el correo o inicia sesión». El endpoint devuelve ese texto cuando Supabase señala una identidad duplicada (`email_exists`/`user_already_exists` o identidades vacías), antes de crear negocio o perfil. Es una respuesta genérica de privacidad; no se consultaron ni registraron correos. En la ventana de logs de Vercel inspeccionada no apareció un `POST` de registro.
 - **Siguiente paso:** comprobar en Authentication > Users, sin compartir la dirección, si el correo intentado ya aparece. Si aparece, usar inicio de sesión o recuperación de contraseña; si no aparece, verificar que las variables Supabase de Production en Vercel apunten a este proyecto y revisar el registro del intento.
 - **Respaldo:** el plan Free de Supabase no incluye respaldos programados; no se creó un respaldo. Como no se ejecutó SQL ni hay migración pendiente de registro, no se necesitó restaurar datos. Para futuras migraciones sigue haciendo falta un respaldo descargable verificable.
+
+### Pulido visual de registro · 2026-11-26
+
+- **Presentación:** se modernizó `/register` con fondo suave, tarjeta dividida y panel de marca con acentos decorativos, además de ajustes en campos, botones y enlace secundario.
+- **Alcance:** solo estilos y una clase para aislarlos en el registro. Se conservaron la estructura del formulario, validaciones, estados, rutas y comportamiento; el inicio de sesión y las demás pantallas de autenticación no reciben estos estilos.
+- **Verificación visual local:** revisado en escritorio y en móvil (390 × 844); se corrigió el diseño de una columna en anchos móviles.
+- **Verificación automatizada:** `npm run lint`, `npm run type-check`, `npm test` (63 archivos, 218 pruebas), `npm run build` y `git diff --check` correctos. Vitest conserva su advertencia conocida sobre `configLoader: 'native'`.
+- **Despliegue:** no se hizo commit ni push; el cambio aún no está publicado en Vercel.

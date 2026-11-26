@@ -586,3 +586,173 @@
     transition: none;
   }
 }
+
+.registerPage.loginPage {
+  background:
+    radial-gradient(ellipse at 12% 12%, rgb(139 124 246 / 13%), transparent 34%),
+    radial-gradient(ellipse at 88% 90%, rgb(126 221 221 / 15%), transparent 32%),
+    #F5F5FB;
+}
+
+.registerPage.loginPrincipal {
+  width: min(1120px, 100%);
+  min-height: min(700px, calc(100svh - 56px));
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  border: 1px solid rgb(25 26 53 / 7%);
+  border-radius: 28px;
+  box-shadow: 0 30px 90px rgb(25 26 53 / 14%);
+}
+
+.registerPage .brandPanel {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 19%, rgb(126 221 221 / 10%) 0 1.5px, transparent 2px) 0 0 / 23px 23px,
+    radial-gradient(ellipse at 82% 21%, rgb(126 221 221 / 18%), transparent 34%),
+    linear-gradient(145deg, #191A35 0%, #22234A 58%, #302D68 100%);
+}
+
+.registerPage .brandPanel::after {
+  position: absolute;
+  top: 38%;
+  right: -155px;
+  width: 360px;
+  height: 360px;
+  border: 1px solid rgb(126 221 221 / 17%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 34px rgb(126 221 221 / 4%), 0 0 0 72px rgb(196 181 253 / 4%);
+  content: "";
+  pointer-events: none;
+}
+
+.registerPage .brandPanel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.registerPage .brandMessage {
+  margin-top: 30px;
+}
+
+.registerPage .brandMessage h1 {
+  max-width: 430px;
+  font-size: clamp(38px, 4.4vw, 54px);
+  letter-spacing: -2px;
+}
+
+.registerPage .brandMessage > p:last-child {
+  max-width: 340px;
+  font-size: 16px;
+}
+
+.registerPage .stockNote {
+  border-color: rgb(196 181 253 / 24%);
+  background: rgb(42 43 74 / 76%);
+  backdrop-filter: blur(12px);
+}
+
+.registerPage .formPanel {
+  background: linear-gradient(155deg, #FFFFFF 0%, #FCFBFF 100%);
+}
+
+.registerPage .formContent {
+  max-width: 410px;
+}
+
+.registerPage .formKicker {
+  margin-bottom: 14px;
+}
+
+.registerPage .formContent h2 {
+  font-size: clamp(30px, 3.5vw, 38px);
+  letter-spacing: -1.2px;
+}
+
+.registerPage .formIntro {
+  max-width: 360px;
+  margin-top: 13px;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
+.registerPage .form {
+  gap: 20px;
+}
+
+.registerPage .field {
+  gap: 9px;
+}
+
+.registerPage .field label {
+  font-size: 13px;
+  letter-spacing: 0.1px;
+}
+
+.registerPage .field input {
+  height: 54px;
+  border-color: #E5E5F0;
+  border-radius: 14px;
+  background: #FAFAFE;
+}
+
+.registerPage .field input:hover:not(:focus-visible) {
+  border-color: #C9C4F5;
+}
+
+.registerPage .submitButton {
+  min-height: 54px;
+  margin-top: 4px;
+  border-color: #5146D8;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #5C50E8 0%, #4940C8 100%);
+  box-shadow: 0 10px 22px rgb(79 70 229 / 20%);
+  letter-spacing: 0.1px;
+}
+
+.registerPage .submitButton:hover:not(:disabled) {
+  border-color: #332D91;
+  background: linear-gradient(110deg, #5146D8 0%, #332D91 100%);
+  box-shadow: 0 13px 26px rgb(79 70 229 / 25%);
+}
+
+.registerPage .registerPrompt {
+  margin-top: 20px;
+}
+
+.registerPage .registerLink {
+  min-height: 50px;
+  border-color: #E2E0F1;
+  border-radius: 14px;
+  color: #5146D8;
+}
+
+.registerPage .registerLink:hover {
+  border-color: #C9C4F5;
+  background: #F7F6FF;
+}
+
+.registerPage .formFooter {
+  margin-top: 28px;
+}
+
+@media (max-width: 760px) {
+  .registerPage.loginPrincipal {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registerPage .brandPanel {
+    display: none;
+  }
+
+  .registerPage.loginPrincipal .formPanel {
+    min-height: calc(100svh - 56px);
+    border-radius: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .registerPage.loginPrincipal .formPanel {
+    min-height: calc(100svh - 32px);
+  }
+}

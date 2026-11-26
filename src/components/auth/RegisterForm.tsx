@@ -106,7 +106,7 @@ export function RegisterForm() {
   }
 
   return (
-    <main className={`${styles.loginPage} ${styles.loginPrincipal}`}>
+    <main className={`${styles.loginPage} ${styles.loginPrincipal} ${styles.registerPage}`}>
       <section className={styles.brandPanel} aria-label="Stockly">
         <Link className={styles.brand} href="/" aria-label="Stockly, inicio">
           <span className={styles.brandMark}>
