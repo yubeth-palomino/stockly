@@ -85,10 +85,32 @@ export async function obtenerEconomia(
     };
   });
 
+  type FilaGananciaRealizada = { gananciaRealizada: number | string };
+  const columnas = await consultar<{ column_name: string }>(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'ventas'
+       AND column_name = 'costo_unitario'`,
+    [],
+  );
+  let gananciaRealizadaTotal: number | null = null;
+  if (columnas.some(({ column_name }) => column_name === 'costo_unitario')) {
+    const filas = await consultar<FilaGananciaRealizada>(
+      `SELECT COALESCE(sum((precio_venta - costo_unitario)::numeric * cantidad), 0)::text
+              AS "gananciaRealizada"
+       FROM ventas
+       WHERE empresa_id = $1 AND costo_unitario IS NOT NULL`,
+      [empresaId],
+    );
+    const valor = filas[0]?.gananciaRealizada ?? 0;
+    gananciaRealizadaTotal = enteroSeguro(Number(valor), 'ganancia realizada total');
+  }
+
   return {
     inversionTotal,
     gananciaPotencialTotal,
-    gananciaRealizadaTotal: null,
+    gananciaRealizadaTotal,
     productos: detalleProductos,
   };
 }

@@ -17,6 +17,7 @@ type FilaProductoBloqueado = {
   talla: string;
   cantidad: number;
   precioVenta: number;
+  precioCompra: number | null;
 };
 
 export async function registrarVenta(
@@ -29,7 +30,7 @@ export async function registrarVenta(
   return conTransaccion(async (tx) => {
     const filasProducto = await tx.query<FilaProductoBloqueado>(
       `SELECT id, referencia, talla, cantidad,
-              precio_venta AS "precioVenta"
+              precio_venta AS "precioVenta", precio_compra AS "precioCompra"
        FROM productos
        WHERE empresa_id = $1 AND clave_referencia = $2 AND clave_talla = $3 AND activo = true
        FOR UPDATE`,
@@ -41,8 +42,8 @@ export async function registrarVenta(
     const cantidadResultante = cantidadTrasVenta(producto.cantidad, datos.cantidad);
     const ventas = await tx.query<FilaVenta>(
       `INSERT INTO ventas
-         (empresa_id, producto_id, usuario_id, referencia, talla, cantidad, precio_venta, fecha_venta)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         (empresa_id, producto_id, usuario_id, referencia, talla, cantidad, precio_venta, costo_unitario, fecha_venta)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, producto_id AS "productoId", usuario_id AS "usuarioId",
                  referencia, talla, cantidad, precio_venta AS "precioVenta",
                  fecha_venta AS "fechaVenta"`,
@@ -54,6 +55,7 @@ export async function registrarVenta(
         producto.talla,
         datos.cantidad,
         producto.precioVenta,
+        producto.precioCompra,
         hoyBogota(),
       ],
     );

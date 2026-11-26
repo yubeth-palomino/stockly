@@ -13,7 +13,7 @@
 | P08 Entrada de mercancía                 | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
 | P09 Ventas                               | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
 | P10 Usuarios y aceptación                | implementación completada; aceptación manual pendiente                                            | correcto                      | 212/212                       | 2026-11-25      |
-| P11 Módulo económico (opcional)          | parcial; utilidad histórica pendiente de costos por venta y empresa activa                        | correcto                      | 130/130                       | 2026-11-07      |
+| P11 Módulo económico (opcional)          | completado técnicamente; ganancia realizada por costo histórico                                      | correcto                      | 212/212                       | 2026-11-25      |
 | P12 Auditoría y planificación de mejoras | completado; auditoría real y diseño aprobatorio sin cambios en producción                         | correcto                      | 158/158                       | 2026-11-14      |
 | Evolución comercial                      | inventario y ventas API local parcial; BD sin migrar                                              | correcto                      | 130/130                       | 2026-11-07      |
 | P13 Base de datos comercial              | migraciones aditivas aplicadas y verificadas en pruebas; integridad concurrente probada           | correcto                      | 171/171                       | 2026-11-14      |
@@ -359,3 +359,12 @@ DEMO-008    34     0         No
 - **Privacidad:** `.env.local` está excluido de Git; la búsqueda de variables con valores en archivos rastreados no encontró coincidencias.
 - **Prueba de integración bloqueada:** `npm run probar:flujo` se detuvo antes de conectarse porque Node no recibió `STOCKLY_POSTGRES_URL` ni `STOCKLY_POSTGRES_URL_NON_POOLING`. La limpieza no pudo ejecutarse; no se tocó ninguna base ni los datos DEMO.
 - **Aceptación manual pendiente:** A-01, A-07, A-13, A-14, A-17 y A-19 requieren sesiones autenticadas y/o un entorno de prueba en Vercel. No se declaran aprobados ni se marca la aceptación de P10 como completa.
+
+### P10–P17 · cierre técnico del tramo existente · 2026-11-25
+
+- **P10:** usuarios, invitaciones, cambio de rol/estado y protección del último dueño quedan implementados y cubiertos por pruebas; la aceptación autenticada A-01, A-07, A-13, A-14, A-17 y A-19 permanece pendiente.
+- **P11:** se completó el cálculo de ganancia realizada desde `ventas.costo_unitario`. Las ventas nuevas conservan el costo vigente en la fila de venta; ventas sin costo aportan cero y no se inventa un costo histórico.
+- **P12:** auditoría y planificación comercial documentadas; no corresponde una migración adicional.
+- **P13–P17:** base comercial, servicios/API, caja, directorios/crédito/abonos y dashboard quedan implementados según sus checkpoints. A-24–A-44 siguen siendo aceptación manual y no se consideran aprobados.
+- **Validación pendiente por entorno:** `npm run probar:flujo` y `npm run db:limpiar -- --prueba` no pudieron ejecutarse porque `.env.local` no contenía la cadena PostgreSQL en la sesión actual. No se modificó ni limpió la base.
+- **Cierre de código:** `npm run build`, `npm run lint`, `npm run type-check` y `npm test` terminaron correctamente; Vitest pasó 62 archivos y 212 pruebas en la ejecución final.

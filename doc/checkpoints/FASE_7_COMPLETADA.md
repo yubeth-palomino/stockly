@@ -6,3 +6,4 @@
 - Las rutas de productos ignoran `precioCompra` enviado por trabajadores, incluso cuando el valor es inválido.
 - Verificación local: `npm run build`, `npm run lint`, `npm run type-check`, `npm test` (95/95), `npm run db:verificar` (0 fallas) y `npm run probar:flujo` (17/17, 0 fallas).
 - A-01 a A-23 están definidos en `doc/ACEPTACION.md`, pero siguen sin diligenciar. La aceptación autenticada con cuentas de dueño y trabajador en Vercel queda pendiente.
+- Revalidación 2026-11-25: se añadió la ganancia realizada histórica desde `ventas.costo_unitario`; ventas nuevas conservan el costo vigente al momento de vender y el resumen excluye ventas sin costo verificable.

@@ -9,7 +9,8 @@ describe('obtenerEconomia', () => {
   beforeEach(() => vi.resetAllMocks());
 
   it('suma inversión y ganancia potencial, sin inventar costo histórico de ventas', async () => {
-    mocks.consultar.mockResolvedValueOnce([
+    mocks.consultar
+      .mockResolvedValueOnce([
         {
           id: 'producto-1',
           referencia: 'CAM001',
@@ -37,14 +38,16 @@ describe('obtenerEconomia', () => {
           precioVenta: 60_000,
           precioCompra: null,
         },
-      ]);
+      ])
+      .mockResolvedValueOnce([{ column_name: 'costo_unitario' }])
+      .mockResolvedValueOnce([{ gananciaRealizada: '80000' }]);
 
     const economia = await obtenerEconomia({}, 'empresa-1');
 
     expect(economia).toEqual({
       inversionTotal: 100_000,
       gananciaPotencialTotal: 150_000,
-      gananciaRealizadaTotal: null,
+      gananciaRealizadaTotal: 80_000,
       productos: [
         expect.objectContaining({
           referencia: 'CAM001',
@@ -68,11 +71,13 @@ describe('obtenerEconomia', () => {
         }),
       ],
     });
-    expect(mocks.consultar).toHaveBeenCalledTimes(1);
+    expect(mocks.consultar).toHaveBeenCalledTimes(3);
   });
 
   it('aplica el filtro de marca al detalle de inventario', async () => {
-    mocks.consultar.mockResolvedValueOnce([]);
+    mocks.consultar
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
     await obtenerEconomia({ marca: ' Nike ' }, 'empresa-1');
 
@@ -81,12 +86,14 @@ describe('obtenerEconomia', () => {
   });
 
   it('no consulta ganancias comerciales sin una empresa autorizada en el contexto', async () => {
-    mocks.consultar.mockResolvedValueOnce([]);
+    mocks.consultar
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
     const economia = await obtenerEconomia({}, 'empresa-1');
 
     expect(economia.gananciaRealizadaTotal).toBeNull();
-    expect(mocks.consultar).toHaveBeenCalledTimes(1);
+    expect(mocks.consultar).toHaveBeenCalledTimes(2);
     expect(mocks.consultar.mock.calls[0]?.[0]).not.toContain('ventas_comerciales');
   });
 });
