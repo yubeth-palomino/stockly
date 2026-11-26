@@ -15,13 +15,13 @@
 | P10 Usuarios y aceptación                | implementación completada; aceptación manual pendiente                                            | correcto                      | 212/212                       | 2026-11-25      |
 | P11 Módulo económico (opcional)          | completado técnicamente; ganancia realizada por costo histórico                                      | correcto                      | 212/212                       | 2026-11-25      |
 | P12 Auditoría y planificación de mejoras | completado; auditoría real y diseño aprobatorio sin cambios en producción                         | correcto                      | 158/158                       | 2026-11-14      |
-| Evolución comercial                      | inventario y ventas API local parcial; BD sin migrar                                              | correcto                      | 130/130                       | 2026-11-07      |
+| Evolución comercial                      | implementada técnicamente en P13–P17 sobre BD de pruebas; aceptación y despliegue de producción pendientes | correcto                      | 171/171; integración comercial 14/14 | 2026-11-14      |
 | P13 Base de datos comercial              | migraciones aditivas aplicadas y verificadas en pruebas; integridad concurrente probada           | correcto                      | 171/171                       | 2026-11-14      |
 | P14 Servicios y API                      | reglas, transacciones, idempotencia y autorización implementadas; integradas contra BD de pruebas | correcto                      | 171/171                       | 2026-11-14      |
 | P15 Caja, códigos y alertas              | vista de inventario actualizada; caja adaptable y detalle de cierres                              | correcto                      | 171/171                       | 2026-11-14      |
 | P16 Proveedores, clientes y créditos     | páginas, API, saldos y abonos concurrentes; aceptación manual pendiente                           | correcto                      | 171/171                       | 2026-11-14      |
 | P17 Dashboard y aceptación               | dashboard con series y filtros reales; aceptación A-24–A-44 sin diligenciar                       | correcto                      | 171/171                       | 2026-11-14      |
-| Revisión funcional global                | implementación validada; aceptación manual y producción pendientes                                | correcto                      | 193/193 (56 archivos)         | 2026-11-21      |
+| Revisión funcional global                | automatización revalidada; aceptación manual y producción pendientes                              | correcto                      | 212/212; BD 0 fallas; flujo 17/17; comercial 14/14 | 2026-11-25      |
 
 ## Bitácora
 
@@ -373,3 +373,21 @@ DEMO-008    34     0         No
 - **Correcciones adicionales:** se incluyó `empresa_id` en las inserciones de verificación, la limpieza eliminó dependencias comerciales antes de ventas/usuarios y el flujo dejó de depender de cookies de una petición HTTP al ejecutar servicios directos.
 - **Sesión en despliegue:** se observó GET `/api/panel/sesion` con respuesta 401 `NO_AUTORIZADO` y el navegador quedó en `/login`; no se logró comprobar la sesión de dueño declarada por la persona usuaria ni iniciar una sesión trabajador. La aceptación autenticada A-01–A-23 queda sin cerrar.
 - **Hardware:** la persona usuaria informó que cámara/lector e impresora están disponibles, pero todavía no se ha capturado lectura ni impresión como evidencia. A-24–A-44 requieren verificación visual/hardware; no se marcan aprobados por pruebas automatizadas.
+
+### Revisión de faltantes y estado de invitaciones · 2026-11-25
+
+- **Cierre técnico:** P00–P17 tienen implementación y pruebas automatizadas registradas; `npm run build`, `npm run lint`, `npm run type-check` y `npm test` pasaron en la última revalidación. Las integraciones de flujo y comercial pasaron contra la base aislada de pruebas, no contra producción.
+- **Aceptación P10/P11 pendiente:** A-01, A-07, A-13, A-14, A-17 y A-19 requieren una sesión real de trabajador, una invitación de prueba o un entorno seguro. A-21 requiere probar el rechazo de precio con datos de prueba; no debe alterarse un precio real en producción. A-17 aún no incluye cerrar navegador/sesión.
+- **Aceptación P13–P17 pendiente:** A-24–A-44 siguen sin resultado manual. Incluyen códigos de barras/lector, mínimos y alertas, caja, proveedores/clientes/crédito, permisos de trabajador y conciliación del dashboard. Cámara/lector e impresora fueron reportados disponibles por la persona usuaria, pero falta probarlos y guardar evidencia física.
+- **Producción de registro público:** la migración multiempresa y su verificación están confirmadas solo en la base aislada local. Falta respaldo, inspección/aplicación controlada y verificación en la base de producción antes de certificar `/register`; también falta validar SMTP/confirmación de correo de Supabase.
+- **Invitaciones de trabajador:** el conector Resend de Vercel existe y `getToken('stockly')` coincide con su identificador. Se agregó `RESEND_FROM` únicamente al entorno Production. El redeploy sigue pendiente de completar la verificación de identidad solicitada por Vercel; mientras no haya un nuevo despliegue listo, la configuración aún no está activa en producción. No se envió una invitación real ni se creó una cuenta de prueba.
+- **Estado de cambios:** esta revisión actualizó documentación únicamente; no cambió código ni hizo push. No se repitieron build ni pruebas por ser un cambio documental.
+
+### Revalidación automatizada y estado de cierre · 2026-11-25
+
+- **Build:** `npm run build` terminó correctamente con Next.js 16.3.5; se generaron las rutas estáticas y dinámicas sin errores.
+- **Calidad y tipos:** `npm run lint` y `npm run type-check` terminaron correctamente.
+- **Pruebas unitarias:** `npm test` aprobó 62 archivos y 212/212 pruebas. Persiste solo la advertencia conocida de Vite sobre `configLoader: 'native'`.
+- **Integración con PostgreSQL aislado:** con confirmación de que `.env.local` apunta a la base aislada, `npm run db:verificar` terminó con 0 fallas; `npm run probar:flujo` pasó 17/17 y limpió 3 ventas, 10 eventos, 3 productos y 1 usuario temporales; `npm run probar:comercial` pasó 14/14 y limpió sus datos de prueba. `STOCKLY_PRUEBA_COMERCIAL=SI` se definió solo para ese proceso.
+- **Producción:** el despliegue activo observado sigue en el commit `879fde5`. `RESEND_FROM` está configurado solo para Production, pero la página compartida de Vercel todavía muestra la verificación de identidad sin completar; no se confirmó un nuevo despliegue ni se probó una invitación real.
+- **Criterio de cierre:** la compilación, lint, tipos y pruebas unitarias están verdes. El estado global sigue abierto por aceptación autenticada, migración/SMTP de producción, pruebas físicas A-24–A-44 y despliegue de la configuración de correo. No se hizo push.

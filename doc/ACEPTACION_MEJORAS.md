@@ -2,7 +2,7 @@
 
 Los casos se mantienen sin resultado hasta ejecutarlos manualmente con el perfil y el entorno indicados. Las pruebas automatizadas y de integración no sustituyen la aceptación visual con hardware ni la validación del usuario.
 
-Nota de revalidación 2026-11-26: las 14 comprobaciones comerciales automatizadas aprobaron en base de pruebas; cámara/lector e impresora física siguen sin dispositivo disponible y no se marcarán como aprobados.
+Nota de revalidación 2026-11-26: las 14 comprobaciones comerciales automatizadas aprobaron en base de pruebas. La persona usuaria informó que cámara/lector e impresora están disponibles, pero aún falta ejecutar y documentar las pruebas físicas; no se marcarán como aprobados por disponibilidad del equipo.
 
 | ID   | Acción                      | Resultado esperado                               | Resultado obtenido | Evidencia | Observaciones |
 | ---- | --------------------------- | ------------------------------------------------ | ------------------ | --------- | ------------- |
