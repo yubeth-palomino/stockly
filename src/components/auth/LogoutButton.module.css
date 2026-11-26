@@ -79,3 +79,39 @@
 .error {
   color: #A76A65;
 }
+
+.button {
+  min-width: var(--altura-control);
+  min-height: var(--altura-control);
+  justify-content: center;
+  padding: 0 var(--espacio-3);
+  border-color: transparent;
+  border-radius: var(--radio-control);
+  color: var(--color-superficie);
+  background: rgb(255 255 255 / 10%);
+  font: var(--peso-medio) var(--texto-xs) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.button:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--color-superficie);
+  background: var(--color-sidebar-superficie);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-disponible);
+  outline-offset: 3px;
+}
+
+.error {
+  color: var(--color-error);
+}
+
+@media (max-width: 800px) {
+  .button {
+    width: var(--altura-control);
+    min-width: var(--altura-control);
+    min-height: var(--altura-control);
+    padding: 0;
+  }
+}

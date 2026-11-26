@@ -1,15 +1,15 @@
 :global(:root) {
-  --auth-blanco: #FFFFFF;
-  --auth-beige: #E9E4FF;
-  --auth-superficie: #EDEDF2;
-  --auth-camel: #8B7CF6;
-  --auth-camel-oscuro: #4F46E5;
-  --auth-texto: #1A1A35;
-  --auth-texto-secundario: #8A8AA3;
-  --auth-error: #4F46E5;
-  --auth-exito: #191A35;
-  --auth-turquesa: #7EDDDD;
-  --auth-marino: #191A35;
+  --auth-blanco: var(--color-superficie);
+  --auth-beige: var(--color-fondo);
+  --auth-superficie: var(--color-borde);
+  --auth-camel: var(--color-primario);
+  --auth-camel-oscuro: var(--color-primario-oscuro);
+  --auth-texto: var(--color-texto);
+  --auth-texto-secundario: var(--color-texto-suave);
+  --auth-error: var(--color-error);
+  --auth-exito: var(--color-exito);
+  --auth-turquesa: var(--color-disponible);
+  --auth-marino: var(--color-sidebar);
 }
 
 .loginPage {
@@ -86,6 +86,7 @@
 .brand {
   display: inline-flex;
   width: fit-content;
+  min-height: var(--altura-control);
   align-items: center;
   gap: 10px;
   margin-bottom: 34px;
@@ -754,5 +755,301 @@
 @media (max-width: 480px) {
   .registerPage.loginPrincipal .formPanel {
     min-height: calc(100svh - 32px);
+  }
+}
+
+.loginPage {
+  padding: var(--espacio-5);
+  background: var(--color-fondo);
+}
+
+.loginPrincipal,
+.registerPage.loginPrincipal {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  box-shadow: var(--sombra-elevada);
+}
+
+.formPanel,
+.registerPage .formPanel {
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.loginPrincipal .formPanel {
+  padding: var(--espacio-7);
+  box-shadow: none;
+}
+
+.registerPage.loginPage {
+  background: var(--color-fondo);
+}
+
+.registerPage .brandPanel {
+  background: var(--color-sidebar);
+}
+
+.registerPage .brandPanel::after {
+  display: none;
+}
+
+.registerPage .formPanel {
+  background: var(--color-superficie);
+}
+
+.formContent h2,
+.registerPage .formContent h2 {
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-fuerte);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.loginPrincipal .brandMessage h1,
+.registerPage .brandMessage h1 {
+  font-size: var(--texto-2xl);
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.registerPage.loginPrincipal {
+  width: min(1080px, 100%);
+  min-height: min(700px, calc(100svh - var(--espacio-6)));
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  overflow: hidden;
+  background: var(--color-superficie);
+}
+
+.registerPage .formPanel {
+  width: 100%;
+  min-height: 100%;
+  justify-content: center;
+  padding: var(--espacio-7);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.registerPage .formContent {
+  max-width: 400px;
+  margin: auto;
+}
+
+.formIntro,
+.registerPage .formIntro {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-base);
+  line-height: var(--interlineado);
+}
+
+.kicker,
+.formKicker,
+.registerPage .formKicker {
+  color: var(--color-primario-oscuro);
+  font-size: var(--texto-xs);
+}
+
+.field,
+.registerPage .field {
+  gap: var(--espacio-2);
+}
+
+.field label,
+.registerPage .field label {
+  color: var(--color-texto);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-fuerte);
+}
+
+.field input,
+.registerPage .field input {
+  height: var(--altura-control);
+  min-height: var(--altura-control);
+  padding: 0 var(--espacio-4);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  font: var(--peso-regular) var(--texto-base) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.inputWithIcon input,
+.passwordInput input {
+  padding-left: 46px;
+}
+
+.field .inputWithIcon input,
+.field .passwordInput input {
+  padding-left: 46px;
+}
+
+.passwordInput input {
+  padding-right: 100px;
+}
+
+.field .passwordInput input {
+  padding-right: 100px;
+}
+
+.field input::placeholder {
+  color: var(--color-texto-suave);
+  opacity: 1;
+}
+
+.field input:focus-visible {
+  border-color: var(--color-enfoque);
+  box-shadow: 0 0 0 3px rgb(79 70 229 / 16%);
+}
+
+.field input.inputError {
+  border-color: var(--color-error);
+}
+
+.fieldError,
+.authError {
+  color: var(--color-error);
+}
+
+.passwordToggle {
+  min-height: var(--altura-control);
+  border-radius: var(--radio-control);
+  color: var(--color-primario-oscuro);
+  font-size: var(--texto-xs);
+}
+
+.forgotPassword,
+.backToLogin,
+.registerLink {
+  min-height: var(--altura-control);
+  color: var(--color-primario-oscuro);
+  font-size: var(--texto-sm);
+}
+
+.submitButton {
+  min-height: var(--altura-control);
+  border-color: var(--color-primario-oscuro);
+  border-radius: var(--radio-control);
+  color: var(--color-superficie);
+  background: var(--color-primario-oscuro);
+  font-size: var(--texto-sm);
+}
+
+.submitButton:hover:not(:disabled) {
+  border-color: var(--color-sidebar);
+  background: var(--color-sidebar);
+}
+
+.registerLink,
+.registerPage .registerLink {
+  border-color: var(--color-primario);
+  border-radius: var(--radio-control);
+  color: var(--color-primario-oscuro);
+  background: var(--color-superficie);
+}
+
+.registerLink:hover,
+.registerPage .registerLink:hover {
+  border-color: var(--color-primario);
+  background: var(--color-primario-suave);
+}
+
+.recoveryMessage {
+  border-color: var(--color-exito);
+  border-radius: var(--radio-control);
+  color: var(--color-exito);
+  background: var(--color-exito-superficie);
+}
+
+.brandMark,
+.registerPage .brandMark {
+  border-radius: var(--radio-control);
+}
+
+.formFooter {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-xs);
+}
+
+.field input:focus-visible,
+.submitButton:focus-visible,
+.forgotPassword:focus-visible,
+.backToLogin:focus-visible,
+.registerLink:focus-visible,
+.passwordToggle:focus-visible {
+  outline: 3px solid var(--color-enfoque);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .loginPage {
+    padding: var(--espacio-4);
+  }
+
+  .loginPrincipal .formPanel {
+    padding: var(--espacio-6);
+  }
+
+  .registerPage.loginPrincipal {
+    min-height: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .registerPage .brandPanel {
+    display: none;
+  }
+
+  .registerPage.loginPrincipal .formPanel {
+    min-height: calc(100svh - var(--espacio-6));
+    padding: var(--espacio-6);
+  }
+}
+
+@media (max-width: 480px) {
+  .loginPage {
+    padding: var(--espacio-2);
+  }
+
+  .loginPrincipal .formPanel,
+  .registerPage.loginPrincipal .formPanel {
+    min-height: calc(100svh - var(--espacio-4));
+    padding: var(--espacio-5) var(--espacio-4);
+    border-radius: var(--radio-tarjeta);
+  }
+
+  .loginPrincipal .mobileBrand {
+    margin-bottom: var(--espacio-6);
+  }
+
+  .formContent h2,
+  .registerPage .formContent h2 {
+    font-size: var(--texto-2xl);
+  }
+
+  .formIntro,
+  .registerPage .formIntro {
+    margin-bottom: var(--espacio-5);
+  }
+
+  .form,
+  .registerPage .form {
+    gap: var(--espacio-4);
+  }
+
+  .formFooter,
+  .registerPage .formFooter {
+    margin-top: auto;
+    padding-top: var(--espacio-5);
+  }
+
+  .registerPage.loginPrincipal .formPanel {
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .passwordLabel {
+    gap: var(--espacio-1);
   }
 }
