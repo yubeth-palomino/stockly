@@ -258,3 +258,72 @@
   transform: translateY(-1px);
   background: var(--color-hover-primario);
 }
+
+.selector {
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-5);
+  padding: var(--espacio-4);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.selector h2 {
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-fuerte);
+}
+
+.filaSeleccion {
+  min-height: var(--altura-control);
+  gap: var(--espacio-3);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.filaSeleccion input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+}
+
+.filaSeleccion input,
+.formato select {
+  min-height: var(--altura-control);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.formato {
+  gap: var(--espacio-2);
+  color: var(--color-texto);
+  font: var(--peso-medio) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.formato select {
+  padding: 0 var(--espacio-3);
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+.botonImprimir {
+  min-height: var(--altura-control);
+  padding: 0 var(--espacio-4);
+  border: 1px solid var(--color-primario);
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  background: var(--color-primario);
+  font: var(--peso-fuerte) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.botonImprimir:hover:not(:disabled) {
+  transform: none;
+  border-color: var(--color-disponible);
+  background: var(--color-disponible);
+}
+
+:where(.filaSeleccion input, .formato select, .botonImprimir):focus-visible {
+  outline: 3px solid var(--color-enfoque);
+  outline-offset: 3px;
+}

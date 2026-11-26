@@ -282,3 +282,107 @@
   border-radius: 8px 8px 3px 3px;
   background: linear-gradient(180deg, #8B7CF6 0%, #C4B5FD 100%);
 }
+
+.panel {
+  gap: var(--espacio-4);
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.tarjeta,
+.metrica {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.tarjeta {
+  padding: var(--espacio-5);
+}
+
+.tarjeta h2,
+.tarjeta h3 {
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+  font-weight: var(--peso-fuerte);
+}
+
+.formulario {
+  gap: var(--espacio-4);
+}
+
+.acciones {
+  gap: var(--espacio-3);
+  margin-top: var(--espacio-3);
+}
+
+.metricas {
+  gap: var(--espacio-4);
+}
+
+.metrica {
+  padding: var(--espacio-4);
+}
+
+.fila,
+.filaCabecera {
+  gap: var(--espacio-3);
+  padding: var(--espacio-3);
+}
+
+.tabla {
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: var(--peso-regular) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.tabla th,
+.tabla td {
+  padding: var(--espacio-3) var(--espacio-4);
+  border-color: var(--color-borde);
+}
+
+.tabla th {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-fuerte);
+}
+
+.tabla tbody tr:nth-child(even) {
+  background: var(--color-primario-suave);
+}
+
+.nota,
+.metrica span {
+  color: var(--color-texto-suave);
+}
+
+.metrica strong {
+  color: var(--color-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.estado {
+  border-radius: 999px;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  font-size: var(--texto-xs);
+}
+
+.barraGrafico span {
+  border-radius: var(--radio-control) var(--radio-control) var(--espacio-1) var(--espacio-1);
+  background: var(--color-primario);
+}
+
+@media (max-width: 760px) {
+  .tabla {
+    max-width: 100%;
+  }
+}

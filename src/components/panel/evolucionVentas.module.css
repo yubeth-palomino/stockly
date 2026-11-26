@@ -383,3 +383,133 @@
 .tablaContenedor tbody tr:nth-child(even) {
   background: var(--color-fondo);
 }
+
+.filtros {
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.filtros label,
+.rangoTexto,
+.nota,
+.kpis article span,
+.kpisEconomicos article span,
+.grafico text,
+.valorBarra,
+.etiquetaBarra {
+  color: var(--color-texto-suave);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.filtros select,
+.filtros input,
+.filtros button {
+  min-height: var(--altura-control);
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: var(--peso-regular) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.filtros button {
+  border-color: var(--color-primario);
+  background: var(--color-primario);
+  font-weight: var(--peso-fuerte);
+}
+
+.filtros button:hover {
+  transform: none;
+  border-color: var(--color-disponible);
+  background: var(--color-disponible);
+}
+
+.kpis,
+.kpisEconomicos {
+  gap: var(--espacio-4);
+  margin: var(--espacio-4) 0;
+}
+
+.kpis article,
+.kpisEconomicos article,
+.tarjeta,
+.comparacion {
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.kpis article,
+.kpisEconomicos article {
+  min-height: 112px;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+.kpis article strong,
+.kpisEconomicos article strong,
+.encabezadoTarjeta > strong {
+  color: var(--color-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.graficos,
+.seccion {
+  gap: var(--espacio-4);
+  margin: var(--espacio-4) 0;
+}
+
+.tarjeta {
+  margin: var(--espacio-4) 0;
+  padding: var(--espacio-5);
+}
+
+.tarjeta h2 {
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+  font-size: var(--texto-lg);
+  font-weight: var(--peso-fuerte);
+}
+
+.tarjeta p,
+.encabezadoTarjeta p,
+.encabezadoTarjeta > strong {
+  color: var(--color-texto-suave);
+}
+
+.barra {
+  border-radius: var(--radio-control) var(--radio-control) var(--espacio-1) var(--espacio-1);
+  background: var(--color-primario);
+}
+
+.tablaContenedor {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tablaContenedor table {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: var(--peso-regular) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.tablaContenedor th,
+.tablaContenedor td {
+  padding: var(--espacio-3) var(--espacio-2);
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.tablaContenedor th {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}

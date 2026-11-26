@@ -455,3 +455,215 @@
     box-shadow: 0 6px 20px rgb(74 63 53 / 4%);
   }
 }
+
+.content {
+  min-width: 0;
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.sectionName,
+.count {
+  color: var(--color-texto-suave);
+}
+
+.heading {
+  gap: var(--espacio-5);
+  padding: var(--espacio-6) 0 var(--espacio-5);
+}
+
+.heading h1 {
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-fuerte);
+}
+
+.toolbar {
+  gap: var(--espacio-4);
+  margin-bottom: var(--espacio-4);
+}
+
+.search {
+  min-height: var(--altura-control);
+  height: auto;
+  gap: var(--espacio-2);
+  padding: 0 var(--espacio-3);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-control);
+  color: var(--color-texto-suave);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.search input,
+.table,
+.field input,
+.field select {
+  color: var(--color-texto);
+  font-family: var(--fuente-inter), sans-serif;
+}
+
+.tableFrame {
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.table {
+  font-size: var(--texto-sm);
+}
+
+.table th,
+.table td {
+  padding: var(--espacio-3) var(--espacio-4);
+  border-color: var(--color-borde);
+}
+
+.table th {
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+  font-size: var(--texto-xs);
+}
+
+.table td {
+  color: var(--color-texto);
+}
+
+.table tbody tr:nth-child(even) {
+  background: var(--color-primario-suave);
+}
+
+.role {
+  min-height: var(--espacio-6);
+  align-items: center;
+  padding: var(--espacio-1) var(--espacio-2);
+  border-radius: 999px;
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.admin {
+  color: var(--color-texto);
+  background: var(--color-disponible);
+}
+
+.editButton,
+.cancelButton,
+.closeButton {
+  min-height: var(--altura-control);
+  padding: 0 var(--espacio-3);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  font: var(--peso-medio) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.editButton:hover,
+.cancelButton:hover:not(:disabled) {
+  border-color: var(--color-primario);
+  color: var(--color-texto);
+  background: var(--color-primario-suave);
+}
+
+.empty,
+.error {
+  color: var(--color-texto-suave);
+}
+
+.overlay {
+  padding: var(--espacio-5);
+  background: rgb(25 26 53 / 55%);
+}
+
+.dialog {
+  padding: var(--espacio-5);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-elevada);
+}
+
+.dialogHeading {
+  gap: var(--espacio-4);
+  margin-bottom: var(--espacio-5);
+}
+
+.dialogKicker {
+  color: var(--color-primario-oscuro);
+}
+
+.dialog h2 {
+  font-size: var(--texto-xl);
+  font-weight: var(--peso-fuerte);
+}
+
+.form {
+  gap: var(--espacio-4);
+}
+
+.field {
+  gap: var(--espacio-2);
+  color: var(--color-texto);
+  font: var(--peso-medio) var(--texto-sm) / var(--interlineado) var(--fuente-inter), sans-serif;
+}
+
+.field input,
+.field select {
+  min-height: var(--altura-control);
+  padding: 0 var(--espacio-3);
+  border-color: var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.search:focus-within {
+  border-color: var(--color-enfoque);
+  outline: 3px solid rgb(79 70 229 / 16%);
+}
+
+.field small {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-xs);
+}
+
+.formActions {
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-2);
+}
+
+@media (max-width: 800px) {
+  .heading {
+    padding-top: var(--espacio-5);
+  }
+
+  .heading h1 {
+    font-size: var(--texto-2xl);
+  }
+
+  .table tbody tr {
+    gap: 0 var(--espacio-2);
+    margin-bottom: var(--espacio-2);
+    border-color: var(--color-borde);
+    border-radius: var(--radio-tarjeta);
+    background: var(--color-superficie);
+    box-shadow: var(--sombra-suave);
+  }
+
+  .table td {
+    gap: var(--espacio-3);
+    padding: var(--espacio-2) var(--espacio-3);
+    border: 0;
+  }
+
+  .table td::before {
+    color: var(--color-texto-suave);
+    font-size: var(--texto-xs);
+  }
+
+  .table .actionCell {
+    border-color: var(--color-borde);
+  }
+}
