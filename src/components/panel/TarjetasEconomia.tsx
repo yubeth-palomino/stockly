@@ -9,10 +9,7 @@ export function TarjetasEconomia({ economia }: { economia: ResumenEconomico }) {
     { etiqueta: 'Ganancia potencial total', valor: formatearPesos(economia.gananciaPotencialTotal) },
     {
       etiqueta: 'Ganancia realizada total',
-      valor:
-        economia.gananciaRealizadaTotal === null
-          ? 'No disponible'
-          : formatearPesos(economia.gananciaRealizadaTotal),
+      valor: formatearPesos(economia.gananciaRealizadaTotal),
     },
   ];
 
@@ -26,12 +23,6 @@ export function TarjetasEconomia({ economia }: { economia: ResumenEconomico }) {
           </article>
         ))}
       </section>
-      {economia.gananciaRealizadaTotal === null && (
-        <p role="note">
-          No se muestra la ganancia realizada: esta vista no tiene una empresa autorizada
-          seleccionada y las ventas legadas no guardan el costo histórico por operación.
-        </p>
-      )}
       <section className={styles.seccionResumen}>
         <h2>Detalle económico por producto</h2>
         {economia.productos.length === 0 ? (

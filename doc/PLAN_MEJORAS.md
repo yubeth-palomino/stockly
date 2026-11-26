@@ -105,13 +105,12 @@ El saldo esperado de efectivo debe operar sobre la suma de apertura + entradas d
 
 ### 4.4 Ganancias y utilidad
 
-No se debe llamar “ganancia” a las ventas como tal. La utilidad debe mostrarse solo cuando exista:
+No se debe llamar “ganancia” a las ventas como tal. Se distinguen dos cálculos:
 
-- costo histórico confiable
-- asociación real a la venta o a la línea vendida
-- escenario válido para la empresa o sucursal
+- **Módulo P11 (`/panel/economia`):** según `PLAN_STOCKLY.md` §9, la ganancia realizada compara cada venta con el precio de compra actual del producto. Si luego se actualiza ese precio, también cambia el cálculo de las ventas anteriores; la interfaz debe decirlo con claridad. Los productos sin precio de compra aportan cero.
+- **Dashboard P13–P17 (`/panel/evolucion`):** la utilidad histórica usa el costo confiable guardado en cada venta (`ventas.costo_unitario`). Si no existe ese costo o una asociación válida a la venta, no se imputa: se muestran ventas/valor vendido y la limitación correspondiente.
 
-Si no hay costo histórico fiable, la UI debe mostrar “ventas” o “valor vendido” y una nota de limitación.
+Estos importes tienen bases distintas y no deben presentarse como una única métrica contable intercambiable.
 
 ### 4.5 Proveedores
 

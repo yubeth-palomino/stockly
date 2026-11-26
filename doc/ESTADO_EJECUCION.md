@@ -3,27 +3,30 @@
 ## Estado vigente · 2026-11-26
 
 - Esta síntesis prevalece sobre las observaciones históricas que siguen en la bitácora.
-- **Alcance:** P00–P17 están implementados técnicamente. `PLAN_STOCKLY.md` y `PROMPTS_STOCKLY.md` definen P00–P11; `PLAN_MEJORAS.md` registra P12–P17. No se encontraron definiciones de P18 ni P19 en los documentos rectores, por lo que no se inventan entregables para esas fases.
-- **Validación local:** `npm.cmd run build`, `npm.cmd test` (62 archivos, 212/212 pruebas), `npm.cmd run lint` y `npm.cmd run type-check` terminaron correctamente en esta revisión. Vitest conserva una advertencia no bloqueante sobre `configLoader: 'native'`.
+- **Alcance:** P00–P11 son los prompts del documento rector; P12–P17 son fases de mejora registradas en `PLAN_MEJORAS.md` y sus checkpoints, no prompts de `PROMPTS_STOCKLY.md`. No se encontraron definiciones de P18 ni P19. La implementación técnica no equivale al cierre formal de un prompt cuando falta una verificación obligatoria.
+- **Discrepancias de cierre:** P05 tiene implementación y pruebas automatizadas, pero falta la verificación real con trabajador que exige el prompt. P10 sigue abierto por aceptación A-01–A-19. P11 se implementó sin cumplir su precondición de aceptación diligenciada y mantiene verificaciones manuales pendientes; por ello no se declara cerrado. Su fórmula ya se alineó con el plan: usa el precio de compra actual del producto.
+- **Validación local:** `npm.cmd run build`, `npm.cmd test` (63 archivos, 218/218 pruebas), `npm.cmd run lint` y `npm.cmd run type-check` terminaron correctamente en esta revisión. Vitest conserva una advertencia no bloqueante sobre `configLoader: 'native'`.
+- **Aislamiento de staging:** el código distingue `VERCEL_ENV=preview` y requiere variables `STOCKLY_PREVIEW_*` para PostgreSQL y Supabase, sin recurrir a credenciales de producción. Las pruebas verifican también el fallo explícito si falta una variable de Preview. El proyecto Supabase `stockly-staging` continúa vacío; todavía no se configuraron las variables en Vercel, ni se aplicaron migraciones, ni se ejecutaron aceptaciones manuales.
 - **Base de producción:** revisión de solo lectura confirmó 14 migraciones registradas, incluida `20261115000100_multiempresa_registro.sql`, y las tablas `empresas`, `sucursales`, `empresas_usuarios` y `usuarios_sucursales`. No se aplicó SQL ni se modificaron datos.
+- **Comparación de migraciones:** consulta de solo lectura comparó los 14 archivos SQL locales con `_migrations` en producción: 14/14 registrados, sin faltantes. `.env.local` apunta a Production; no se usó para migrar el staging.
 - **Registro público:** el signup de Supabase y el proveedor Email están habilitados, con confirmación por correo activa. El error reportado coincide con una identidad que Supabase considera duplicada; no se verificó la dirección concreta ni se determinó si las variables de Vercel apuntan al mismo proyecto.
 - **Pendiente para cerrar aceptación:** siguen pendientes A-01, A-07, A-13, A-14, A-17 y A-19; A-21 requiere datos de prueba, y A-24–A-44 requieren aceptación manual/visual y, según el caso, hardware. También falta probar el envío real de correo y confirmar el despliegue de `RESEND_FROM`.
 
-| Prompt                                   | Estado                                                                                            | Build                         | Tests                         | Fecha de cierre |
+| Prompt                                   | Estado                                                                                            | Build                         | Tests                         | Fecha de evidencia |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------- | --------------- |
 | P00 Auditoría                            | completado                                                                                        | correcto                      | no ejecutados                 | 2026-10-31      |
 | P01 Base de datos                        | completado                                                                                        | correcto                      | 0 fallas                      | 2026-10-31      |
 | P02 Reglas de negocio                    | completado                                                                                        | correcto                      | 68/68                         | 2026-10-31      |
 | P03 Servidor y roles                     | completado                                                                                        | correcto                      | 80/80                         | 2026-10-31      |
 | P04 Datos                                | completado                                                                                        | correcto                      | 80/80                         | 2026-10-31      |
-| P05 API                                  | completado                                                                                        | correcto                      | 84/84                         | 2026-10-31      |
+| P05 API                                  | implementación completa; verificación real con trabajador pendiente                              | correcto                      | 84/84                         | 2026-10-31      |
 | P06 Interfaz base y resumen              | completado                                                                                        | correcto                      | 84/84                         | 2026-10-31      |
-| P07 Inventario                           | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
+| P07 Inventario                           | implementación completa; privacidad con sesión real de trabajador pendiente                      | correcto                      | 98/98                         | 2026-11-07      |
 | P08 Entrada de mercancía                 | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
 | P09 Ventas                               | completado                                                                                        | correcto                      | 98/98                         | 2026-11-07      |
-| P10 Usuarios y aceptación                | implementación completada; aceptación manual pendiente                                            | correcto                      | 212/212                       | 2026-11-25      |
-| P11 Módulo económico (opcional)          | completado técnicamente; ganancia realizada por costo histórico                                      | correcto                      | 212/212                       | 2026-11-25      |
-| P12 Auditoría y planificación de mejoras | completado; auditoría real y diseño aprobatorio sin cambios en producción                         | correcto                      | 158/158                       | 2026-11-14      |
+| P10 Usuarios y aceptación                | implementación técnica; prompt no cerrado por aceptación A-01–A-19 pendiente                       | correcto                      | 212/212                       | 2026-11-25      |
+| P11 Módulo económico (opcional)          | implementación alineada con el plan; no cerrado por precondición P10 y validaciones manuales    | correcto                      | 212/212                       | 2026-11-26      |
+| P12 Auditoría y planificación de mejoras | auditoría/diseño cerrados; aprobación posterior para desarrollo de prueba registrada en PLAN_MEJORAS | correcto                      | 158/158                       | 2026-11-14      |
 | Evolución comercial                      | implementada técnicamente en P13–P17; migración registrada en producción; aceptación manual pendiente | correcto                      | 212/212; integración comercial 14/14 en BD aislada | 2026-11-26      |
 | P13 Base de datos comercial              | migraciones verificadas en pruebas; registro y tablas comerciales confirmados en producción (solo lectura) | correcto                      | 212/212; BD aislada 0 fallas | 2026-11-26      |
 | P14 Servicios y API                      | reglas, transacciones, idempotencia y autorización implementadas; integradas contra BD de pruebas | correcto                      | 171/171                       | 2026-11-14      |
@@ -34,6 +37,17 @@
 
 ## Bitácora
 
+### Preparación de Preview aislado · 2026-11-26
+
+- **Aislamiento:** runtime y cliente administrativo de Supabase usan variables `STOCKLY_PREVIEW_*` únicamente en Vercel Preview; las herramientas de migración priorizan la URL no agrupada de staging cuando existe.
+- **Verificación local:** 63 archivos y 218/218 pruebas aprobaron; `npm.cmd run build`, `npm.cmd run lint` y `npm.cmd run type-check` aprobaron. `git diff --check` no reportó problemas.
+- **Pendiente:** Vercel todavía no tiene las variables exclusivas de Preview; no se aplicaron migraciones al proyecto staging y la aceptación manual sigue abierta. No se modificó Production ni se hizo push.
+
+### Verificación del destino de migración · 2026-11-26
+
+- **Production:** la conexión configurada localmente identifica el proyecto `kzjvamlbbberhqdzqqhj`; una consulta de solo lectura confirmó las 14 migraciones locales ya registradas y ninguna pendiente. No se ejecutó el migrador en Production.
+- **Staging:** el proyecto `stockly-staging` (`vmuwhxxdocujvbolrfhx`) sigue siendo el destino aislado para las aceptaciones, pero no hay conexión local configurada para él y el panel Supabase no terminó de cargar. No se aplicó SQL en ese proyecto.
+
 ### P12 · Auditoría y planificación de mejoras
 
 - **Archivos creados:** `doc/PLAN_MEJORAS.md`, `doc/checkpoints/FASE_8_COMPLETADA.md`.
@@ -42,7 +56,7 @@
 - **Decisiones clave:** variante/SKU como nivel de código de barras; caja separada entre efectivo y otros medios; ganancia solo si existe costo histórico confiable; proveedores no implican compras ni deuda sin evidencia real; los movimientos financieros conservan trazabilidad y responsable.
 - **Verificación:** `npm test` terminó con 42 archivos y 158 pruebas aprobadas; `npm run build` compiló correctamente.
 - **Límite del plan:** la migración estructural comercial queda suspendida hasta aprobación del responsable, respaldo de la base de pruebas y confirmación del ámbito de caja y del modelo de variantes.
-- **Cierre:** P12 queda documentado como auditoría y diseño, con la siguiente etapa segura en P13 sólo tras aprobación del responsable y validación del entorno de pruebas.
+- **Cierre:** al terminar P12, quedó cerrada la auditoría y el diseño, no la implementación comercial; en ese momento la aprobación de la siguiente etapa seguía pendiente. La aprobación posterior para desarrollar sobre la base de pruebas se registra en la sección 16 de `doc/PLAN_MEJORAS.md` y no implica autorización para modificar producción.
 
 ### P13–P17 · Mejoras comerciales · 2026-11-14
 
@@ -57,6 +71,7 @@
 - **Verificación final:** `npm test` pasó 52 archivos/171 pruebas; `npm run lint`, `npm run type-check` y `npm run build` terminaron correctamente. `npm run db:verificar` finalizó con 0 fallas, incluidas las columnas nuevas de `v_productos`. `npm run probar:comercial` completó 14/14 comprobaciones y limpió sus datos temporales.
 - **Aceptación manual pendiente:** A-24–A-44 quedan vacíos en `doc/ACEPTACION_MEJORAS.md`. No se afirma aceptación visual, prueba de cámara/lector físico ni sesión real de trabajador.
 - **Límites:** proveedores son catálogo; no existe compras/cuentas por pagar. Ventas históricas conservan método sin clasificar. Caja, directorios y panel financiero son exclusivos del dueño por la regla de confidencialidad del proyecto.
+- **Cierre de fase:** la implementación y las pruebas de integración no sustituyen A-24–A-44. Estas fases quedan técnicamente implementadas, con aceptación manual abierta.
 
 ### Ajuste de migración para `stock_minimo` · 2026-11-14
 
@@ -166,6 +181,7 @@ DEMO-008    34     0         No
 - **Dueño con sesión real:** GET `/api/panel/productos` respondió 200 con 8 productos e incluyó `precioCompra`; GET `/api/panel/usuarios` respondió 200 con 1 usuario.
 - **Trabajador:** pruebas de rutas verifican 403 al consultar usuarios y que el rol trabajador se pasa al servicio de inventario, que serializa omitiendo `precioCompra`. No se usó una sesión real de trabajador en esta comprobación.
 - **Checkpoint:** `doc/checkpoints/FASE_4_COMPLETADA.md`.
+- **Estado del prompt:** no se cierra formalmente P05 hasta verificar con una sesión real de trabajador que la API responde 403 para usuarios y no serializa `precioCompra`; el checkpoint confirma que esa comprobación no se hizo.
 
 ### Revalidación de P01–P05 · 2026-11-06
 
@@ -197,6 +213,7 @@ DEMO-008    34     0         No
 - **Verificación local:** `npm run type-check`, `npm test` (26 archivos, 95/95), `npm run lint` y `npm run build` correctos. `npm run db:verificar`: 0 fallas. `npm run probar:flujo`: 17/17 pasos, 0 fallas; eliminó solo sus datos temporales `PRUEBA` (3 ventas, 10 eventos, 3 productos y 1 usuario).
 - **Aceptación manual pendiente:** A-01 a A-23 permanecen sin resultado ni evidencia; no se verificó la sesión autenticada de trabajador ni la aceptación de ambos roles en Vercel. Completarla antes de declarar aprobada la aceptación de producción.
 - **Aviso:** Vitest conserva la advertencia preexistente de `configLoader: 'native'`; no afecta las pruebas.
+- **Estado de cierre:** P10 sigue pendiente por aceptación A-01–A-19. P11 quedó implementado técnicamente, pero se inició sin cumplir la precondición escrita de P11 (aceptación A-01–A-19 diligenciada); no se considera formalmente completado.
 
 ### Auditoría integral P00–P11 · 2026-11-07
 
@@ -370,18 +387,21 @@ DEMO-008    34     0         No
 - **Prueba de integración bloqueada:** `npm run probar:flujo` se detuvo antes de conectarse porque Node no recibió `STOCKLY_POSTGRES_URL` ni `STOCKLY_POSTGRES_URL_NON_POOLING`. La limpieza no pudo ejecutarse; no se tocó ninguna base ni los datos DEMO.
 - **Aceptación manual pendiente:** A-01, A-07, A-13, A-14, A-17 y A-19 requieren sesiones autenticadas y/o un entorno de prueba en Vercel. No se declaran aprobados ni se marca la aceptación de P10 como completa.
 
-### P10–P17 · cierre técnico y seguimiento de aceptación · 2026-11-26
+### P10–P17 · estado técnico y seguimiento de aceptación · 2026-11-26
 
 - **P10:** usuarios, invitaciones, cambio de rol/estado y protección del último dueño quedan implementados y cubiertos por pruebas; la aceptación autenticada A-01, A-07, A-13, A-14, A-17 y A-19 permanece pendiente.
-- **P11:** se completó el cálculo de ganancia realizada desde `ventas.costo_unitario`. Las ventas nuevas conservan el costo vigente en la fila de venta; ventas sin costo aportan cero y no se inventa un costo histórico.
+- **P11:** por decisión de la persona usuaria del 2026-11-26, `obtenerEconomia` calcula la ganancia realizada usando el precio de compra actual del producto, como indican `PLAN_STOCKLY.md` §9 y P11 de `PROMPTS_STOCKLY.md`. La métrica histórica del dashboard comercial conserva el costo guardado al vender y se documenta como distinta en `PLAN_MEJORAS.md` §4.4. P11 sigue sin cumplir su precondición: `doc/ACEPTACION.md` no está diligenciado para A-01–A-19; A-21 y la verificación con trabajador siguen pendientes. P11 no se considera formalmente cerrado.
+- **Corrección P11:** `obtenerEconomia` ahora une ventas con su producto y usa `productos.precio_compra`; las ventas cuyo producto no tiene costo aportan cero. La interfaz advierte que modificar el costo actual recalcula ventas anteriores.
 - **P12:** auditoría y planificación comercial documentadas; no corresponde una migración adicional.
 - **P13–P17:** base comercial, servicios/API, caja, directorios/crédito/abonos y dashboard quedan implementados según sus checkpoints. A-24–A-44 siguen siendo aceptación manual y no se consideran aprobados.
 - **Migración multiempresa:** en la base aislada, `npm run db:migrar` omitió las 14 migraciones y `npm run db:verificar` terminó con 0 fallas. Una revisión de solo lectura de producción confirmó 14 entradas en `_migrations`, incluida `20261115000100_multiempresa_registro.sql`, y las cuatro tablas multiempresa. No se aplicó SQL en producción.
 - **Cierre de código:** `npm run build`, `npm run lint`, `npm run type-check` y `npm test` terminaron correctamente; Vitest pasó 62 archivos y 212 pruebas en la ejecución final.
+- **Revalidación de esta corrección:** `npm test -- src/lib/datos/economia.test.ts` pasó 3/3; `npm run build`, `npm test` (62 archivos, 212/212), `npm run lint` y `npm run type-check` pasaron. Solo persiste la advertencia conocida de configuración de Vitest.
 - **Revalidación con variables configuradas:** `npm run db:verificar` terminó con 0 fallas; `npm run probar:flujo` completó 17/17 pasos y limpió sus datos; `npm run probar:comercial` completó 14/14 comprobaciones.
 - **Correcciones adicionales:** se incluyó `empresa_id` en las inserciones de verificación, la limpieza eliminó dependencias comerciales antes de ventas/usuarios y el flujo dejó de depender de cookies de una petición HTTP al ejecutar servicios directos.
 - **Sesión en despliegue:** se observó GET `/api/panel/sesion` con respuesta 401 `NO_AUTORIZADO` y el navegador quedó en `/login`; no se logró comprobar la sesión de dueño declarada por la persona usuaria ni iniciar una sesión trabajador. La aceptación autenticada A-01–A-23 queda sin cerrar.
 - **Hardware:** la persona usuaria informó que cámara/lector e impresora están disponibles, pero todavía no se ha capturado lectura ni impresión como evidencia. A-24–A-44 requieren verificación visual/hardware; no se marcan aprobados por pruebas automatizadas.
+- **Correspondencia con prompts:** la tabla inicial distingue a partir de esta revisión implementación técnica, precondiciones y verificaciones manuales requeridas; no se deduce cierre formal solo por tener pruebas verdes.
 
 ### Revisión de faltantes y estado de invitaciones · 2026-11-25
 

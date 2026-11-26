@@ -35,8 +35,9 @@ No continuar con P00 hasta terminar estos pasos.
 | 2 · Reglas de negocio | P02 |
 | 3 · Servidor y roles | P03 |
 | 4 · Datos y API | P04, P05 |
-| 5 · Interfaz | P06, P07, P08, P09, P10 |
-| 7 · Opcional económico | P11 |
+| 5 · Interfaz | P06, P07, P08, P09 y la interfaz de usuarios de P10 |
+| 6 · Aceptación | P10: revisión de seguridad, README y casos A-01 a A-19 |
+| 7 · Opcional económico | P11; requiere aceptación diligenciada de la fase 6 |
 
 ---
 
@@ -119,7 +120,7 @@ TAREA 3. Crea doc/ESTADO_EJECUCION.md:
 ```markdown
 # Estado de ejecución · Stockly
 
-| Prompt | Estado | Build | Tests | Fecha de cierre |
+| Prompt | Estado | Build | Tests | Fecha de evidencia |
 |---|---|---|---|---|
 | P00 Auditoría | pendiente | | | |
 | P01 Base de datos | pendiente | | | |

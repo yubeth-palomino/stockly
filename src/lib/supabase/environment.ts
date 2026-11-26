@@ -1,4 +1,17 @@
 export function getSupabaseEnvironment() {
+  if (process.env.VERCEL_ENV === 'preview') {
+    const url = process.env.STOCKLY_PREVIEW_SUPABASE_URL;
+    const publishableKey = process.env.STOCKLY_PREVIEW_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!url || !publishableKey) {
+      throw new Error(
+        'Faltan STOCKLY_PREVIEW_SUPABASE_URL o STOCKLY_PREVIEW_SUPABASE_PUBLISHABLE_KEY en Preview.',
+      );
+    }
+
+    return { url, publishableKey };
+  }
+
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
     process.env.NEXT_PUBLIC_STOCKLY_STOCKLYSUPABASE_URL ||

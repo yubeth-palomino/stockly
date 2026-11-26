@@ -8,7 +8,7 @@ import { obtenerEconomia } from './economia';
 describe('obtenerEconomia', () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it('suma inversión y ganancia potencial, sin inventar costo histórico de ventas', async () => {
+  it('suma inversión y ganancia potencial usando el costo actual para las ventas', async () => {
     mocks.consultar
       .mockResolvedValueOnce([
         {
@@ -39,7 +39,6 @@ describe('obtenerEconomia', () => {
           precioCompra: null,
         },
       ])
-      .mockResolvedValueOnce([{ column_name: 'costo_unitario' }])
       .mockResolvedValueOnce([{ gananciaRealizada: '80000' }]);
 
     const economia = await obtenerEconomia({}, 'empresa-1');
@@ -71,29 +70,35 @@ describe('obtenerEconomia', () => {
         }),
       ],
     });
-    expect(mocks.consultar).toHaveBeenCalledTimes(3);
+    expect(mocks.consultar).toHaveBeenCalledTimes(2);
+    expect(mocks.consultar.mock.calls[1]?.[0]).toContain(
+      '(v.precio_venta::numeric - p.precio_compra::numeric)',
+    );
+    expect(mocks.consultar.mock.calls[1]?.[0]).not.toContain('costo_unitario');
   });
 
   it('aplica el filtro de marca al detalle de inventario', async () => {
     mocks.consultar
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([{ gananciaRealizada: '0' }]);
 
     await obtenerEconomia({ marca: ' Nike ' }, 'empresa-1');
 
     expect(mocks.consultar.mock.calls[0]?.[0]).toContain('lower(marca) LIKE $2');
     expect(mocks.consultar.mock.calls[0]?.[1]).toEqual(['empresa-1', '%nike%']);
+    expect(mocks.consultar.mock.calls[1]?.[0]).toContain('lower(p.marca) LIKE $2');
+    expect(mocks.consultar.mock.calls[1]?.[1]).toEqual(['empresa-1', '%nike%']);
   });
 
-  it('no consulta ganancias comerciales sin una empresa autorizada en el contexto', async () => {
+  it('devuelve cero de ganancia realizada cuando no hay ventas con costo de compra', async () => {
     mocks.consultar
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([{ gananciaRealizada: '0' }]);
 
     const economia = await obtenerEconomia({}, 'empresa-1');
 
-    expect(economia.gananciaRealizadaTotal).toBeNull();
+    expect(economia.gananciaRealizadaTotal).toBe(0);
     expect(mocks.consultar).toHaveBeenCalledTimes(2);
-    expect(mocks.consultar.mock.calls[0]?.[0]).not.toContain('ventas_comerciales');
+    expect(mocks.consultar.mock.calls[1]?.[0]).toContain('p.precio_compra IS NOT NULL');
   });
 });

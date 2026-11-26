@@ -3,13 +3,17 @@ import pg from 'pg';
 const { Client } = pg;
 
 export function crearClienteBaseDatos() {
-  const variableConexion = process.env.STOCKLY_POSTGRES_URL_NON_POOLING
-    ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
-    : 'STOCKLY_POSTGRES_URL';
+  const variableConexion = process.env.STOCKLY_PREVIEW_POSTGRES_URL_NON_POOLING
+    ? 'STOCKLY_PREVIEW_POSTGRES_URL_NON_POOLING'
+    : process.env.STOCKLY_POSTGRES_URL_NON_POOLING
+      ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
+      : 'STOCKLY_POSTGRES_URL';
   const cadenaConexion = process.env[variableConexion];
 
   if (!cadenaConexion) {
-    throw new Error('Configura STOCKLY_POSTGRES_URL_NON_POOLING o STOCKLY_POSTGRES_URL.');
+    throw new Error(
+      'Configura STOCKLY_PREVIEW_POSTGRES_URL_NON_POOLING, STOCKLY_POSTGRES_URL_NON_POOLING o STOCKLY_POSTGRES_URL.',
+    );
   }
 
   const url = new URL(cadenaConexion);

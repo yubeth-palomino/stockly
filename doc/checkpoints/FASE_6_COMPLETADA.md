@@ -1,4 +1,6 @@
-# Fase 6 completada · Usuarios y revisión
+# Fase 6 · Implementación técnica; aceptación de producción pendiente
+
+Este checkpoint confirma la administración de usuarios y la preparación de la tabla de aceptación; no certifica el cierre de P10. El propio prompt pide ejecutar A-01–A-19 en Vercel con cuentas de dueño y trabajador. Los casos todavía pendientes se mantienen en `doc/ACEPTACION.md`.
 
 - Administración de cuentas Stockly disponible solo para el dueño.
 - La cuenta de autenticación se crea primero en Supabase Auth y se vincula mediante su UUID; el login existente no se modificó ni se agregó registro público.

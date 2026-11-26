@@ -76,7 +76,7 @@ export default async function PanelPage() {
       </section>
       {usuario.rol === 'dueno' && resumen.gananciaRealizadaTotal === null && (
         <p className={styles.textoSuave} role="note">
-          La ganancia realizada requiere una empresa autorizada y costos históricos por venta.
+          La ganancia realizada estará disponible cuando se active el módulo económico.
         </p>
       )}
 

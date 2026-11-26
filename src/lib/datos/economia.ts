@@ -86,33 +86,23 @@ export async function obtenerEconomia(
   });
 
   type FilaGananciaRealizada = { gananciaRealizada: number | string };
-  const columnas = await consultar<{ column_name: string }>(
-    `SELECT column_name
-     FROM information_schema.columns
-     WHERE table_schema = 'public'
-       AND table_name = 'ventas'
-       AND column_name = 'costo_unitario'`,
-    [],
+  const condicionMarcaVentas = marca ? 'AND lower(p.marca) LIKE $2' : '';
+  const parametrosVentas = filtroMarca === undefined ? [empresaId] : [empresaId, filtroMarca];
+  const filasGananciaRealizada = await consultar<FilaGananciaRealizada>(
+    `SELECT COALESCE(
+              sum((v.precio_venta::numeric - p.precio_compra::numeric) * v.cantidad),
+              0
+            )::text AS "gananciaRealizada"
+     FROM ventas v
+     JOIN productos p ON p.id = v.producto_id AND p.empresa_id = v.empresa_id
+     WHERE v.empresa_id = $1
+       AND p.precio_compra IS NOT NULL ${condicionMarcaVentas}`,
+    parametrosVentas,
   );
-  let gananciaRealizadaTotal: number | null = null;
-  if (columnas.some(({ column_name }) => column_name === 'costo_unitario')) {
-    const condicionMarcaVentas = marca
-      ? `AND lower(p.marca) LIKE $2`
-      : '';
-    const parametrosVentas = filtroMarca === undefined
-      ? [empresaId]
-      : [empresaId, filtroMarca];
-    const filas = await consultar<FilaGananciaRealizada>(
-      `SELECT COALESCE(sum((v.precio_venta - v.costo_unitario)::numeric * v.cantidad), 0)::text
-              AS "gananciaRealizada"
-       FROM ventas v
-       JOIN productos p ON p.id = v.producto_id AND p.empresa_id = v.empresa_id
-       WHERE v.empresa_id = $1 AND v.costo_unitario IS NOT NULL ${condicionMarcaVentas}`,
-      parametrosVentas,
-    );
-    const valor = filas[0]?.gananciaRealizada ?? 0;
-    gananciaRealizadaTotal = enteroSeguro(Number(valor), 'ganancia realizada total');
-  }
+  const gananciaRealizadaTotal = enteroSeguro(
+    Number(filasGananciaRealizada[0]?.gananciaRealizada ?? 0),
+    'ganancia realizada total',
+  );
 
   return {
     inversionTotal,

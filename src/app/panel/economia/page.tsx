@@ -26,8 +26,8 @@ export default async function EconomiaPage({ searchParams }: Props) {
           <p className={styles.sobretitulo}>Solo dueño</p>
           <h1 className={styles.titulo}>Economía</h1>
           <p className={styles.descripcion}>
-            Inversión y ganancia potencial con los costos registrados. La ganancia realizada
-            requiere una empresa autorizada y costos históricos por venta.
+            La ganancia realizada compara las ventas con el precio de compra actual registrado
+            para cada producto; actualizar ese precio también cambia el cálculo de ventas anteriores.
           </p>
         </div>
       </header>

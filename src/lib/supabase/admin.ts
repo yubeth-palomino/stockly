@@ -3,10 +3,14 @@ import { getSupabaseEnvironment } from './server';
 
 export function createAdminClient() {
   const { url } = getSupabaseEnvironment();
-  const serviceRoleKey = process.env.STOCKLY_SUPABASE_SERVICE_ROLE_KEY;
+  const variableClave =
+    process.env.VERCEL_ENV === 'preview'
+      ? 'STOCKLY_PREVIEW_SUPABASE_SERVICE_ROLE_KEY'
+      : 'STOCKLY_SUPABASE_SERVICE_ROLE_KEY';
+  const serviceRoleKey = process.env[variableClave];
 
   if (!serviceRoleKey) {
-    throw new Error('Falta STOCKLY_SUPABASE_SERVICE_ROLE_KEY en el servidor.');
+    throw new Error(`Falta ${variableClave} en el servidor.`);
   }
 
   return createSupabaseClient(url, serviceRoleKey, {

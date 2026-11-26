@@ -27,11 +27,22 @@ describe('conexión de base de datos', () => {
 
   it('conserva el pool de transacciones en Vercel', async () => {
     vi.stubEnv('VERCEL', '1');
+    vi.stubEnv('VERCEL_ENV', 'production');
     vi.stubEnv('STOCKLY_POSTGRES_URL', 'postgres://pool.example/base');
     vi.stubEnv('STOCKLY_POSTGRES_URL_NON_POOLING', 'postgres://direct.example/base');
     const { obtenerVariableConexion } = await import('@/lib/db/conexion');
 
     expect(obtenerVariableConexion()).toBe('STOCKLY_POSTGRES_URL');
+  });
+
+  it('usa la conexión aislada de staging en Vercel Preview', async () => {
+    vi.stubEnv('VERCEL', '1');
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    vi.stubEnv('STOCKLY_POSTGRES_URL', 'postgres://production.example/base');
+    vi.stubEnv('STOCKLY_PREVIEW_POSTGRES_URL', 'postgres://preview.example/base');
+    const { obtenerVariableConexion } = await import('@/lib/db/conexion');
+
+    expect(obtenerVariableConexion()).toBe('STOCKLY_PREVIEW_POSTGRES_URL');
   });
 
   it('usa la conexión principal si no se configuró la directa', async () => {

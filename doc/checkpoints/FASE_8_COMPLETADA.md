@@ -36,4 +36,4 @@ P12 revisó el estado real del repositorio y diseñó la ruta para la ampliació
 
 ## Conclusión
 
-La fase P12 queda cerrada como auditoría y diseño, con la aprobación del responsable pendiente para ejecutar la migración estructural de evolución comercial y continuar a P13 con la base de datos en entorno de pruebas y respaldo.
+La fase P12 queda cerrada como auditoría y diseño, no como implementación comercial. Al escribir este checkpoint, la aprobación del responsable para ejecutar la migración seguía pendiente. La aprobación posterior para desarrollo sobre la base de pruebas quedó documentada en la sección 16 de `doc/PLAN_MEJORAS.md`; no constituye aprobación para modificar producción.

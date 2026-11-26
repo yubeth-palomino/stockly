@@ -1,4 +1,4 @@
-# Fase 4 completada · Datos y API
+# Fase 4 · Datos completados; verificación real de roles de P05 pendiente
 
 ## P04 · Capa de datos
 
@@ -20,3 +20,7 @@
 - `npm run type-check`: correcto.
 - ESLint focalizado y Prettier: correctos.
 - `npm run build`: correcto.
+
+## Estado de cierre
+
+P04 queda completado con su flujo de integración. P05 tiene implementación y pruebas automatizadas, pero no se cierra formalmente: el prompt pide validar con una sesión real de trabajador y esa sesión no estuvo disponible. La prueba simulada no sustituye esa aceptación.

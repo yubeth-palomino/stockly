@@ -11,6 +11,7 @@ declare global {
 let poolLocal: Pool | undefined;
 
 export function obtenerVariableConexion(): string {
+  if (process.env.VERCEL_ENV === 'preview') return 'STOCKLY_PREVIEW_POSTGRES_URL';
   if (process.env.VERCEL === '1') return 'STOCKLY_POSTGRES_URL';
   return process.env.STOCKLY_POSTGRES_URL_NON_POOLING
     ? 'STOCKLY_POSTGRES_URL_NON_POOLING'
