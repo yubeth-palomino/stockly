@@ -470,4 +470,4 @@ DEMO-008    34     0         No
 - **Verificación visual:** 15 combinaciones de ruta y viewport público (360, 390, 768, 1024 y 1440 px) respondieron HTTP 200 sin scroll horizontal ni errores de página; la captura final incluye solo las tres rutas públicas. Tab en login verificó el foco visible en sus controles.
 - **Pendiente de sesión aislada:** todas las rutas de panel probadas llevan a `/login` sin sesión. Sin cuenta de prueba y base aislada disponibles, no se verificaron capturas ni teclado en panel autenticado, impresión en vista previa ni cámara física. La automatización de esta tarea no equivale a aceptación visual manual del panel.
 - **Validación local:** `npm.cmd run lint`, `npm.cmd run type-check`, `npm.cmd test` (64 archivos, 225/225 pruebas), `npm.cmd run build` y `git diff --check` correctos. No se conectó a bases de datos.
-- **Rama:** `diseno/ui-moderna`; pendiente registrar el resultado final del commit y push de esta rama.
+- **Rama:** `diseno/ui-moderna`; cambios separados en commits por área y publicados en `origin/diseno/ui-moderna`. No se hizo push a `main`.
