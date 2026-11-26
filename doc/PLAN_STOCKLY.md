@@ -716,8 +716,9 @@ Los mensajes con `{...}` se completan con los valores de `detalles`.
 | `GET /api/panel/sesion` | ambos | | `{ nombre, rol }` |
 | `GET /api/panel/resumen` | ambos | | `ResumenPanel` (económico solo si es dueño) |
 | `GET /api/panel/productos?referencia=&marca=&talla=&soloDisponibles=` | ambos | | `FilaProducto[]` (sin `precioCompra` para trabajador) |
-| `POST /api/panel/productos` | ambos | `{ referencia, marca, descripcion, talla, cantidad, precioVenta, fechaEntrada }` | `{ productoId, sumado, cantidadResultante }` (201) |
+| `POST /api/panel/productos` | ambos | JSON `{ referencia, marca, descripcion, talla, cantidad, precioVenta, fechaEntrada }` o multipart con `datos` JSON y `foto` JPEG opcional (máx. 3 MB) | `{ productoId, sumado, cantidadResultante }` (201) |
 | `GET /api/panel/productos/[id]` | ambos | | `DetalleProducto` (sin economía para trabajador) |
+| `GET /api/panel/productos/[id]/foto` | ambos | | Redirección a URL firmada temporal de una foto privada |
 | `PATCH /api/panel/productos/[id]` | ambos | `{ marca?, descripcion?, precioVenta? }` | `{ actualizado: true }` |
 | `POST /api/panel/productos/[id]/desactivar` | dueño | | `{ desactivado: true }` |
 | `GET /api/panel/ventas?referencia=&desde=&hasta=` | ambos | | `FilaVenta[]` |
@@ -728,6 +729,8 @@ Los mensajes con `{...}` se completan con los valores de `detalles`.
 | `GET /api/panel/economia?marca=` | dueño | | `ResumenEconomico` (módulo opcional) |
 
 El módulo económico (`precioCompra` en POST/PATCH de productos y las rutas de economía) se agrega en P11.
+
+La foto del producto es opcional: se captura desde la cámara trasera, se reduce y convierte a JPEG en el navegador, y se almacena en el bucket privado `stockly-productos`. La base guarda solo `foto_path`; ese path nunca se serializa al cliente. La ruta de lectura comprueba la sesión y la pertenencia del producto al negocio antes de emitir una URL firmada con vigencia de 60 segundos. El acceso al bucket se realiza solo desde el servidor con la clave administrativa.
 
 ### 11.4 Serialización por rol
 
@@ -756,8 +759,8 @@ La comparación entre precio de venta y precio de compra se hace en `lib/reglas/
 | Layout `/panel` | ambos | Verifica la sesión con `obtenerUsuario()`; sin sesión redirige al login. Barra con el nombre "Stockly", navegación (Resumen, Inventario, Ventas; Usuarios y Economía solo para el dueño), nombre del usuario, `InsigniaRol` y botón de cerrar sesión del login existente. Menú desplegable en móvil. |
 | `/panel` · Resumen | ambos | Indicadores: productos activos, unidades totales disponibles, productos agotados, ventas de hoy. Para el dueño, si el módulo económico está activo, agrega inversión total y ganancia realizada total. Tabla de productos agotados con enlace. Accesos rápidos a "Registrar entrada" y "Registrar venta". |
 | `/panel/inventario` · Inventario | ambos | `FiltrosInventario` (referencia, marca, talla y casilla "Solo disponibles") reflejados en la URL. `TablaInventario`: referencia, marca, descripción, talla, cantidad, precio de venta, disponibilidad (`InsigniaDisponibilidad`). Para el dueño, columna de precio de compra (vacía si no se ha registrado). Botón "Registrar entrada". `EstadoVacio` cuando la búsqueda no tiene coincidencias (RN-27). |
-| `/panel/inventario/nuevo` · Registrar entrada | ambos | `FormularioProducto`: referencia, marca, descripción, talla, cantidad, precio de venta, fecha de entrada (por defecto hoy, máximo hoy). Aviso en vivo: si la referencia y la talla ya existen, "Esta referencia y talla ya existen: la cantidad se sumará al producto actual (N unidades)". Al guardar, muestra si creó o sumó y navega al inventario. |
-| `/panel/inventario/[id]` · Detalle | ambos | Datos del producto, disponibilidad e historial de eventos. Para el dueño: precio de compra y, si el módulo económico está activo, inversión y ganancia potencial del producto. Acciones: "Editar" (marca, descripción, precio de venta; el dueño también el precio de compra en el módulo opcional) y, para el dueño, "Desactivar" (solo con cantidad 0). Lista de ventas del producto. |
+| `/panel/inventario/nuevo` · Registrar entrada | ambos | `FormularioProducto`: referencia, marca, descripción, talla, cantidad, precio de venta, fecha de entrada (por defecto hoy, máximo hoy) y fotografía opcional. Aviso en vivo: si la referencia y la talla ya existen, "Esta referencia y talla ya existen: la cantidad se sumará al producto actual (N unidades)". Al guardar, muestra si creó o sumó y navega al inventario. |
+| `/panel/inventario/[id]` · Detalle | ambos | Datos del producto, fotografía si existe, disponibilidad e historial de eventos. Para el dueño: precio de compra y, si el módulo económico está activo, inversión y ganancia potencial del producto. Acciones: "Editar" (marca, descripción, precio de venta; el dueño también el precio de compra en el módulo opcional) y, para el dueño, "Desactivar" (solo con cantidad 0). Lista de ventas del producto. |
 | `/panel/ventas` · Ventas | ambos | `FiltrosVentas` (referencia, rango de fechas). `TablaVentas`: fecha, referencia, talla, cantidad, precio de venta, total de la línea, quién registró. Botón "Registrar venta". |
 | `/panel/ventas/nueva` · Registrar venta | ambos | `BuscadorProducto` por referencia y talla que muestra la cantidad disponible; campo de cantidad con validación en vivo contra la disponible; resumen (referencia, talla, precio de venta, total) y confirmación. Tras vender, `Aviso` con el resultado y la cantidad restante; si quedó agotado, lo indica. |
 | `/panel/usuarios` · Usuarios | dueño | `TablaUsuarios`: nombre, usuario, rol (`InsigniaRol`), estado. Acciones: crear, cambiar rol, activar o desactivar. El dueño no puede quitarse el rol ni desactivarse si es el único dueño (`ULTIMO_DUENO`). |

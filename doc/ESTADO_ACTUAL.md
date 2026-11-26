@@ -154,6 +154,7 @@ En `tsconfig.json`, `@/*` apunta a `./src/*` y `@data/*` apunta a `./data/*`. Po
 ## 7. Migraciones
 
 - Carpeta: `supabase/migrations/`.
+- Migración local añadida el 2026-11-26: `20261126000100_fotografias_productos.sql`, para guardar la ruta de foto en productos y crear un bucket privado. No se ha aplicado a ninguna base.
 - Migración local existente: `20261003000100_create_users_profiles.sql`.
 - También existe `supabase/restablecimientos_contrasena.sql`.
 - No se encontró un script de migración, una tabla de control de migraciones ni una página que aplique migraciones.
