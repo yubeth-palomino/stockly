@@ -3,27 +3,59 @@
   --color-fondo: #E9E4FF;
   --color-superficie: #FFFFFF;
   --color-primario: #8B7CF6;
+  --color-primario-oscuro: #4F46E5;
   --color-primario-suave: #F8F7FF;
   --color-disponible: #8FE3E3;
-  --color-agotado: #C4B5FD;
-  --color-inactivo: #8A8AA3;
-  --color-dueno: #191A35;
   --color-acento: #C4B5FD;
   --color-texto: #1A1A35;
-  --color-texto-suave: #8A8AA3;
+  --color-texto-suave: #606176;
   --color-borde: #EDEDF2;
-  --color-editar: #C4B5FD;
-  --color-hover-primario: #8B7CF6;
+  --color-sidebar: #191A35;
+  --color-sidebar-superficie: #2A2B4A;
+  --color-error: #A12B36;
+  --color-error-superficie: #FCE8E8;
+  --color-exito: #1D654D;
+  --color-exito-superficie: #E2F4EC;
+  --color-advertencia: #705300;
+  --color-advertencia-superficie: #FFF3CC;
+  --color-enfoque: #4F46E5;
   --color-hover-guardar: #7EDDDD;
-  --ink: #1A1A35;
-  --muted: #8A8AA3;
-  --line: #EDEDF2;
-  --canvas: #E9E4FF;
-  --white: #FFFFFF;
-  --teal: #7EDDDD;
-  --teal-soft: #8FE3E3;
-  --coral: #8B7CF6;
-  --amber: #C4B5FD;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 24px;
+  --espacio-6: 32px;
+  --espacio-7: 48px;
+  --texto-xs: 12px;
+  --texto-sm: 14px;
+  --texto-base: 16px;
+  --texto-lg: 20px;
+  --texto-xl: 24px;
+  --texto-2xl: 32px;
+  --peso-regular: 400;
+  --peso-medio: 500;
+  --peso-fuerte: 600;
+  --interlineado: 1.5;
+  --radio-control: 12px;
+  --radio-tarjeta: 20px;
+  --sombra-suave: 0 2px 8px rgb(25 26 53 / 6%);
+  --sombra-elevada: 0 12px 32px rgb(25 26 53 / 10%);
+  --altura-control: 48px;
+  --ink: var(--color-texto);
+  --muted: var(--color-texto-suave);
+  --line: var(--color-borde);
+  --canvas: var(--color-fondo);
+  --white: var(--color-superficie);
+  --teal: var(--color-disponible);
+  --teal-soft: var(--color-disponible);
+  --coral: var(--color-primario-oscuro);
+  --amber: var(--color-acento);
+  --color-agotado: var(--color-error);
+  --color-inactivo: var(--color-texto-suave);
+  --color-dueno: var(--color-sidebar);
+  --color-editar: var(--color-acento);
+  --color-hover-primario: var(--color-primario-oscuro);
 }
 * { box-sizing: border-box; }
 html { min-height: 100%; background: var(--color-fondo); }
@@ -33,11 +65,17 @@ body {
   color: var(--color-texto);
   background: var(--color-fondo);
   font-family: var(--fuente-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--texto-base);
+  line-height: var(--interlineado);
   -webkit-font-smoothing: antialiased;
 }
 h1, h2, h3 { font-family: var(--fuente-inter), sans-serif; }
-button, a { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
+:where(button, input, select, textarea, a):focus-visible {
+  outline: 3px solid var(--color-enfoque);
+  outline-offset: 3px;
+}
 ::selection { color: var(--color-texto); background: #C4B5FD; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { display: flex; width: 248px; flex-direction: column; padding: 30px 20px 22px; border-right: 0; color: #FFFFFF; background: #191A35; }
