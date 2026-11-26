@@ -27,6 +27,7 @@ describe('POST /api/auth/register', () => {
   }
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     mocks.query.mockImplementation(async (sql: string) => {
       if (sql.includes('INSERT INTO public.empresas')) {
@@ -130,6 +131,37 @@ describe('POST /api/auth/register', () => {
 
     expect(response.status).toBe(409);
     expect(mocks.conTransaccion).not.toHaveBeenCalled();
+  });
+
+  it('distingue otros errores de Auth y registra solo metadatos sin correo', async () => {
+    const registroError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    signUp.mockResolvedValue({
+      data: { user: null, session: null },
+      error: {
+        code: 'unexpected_auth_error',
+        status: 503,
+        message: 'Falló la solicitud para persona@example.invalid',
+      },
+    });
+
+    const response = await POST(
+      solicitud({
+        nombre: 'Ana Pérez',
+        correo: 'persona@example.invalid',
+        contrasena: 'contrasena-segura',
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: 'No se pudo crear la cuenta. Intenta nuevamente.',
+    });
+    expect(mocks.conTransaccion).not.toHaveBeenCalled();
+    expect(registroError).toHaveBeenCalledWith(
+      'No se pudo crear la identidad de autenticación para el registro Stockly.',
+      { codigo: 'unexpected_auth_error', estado: 503 },
+    );
+    expect(JSON.stringify(registroError.mock.calls)).not.toContain('persona@example.invalid');
   });
 
   it('elimina la identidad Auth si falla la preparación del negocio', async () => {

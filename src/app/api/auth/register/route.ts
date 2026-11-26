@@ -30,6 +30,28 @@ function usuarioDesdeCorreo(correo: string, authId: string): string {
   return local && local.length >= 3 ? local : `dueno-${authId.slice(0, 8)}`;
 }
 
+function detallesErrorSeguro(error: unknown): Record<string, string | number> {
+  if (typeof error !== 'object' || error === null) return { codigo: 'sin_detalle' };
+
+  const datos = error as Record<string, unknown>;
+  const codigo =
+    typeof datos.code === 'string' && /^[a-z0-9._-]{1,64}$/i.test(datos.code)
+      ? datos.code
+      : 'sin_codigo';
+  const estado =
+    typeof datos.status === 'number' && Number.isInteger(datos.status) ? datos.status : undefined;
+  const restriccion =
+    typeof datos.constraint === 'string' && /^[a-z0-9._-]{1,64}$/i.test(datos.constraint)
+      ? datos.constraint
+      : undefined;
+
+  return {
+    codigo,
+    ...(estado === undefined ? {} : { estado }),
+    ...(restriccion === undefined ? {} : { restriccion }),
+  };
+}
+
 export async function POST(request: Request) {
   let cuerpo: unknown;
   try {
@@ -59,16 +81,27 @@ export async function POST(request: Request) {
 
   if (error || !data.user) {
     if (error?.code === 'email_exists' || error?.code === 'user_already_exists') {
+      console.warn(
+        'Supabase rechazó el registro por una identidad existente.',
+        detallesErrorSeguro(error),
+      );
       return respuesta(
         { error: 'No fue posible crear la cuenta con esos datos. Verifica el correo o inicia sesión.' },
         409,
       );
     }
-    console.error('No se pudo crear la cuenta de autenticación para el registro Stockly.', error);
+    console.error(
+      'No se pudo crear la identidad de autenticación para el registro Stockly.',
+      detallesErrorSeguro(error),
+    );
     return respuesta({ error: 'No se pudo crear la cuenta. Intenta nuevamente.' }, 400);
   }
 
   if (data.user.identities?.length === 0) {
+    console.warn(
+      'Supabase devolvió identidades vacías durante el registro; se respondió como identidad existente.',
+      { motivo: 'identidades_vacias' },
+    );
     return respuesta(
       { error: 'No fue posible crear la cuenta con esos datos. Verifica el correo o inicia sesión.' },
       409,
@@ -118,16 +151,39 @@ export async function POST(request: Request) {
       );
     });
   } catch (error) {
-    console.error('No se pudo crear el espacio de trabajo del nuevo dueño.', error);
-    const admin = createAdminClient();
-    const { error: deleteError } = await admin.auth.admin.deleteUser(authId);
-    if (deleteError) {
-      console.error('No se pudo revertir la cuenta Auth del registro incompleto.', deleteError);
+    console.error(
+      'No se pudo crear el espacio de trabajo del nuevo dueño.',
+      detallesErrorSeguro(error),
+    );
+    try {
+      const admin = createAdminClient();
+      const { error: deleteError } = await admin.auth.admin.deleteUser(authId);
+      if (deleteError) {
+        console.error(
+          'No se pudo revertir la identidad Auth del registro incompleto.',
+          detallesErrorSeguro(deleteError),
+        );
+      }
+    } catch (errorReversion) {
+      console.error(
+        'No se pudo revertir la identidad Auth del registro incompleto.',
+        detallesErrorSeguro(errorReversion),
+      );
     }
     if (data.session) {
-      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
-      if (signOutError) {
-        console.error('No se pudo cerrar la sesión de un registro incompleto.', signOutError);
+      try {
+        const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+        if (signOutError) {
+          console.error(
+            'No se pudo cerrar la sesión de un registro incompleto.',
+            detallesErrorSeguro(signOutError),
+          );
+        }
+      } catch (errorCierreSesion) {
+        console.error(
+          'No se pudo cerrar la sesión de un registro incompleto.',
+          detallesErrorSeguro(errorCierreSesion),
+        );
       }
     }
     return respuesta({ error: 'No se pudo preparar el negocio. Intenta nuevamente.' }, 503);
